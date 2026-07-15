@@ -1,0 +1,67 @@
+using Godot;
+
+namespace Game1;
+
+public partial class PlayerTank : CharacterBody2D
+{
+    [Export] public float MoveSpeed { get; set; } = 120f;
+
+    private DashComponent _dashComponent = null!;
+    private Node2D _turret = null!;
+
+    public Vector2 AimDirection { get; private set; } = Vector2.Right;
+
+    public override void _Ready()
+    {
+        MotionMode = MotionModeEnum.Floating;
+        _dashComponent = GetNode<DashComponent>("DashComponent");
+        _turret = GetNode<Node2D>("Turret");
+    }
+
+    public override void _PhysicsProcess(double delta)
+    {
+        float deltaSeconds = (float)delta;
+        Vector2 movementInput = Input.GetVector("move_left", "move_right", "move_up", "move_down");
+        UpdateAimDirection();
+
+        _dashComponent.Advance(deltaSeconds);
+        if (Input.IsActionJustPressed("dash"))
+        {
+            Vector2 dashDirection = movementInput.IsZeroApprox() ? AimDirection : movementInput;
+            _dashComponent.TryStart(dashDirection);
+        }
+
+        if (_dashComponent.IsDashing)
+        {
+            Velocity = _dashComponent.Direction * MoveSpeed * _dashComponent.SpeedMultiplier;
+        }
+        else
+        {
+            Velocity = TankMotion.CalculateVelocity(movementInput, MoveSpeed);
+        }
+
+        if (!Velocity.IsZeroApprox())
+        {
+            Rotation = Velocity.Angle();
+        }
+
+        _turret.GlobalRotation = AimDirection.Angle();
+        MoveAndSlide();
+    }
+
+    private void UpdateAimDirection()
+    {
+        Vector2 stickAim = Input.GetVector("aim_left", "aim_right", "aim_up", "aim_down");
+        if (!stickAim.IsZeroApprox())
+        {
+            AimDirection = stickAim.Normalized();
+            return;
+        }
+
+        Vector2 mouseAim = GetGlobalMousePosition() - GlobalPosition;
+        if (!mouseAim.IsZeroApprox())
+        {
+            AimDirection = mouseAim.Normalized();
+        }
+    }
+}
