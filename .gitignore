@@ -15,6 +15,7 @@
 .vs/
 .idea/
 .vscode/
+.worktrees/
 
 # Raw/licensed asset source archives stay local
 asset_sources/downloads/
