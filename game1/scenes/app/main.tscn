@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/app/AppRoot.cs" id="1_app_root"]
+
+[node name="AppRoot" type="Node"]
+script = ExtResource("1_app_root")
+
+[node name="RoomHost" type="Node" parent="."]
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="StatusLabel" type="Label" parent="UI"]
+offset_left = 12.0
+offset_top = 10.0
+offset_right = 190.0
+offset_bottom = 34.0
+text = "MVP FOUNDATION"

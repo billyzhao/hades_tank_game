@@ -6,7 +6,7 @@
 
 **Architecture:** 使用场景组合构建玩家、敌人、房间与 Boss；静态内容使用只读 C# `Resource`，单局状态使用普通 C# 对象。弹道使用物理帧扫掠查询，敌人导航使用 `AStarGrid2D`，房间和构筑状态限定在当前单局作用域。
 
-**Tech Stack:** Godot 4.7 .NET、C# / .NET 8、Godot 2D Compatibility renderer、NUnit 4.6.1、NUnit3TestAdapter 6.2.0、Microsoft.NET.Test.Sdk 18.7.0。
+**Tech Stack:** Godot 4.7 .NET、游戏目标框架 .NET 8、测试目标框架 .NET 10、Godot 2D Compatibility renderer、NUnit 4.6.1、NUnit3TestAdapter 6.2.0、Microsoft.NET.Test.Sdk 18.7.0。
 
 ## Global Constraints
 
@@ -49,7 +49,7 @@
 **Files:**
 - Create: `.gitignore`
 - Create: `GodotTank.sln`
-- Create: `tests/Game1.Tests/Game1.Tests.csproj`
+- Create: `tests/Game1.Tests/Game1.Tests.csproj`（目标 `net10.0`，引用目标 `net8.0` 的游戏项目）
 - Create: `tests/Game1.Tests/Run/RunStateTests.cs`
 - Create: `game1/scripts/run/RunState.cs`
 - Create: `game1/scripts/app/AppRoot.cs`
@@ -73,7 +73,7 @@ Expected: local repository and solution exist; no remote is configured.
 
 - [ ] **Step 2: Create the NUnit project**
 
-Use `net8.0` and exact package versions from the plan header. Add a project reference to `../../game1/Game1.csproj`, then add the test project to `GodotTank.sln`.
+Use `net10.0` and exact package versions from the plan header. Add a project reference to `../../game1/Game1.csproj`, then add the test project to `GodotTank.sln`. This keeps Godot runtime compatibility on .NET 8 while using the installed .NET 10 test host.
 
 - [ ] **Step 3: Write the failing run-state test**
 
