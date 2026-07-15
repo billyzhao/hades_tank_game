@@ -1,0 +1,22 @@
+# Local Codex workspace metadata
+.agents/
+.codex/
+
+# Godot and .NET generated files
+**/.godot/
+**/.mono/
+**/bin/
+**/obj/
+*.user
+*.tmp
+*.log
+
+# Editor metadata
+.vs/
+.idea/
+.vscode/
+
+# Raw/licensed asset source archives stay local
+asset_sources/downloads/
+asset_sources/working/
+asset_sources/ai_generated/source/

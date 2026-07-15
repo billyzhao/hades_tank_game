@@ -1,0 +1,6 @@
+.godot/
+bin/
+obj/
+.mono/
+export.cfg
+export_presets.cfg
