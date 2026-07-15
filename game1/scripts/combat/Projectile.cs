@@ -1,0 +1,45 @@
+using Godot;
+
+namespace Game1;
+
+public partial class Projectile : Node2D
+{
+    [Export] public uint CollisionMask { get; set; } = 1;
+    private ProjectileSpec _spec;
+    private Vector2 _direction;
+    private float _lifetime;
+    private int _bounces;
+
+    public void Initialize(ProjectileSpec spec, Team team, Vector2 direction)
+    {
+        _spec = spec;
+        _direction = direction.Normalized();
+        _lifetime = spec.LifetimeSeconds;
+        _bounces = spec.Bounces;
+        Modulate = team == Team.Player ? new Color(1f, 0.82f, 0.2f) : new Color(1f, 0.3f, 0.25f);
+    }
+
+    public override void _PhysicsProcess(double delta)
+    {
+        // 不依赖 Node2D 的逐帧位移碰撞：高速炮弹可能跨过薄墙，故每帧对“当前位置到目标位置”做线段查询。
+        float remaining = _spec.Speed * (float)delta;
+        _lifetime -= (float)delta;
+        if (_lifetime <= 0f) { QueueFree(); return; }
+        for (int impact = 0; impact < 4 && remaining > 0f; impact++)
+        {
+            Vector2 target = GlobalPosition + _direction * remaining;
+            PhysicsRayQueryParameters2D query = PhysicsRayQueryParameters2D.Create(GlobalPosition, target, CollisionMask);
+            Godot.Collections.Dictionary hit = GetWorld2D().DirectSpaceState.IntersectRay(query);
+            if (hit.Count == 0) { GlobalPosition = target; return; }
+            Vector2 point = hit["position"].AsVector2();
+            Vector2 normal = hit["normal"].AsVector2();
+            // 命中后保留本物理帧尚未走完的距离，使反弹不会因帧率不同而缩短或变慢。
+            remaining -= GlobalPosition.DistanceTo(point);
+            // 轻微沿法线偏移，防止下一次射线从墙面内部开始而在墙角反复命中。
+            GlobalPosition = point + normal * 0.05f;
+            // MVP 钢墙默认提供一次反弹；耗尽时立即销毁，避免在封闭空间中无限弹射。
+            if (_bounces-- <= 0) { QueueFree(); return; }
+            _direction = ProjectileMath.Reflect(_direction, normal);
+        }
+    }
+}

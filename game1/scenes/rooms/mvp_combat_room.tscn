@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player_tank.tscn" id="1_player_tank"]
 
@@ -10,6 +10,9 @@ size = Vector2(12, 270)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_room"]
 bg_color = Color(0.0627451, 0.0784314, 0.101961, 1)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_steel"]
+size = Vector2(24, 100)
 
 [node name="MvpCombatRoom" type="Node2D"]
 
@@ -25,6 +28,18 @@ width = 3.0
 default_color = Color(0.407843, 0.529412, 0.611765, 1)
 
 [node name="Walls" type="Node2D" parent="."]
+
+[node name="SteelWall" type="StaticBody2D" parent="Walls"]
+position = Vector2(360, 135)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/SteelWall"]
+shape = SubResource("RectangleShape2D_steel")
+
+[node name="Visual" type="Polygon2D" parent="Walls/SteelWall"]
+polygon = PackedVector2Array(-12, -50, 12, -50, 12, 50, -12, 50)
+color = Color(0.35, 0.43, 0.5, 1)
 
 [node name="Top" type="StaticBody2D" parent="Walls"]
 position = Vector2(240, 6)

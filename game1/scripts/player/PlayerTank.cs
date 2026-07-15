@@ -8,6 +8,7 @@ public partial class PlayerTank : CharacterBody2D
 
     private DashComponent _dashComponent = null!;
     private Node2D _turret = null!;
+    private WeaponController _weaponController = null!;
 
     public Vector2 AimDirection { get; private set; } = Vector2.Right;
 
@@ -16,6 +17,7 @@ public partial class PlayerTank : CharacterBody2D
         MotionMode = MotionModeEnum.Floating;
         _dashComponent = GetNode<DashComponent>("DashComponent");
         _turret = GetNode<Node2D>("Turret");
+        _weaponController = GetNode<WeaponController>("WeaponController");
     }
 
     public override void _PhysicsProcess(double delta)
@@ -46,6 +48,11 @@ public partial class PlayerTank : CharacterBody2D
         }
 
         _turret.GlobalRotation = AimDirection.Angle();
+        if (Input.IsActionPressed("fire_primary"))
+        {
+            // 持续按住开火键即可连射，实际是否能发射由 WeaponController 的冷却决定。
+            _weaponController.TryFire(GetNode<Marker2D>("Turret/Muzzle").GlobalPosition, AimDirection, Team.Player);
+        }
         MoveAndSlide();
     }
 
