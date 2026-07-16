@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/PlayerTank.cs" id="1_player_tank"]
 [ext_resource type="Script" path="res://scripts/player/DashComponent.cs" id="2_dash_component"]
 [ext_resource type="Script" path="res://scripts/combat/WeaponController.cs" id="3_weapon_controller"]
+[ext_resource type="Script" path="res://scripts/combat/HealthComponent.cs" id="4_health"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(18, 18)
@@ -33,3 +34,6 @@ script = ExtResource("2_dash_component")
 
 [node name="WeaponController" type="Node" parent="."]
 script = ExtResource("3_weapon_controller")
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("4_health")

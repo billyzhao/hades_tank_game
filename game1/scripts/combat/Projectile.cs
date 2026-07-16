@@ -4,7 +4,7 @@ namespace Game1;
 
 public partial class Projectile : Node2D
 {
-    [Export] public uint CollisionMask { get; set; } = 1;
+    [Export] public uint CollisionMask { get; set; } = 19;
     private ProjectileSpec _spec;
     private Vector2 _direction;
     private float _lifetime;
@@ -33,6 +33,13 @@ public partial class Projectile : Node2D
             if (hit.Count == 0) { GlobalPosition = target; return; }
             Vector2 point = hit["position"].AsVector2();
             Vector2 normal = hit["normal"].AsVector2();
+            // 命中可受伤实体时先结算伤害；砖墙和中继站不会进入反弹分支。
+            if (hit["collider"].AsGodotObject() is IDamageable damageable)
+            {
+                damageable.ApplyDamage(new DamageContext(_spec.Damage));
+                QueueFree();
+                return;
+            }
             // 命中后保留本物理帧尚未走完的距离，使反弹不会因帧率不同而缩短或变慢。
             remaining -= GlobalPosition.DistanceTo(point);
             // 轻微沿法线偏移，防止下一次射线从墙面内部开始而在墙角反复命中。

@@ -1,6 +1,18 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/app/AppRoot.cs" id="1_app_root"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud"]
+bg_color = Color(0.035, 0.055, 0.075, 0.88)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.22, 0.65, 0.9, 0.8)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 
 [node name="AppRoot" type="Node"]
 script = ExtResource("1_app_root")
@@ -9,9 +21,48 @@ script = ExtResource("1_app_root")
 
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="StatusLabel" type="Label" parent="UI"]
+[node name="HudPanel" type="Panel" parent="UI"]
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 238.0
+offset_bottom = 100.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_hud")
+mouse_filter = 2
+
+[node name="Hud" type="VBoxContainer" parent="UI"]
 offset_left = 12.0
 offset_top = 10.0
-offset_right = 350.0
-offset_bottom = 50.0
-text = "WASD / arrows: move | mouse / right stick: aim | Space: dash"
+offset_right = 240.0
+offset_bottom = 100.0
+
+[node name="ArmorLabel" type="Label" parent="UI/Hud"]
+text = "坦克装甲"
+theme_override_colors/font_color = Color(0.45, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="RelayLabel" type="Label" parent="UI/Hud"]
+text = "中继站耐久"
+theme_override_colors/font_color = Color(0.4, 1, 0.55, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="RebootLabel" type="Label" parent="UI/Hud"]
+text = "战场重启"
+theme_override_colors/font_color = Color(1, 0.8, 0.3, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="StatusLabel" type="Label" parent="UI"]
+offset_left = 12.0
+offset_top = 110.0
+offset_right = 470.0
+offset_bottom = 134.0
+text = "移动：WASD/方向键 | 射击：鼠标左键 | 冲刺：空格 | 验收调试：Z 坦克受伤，X 中继站受伤"
+theme_override_font_sizes/font_size = 14
+
+[node name="EventLabel" type="Label" parent="UI"]
+offset_left = 12.0
+offset_top = 140.0
+offset_right = 470.0
+offset_bottom = 168.0
+text = "验收提示会显示在这里"
+theme_override_colors/font_color = Color(1, 0.9, 0.35, 1)
+theme_override_font_sizes/font_size = 18
