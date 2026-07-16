@@ -4,7 +4,8 @@ namespace Game1;
 
 public partial class Projectile : Node2D
 {
-    [Export] public uint CollisionMask { get; set; } = 19;
+    [Signal] public delegate void ImpactedEventHandler(Vector2 position, bool destroyedTarget, bool reflected);
+    [Export] public uint CollisionMask { get; set; } = 27;
     private ProjectileSpec _spec;
     private Vector2 _direction;
     private float _lifetime;
@@ -14,6 +15,7 @@ public partial class Projectile : Node2D
     {
         _spec = spec;
         _direction = direction.Normalized();
+        Rotation = _direction.Angle();
         _lifetime = spec.LifetimeSeconds;
         _bounces = spec.Bounces;
         Modulate = team == Team.Player ? new Color(1f, 0.82f, 0.2f) : new Color(1f, 0.3f, 0.25f);
@@ -36,7 +38,8 @@ public partial class Projectile : Node2D
             // 命中可受伤实体时先结算伤害；砖墙和中继站不会进入反弹分支。
             if (hit["collider"].AsGodotObject() is IDamageable damageable)
             {
-                damageable.ApplyDamage(new DamageContext(_spec.Damage));
+                DamageResult result = damageable.ApplyDamage(new DamageContext(_spec.Damage));
+                EmitSignal(SignalName.Impacted, point, result.DepletedNow, false);
                 QueueFree();
                 return;
             }
@@ -44,9 +47,11 @@ public partial class Projectile : Node2D
             remaining -= GlobalPosition.DistanceTo(point);
             // 轻微沿法线偏移，防止下一次射线从墙面内部开始而在墙角反复命中。
             GlobalPosition = point + normal * 0.05f;
+            EmitSignal(SignalName.Impacted, point, false, true);
             // MVP 钢墙默认提供一次反弹；耗尽时立即销毁，避免在封闭空间中无限弹射。
             if (_bounces-- <= 0) { QueueFree(); return; }
             _direction = ProjectileMath.Reflect(_direction, normal);
+            Rotation = _direction.Angle();
         }
     }
 }

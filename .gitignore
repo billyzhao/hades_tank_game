@@ -21,3 +21,5 @@
 asset_sources/downloads/
 asset_sources/working/
 asset_sources/ai_generated/source/
+asset_sources/ai_prototype_working/
+tmp/

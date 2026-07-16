@@ -1,0 +1,31 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/EnemyTank.cs" id="1_enemy"]
+[ext_resource type="Texture2D" path="res://assets/art/actors/enemy_vehicle.png" id="2_enemy_sprite"]
+[sub_resource type="RectangleShape2D" id="1_shape"]
+size = Vector2(16, 16)
+
+[node name="EnemyTank" type="CharacterBody2D"]
+collision_layer = 8
+collision_mask = 1
+script = ExtResource("1_enemy")
+
+[node name="Visual" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-9, -7, 9, -7, 11, 0, 9, 7, -9, 7, -11, 0)
+color = Color(0.95, 0.75, 0.2, 1)
+
+[node name="RoleSprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_enemy_sprite")
+texture_filter = 1
+rotation = 1.5707963
+scale = Vector2(0.5, 0.5)
+z_index = 1
+
+[node name="AttackWarning" type="Line2D" parent="."]
+points = PackedVector2Array(15, 0, 13, 7, 7, 13, 0, 15, -7, 13, -13, 7, -15, 0, -13, -7, -7, -13, 0, -15, 7, -13, 13, -7, 15, 0)
+width = 2.0
+default_color = Color(1, 0.4, 0.2, 0.85)
+z_index = -1
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+shape = SubResource("1_shape")

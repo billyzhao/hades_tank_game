@@ -5,6 +5,8 @@ namespace Game1;
 public partial class WeaponController : Node
 {
     private static readonly PackedScene ProjectileScene = GD.Load<PackedScene>("res://scenes/combat/projectile.tscn");
+    [Signal] public delegate void FiredEventHandler(Vector2 origin, Vector2 direction, int team);
+    [Signal] public delegate void ProjectileImpactedEventHandler(Vector2 position, bool destroyedTarget, bool reflected);
     [Export] public WeaponDefinition Definition { get; set; } = new();
     private float _cooldown;
 
@@ -18,7 +20,10 @@ public partial class WeaponController : Node
         GetTree().CurrentScene.AddChild(projectile);
         projectile.GlobalPosition = origin;
         projectile.Initialize(Definition.CreateSpec(), team, direction);
+        projectile.Impacted += (position, destroyedTarget, reflected) =>
+            EmitSignal(SignalName.ProjectileImpacted, position, destroyedTarget, reflected);
         _cooldown = Definition.CooldownSeconds;
+        EmitSignal(SignalName.Fired, origin, direction, (int)team);
         return true;
     }
 }

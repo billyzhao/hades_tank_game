@@ -2,7 +2,13 @@
 [ext_resource type="Script" path="res://scripts/combat/Projectile.cs" id="1"]
 [node name="Projectile" type="Node2D"]
 script = ExtResource("1")
-collision_mask = 19
+collision_mask = 27
 [node name="Visual" type="Polygon2D" parent="."]
 polygon = PackedVector2Array(-3, -2, 3, 0, -3, 2)
 color = Color(1, 0.82, 0.2, 1)
+
+[node name="Trail" type="Line2D" parent="."]
+points = PackedVector2Array(-10, 0, -2, 0)
+width = 2.0
+default_color = Color(1, 0.58, 0.12, 0.75)
+z_index = -1

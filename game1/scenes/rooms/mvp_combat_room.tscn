@@ -4,6 +4,13 @@
 [ext_resource type="Script" path="res://scripts/combat/DestructibleTerrain.cs" id="2_brick"]
 [ext_resource type="Script" path="res://scripts/combat/RelayStation.cs" id="3_relay"]
 [ext_resource type="Script" path="res://scripts/combat/RebootController.cs" id="4_reboot"]
+[ext_resource type="Script" path="res://scripts/combat/EnemyDirector.cs" id="5_director"]
+[ext_resource type="Script" path="res://scripts/combat/RoomController.cs" id="6_room"]
+[ext_resource type="Texture2D" path="res://assets/art/tiles/desert_industrial_arena.png" id="7_arena"]
+[ext_resource type="Texture2D" path="res://assets/art/actors/relay_station.png" id="8_relay_sprite"]
+[ext_resource type="Script" path="res://scripts/presentation/CameraShakeController.cs" id="9_camera_shake"]
+[ext_resource type="Script" path="res://scripts/presentation/VisualFeedbackController.cs" id="10_visual_feedback"]
+[ext_resource type="Script" path="res://scripts/presentation/AudioFeedbackController.cs" id="11_audio_feedback"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_top_bottom"]
 size = Vector2(480, 12)
@@ -22,11 +29,15 @@ size = Vector2(24, 64)
 
 [node name="MvpCombatRoom" type="Node2D"]
 
-[node name="Background" type="Panel" parent="."]
-offset_right = 480.0
-offset_bottom = 270.0
-theme_override_styles/panel = SubResource("StyleBoxFlat_room")
-mouse_filter = 2
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(240, 135)
+enabled = true
+
+[node name="Background" type="Sprite2D" parent="."]
+texture = ExtResource("7_arena")
+texture_filter = 1
+centered = false
+z_index = -10
 
 [node name="BoundaryVisual" type="Line2D" parent="."]
 points = PackedVector2Array(6, 6, 474, 6, 474, 264, 6, 264, 6, 6)
@@ -46,9 +57,18 @@ shape = SubResource("RectangleShape2D_brick")
 
 [node name="Visual" type="Polygon2D" parent="Walls/BrickWall"]
 polygon = PackedVector2Array(-12, -32, 12, -32, 12, 32, -12, 32)
-color = Color(0.75, 0.31, 0.18, 1)
+color = Color(0.56, 0.20, 0.12, 1)
 
-[node name="RelayStation" type="StaticBody2D" parent="."]
+[node name="MortarLines" type="Line2D" parent="Walls/BrickWall"]
+points = PackedVector2Array(-11, -18, 11, -18, -11, -2, 11, -2, -11, 14, 11, 14)
+width = 2.0
+default_color = Color(0.92, 0.48, 0.20, 0.9)
+
+[node name="DamageMark" type="Polygon2D" parent="Walls/BrickWall"]
+polygon = PackedVector2Array(-5, -31, 2, -31, -2, -22, 6, -22, 1, -13, -6, -13)
+color = Color(0.22, 0.10, 0.07, 0.9)
+
+[node name="RelayStation" type="StaticBody2D" parent="." groups=["relay"]]
 position = Vector2(80, 135)
 collision_layer = 16
 collision_mask = 0
@@ -59,7 +79,13 @@ shape = SubResource("RectangleShape2D_brick")
 
 [node name="Visual" type="Polygon2D" parent="RelayStation"]
 polygon = PackedVector2Array(-14, -20, 14, -20, 14, 20, -14, 20)
-color = Color(0.25, 0.85, 0.46, 1)
+color = Color(0.055, 0.10, 0.075, 0.92)
+
+[node name="Sprite" type="Sprite2D" parent="RelayStation"]
+texture = ExtResource("8_relay_sprite")
+texture_filter = 1
+scale = Vector2(0.62, 0.62)
+z_index = 1
 
 [node name="SteelWall" type="StaticBody2D" parent="Walls"]
 position = Vector2(360, 135)
@@ -71,7 +97,16 @@ shape = SubResource("RectangleShape2D_steel")
 
 [node name="Visual" type="Polygon2D" parent="Walls/SteelWall"]
 polygon = PackedVector2Array(-12, -50, 12, -50, 12, 50, -12, 50)
-color = Color(0.35, 0.43, 0.5, 1)
+color = Color(0.20, 0.30, 0.38, 1)
+
+[node name="HazardStripes" type="Polygon2D" parent="Walls/SteelWall"]
+polygon = PackedVector2Array(-10, -40, -2, -46, 10, -34, 10, -24, 2, -18, -10, -30)
+color = Color(0.95, 0.67, 0.15, 0.85)
+
+[node name="RivetLines" type="Line2D" parent="Walls/SteelWall"]
+points = PackedVector2Array(-8, -10, 8, -10, -8, 12, 8, 12, -8, 34, 8, 34)
+width = 2.0
+default_color = Color(0.52, 0.73, 0.78, 0.75)
 
 [node name="Top" type="StaticBody2D" parent="Walls"]
 position = Vector2(240, 6)
@@ -105,8 +140,23 @@ collision_mask = 0
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/Right"]
 shape = SubResource("RectangleShape2D_left_right")
 
-[node name="PlayerTank" parent="." instance=ExtResource("1_player_tank")]
+[node name="PlayerTank" parent="." groups=["player"] instance=ExtResource("1_player_tank")]
 position = Vector2(240, 135)
 
 [node name="RebootController" type="Node" parent="."]
 script = ExtResource("4_reboot")
+
+[node name="EnemyDirector" type="Node" parent="."]
+script = ExtResource("5_director")
+
+[node name="RoomController" type="Node" parent="."]
+script = ExtResource("6_room")
+
+[node name="CameraShakeController" type="Node" parent="."]
+script = ExtResource("9_camera_shake")
+
+[node name="VisualFeedbackController" type="Node2D" parent="."]
+script = ExtResource("10_visual_feedback")
+
+[node name="AudioFeedbackController" type="Node" parent="."]
+script = ExtResource("11_audio_feedback")

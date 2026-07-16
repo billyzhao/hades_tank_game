@@ -9,6 +9,7 @@ public partial class PlayerTank : CharacterBody2D
     private DashComponent _dashComponent = null!;
     private Node2D _turret = null!;
     private WeaponController _weaponController = null!;
+    private TankVisualAnimator _visualAnimator = null!;
 
     public Vector2 AimDirection { get; private set; } = Vector2.Right;
 
@@ -18,6 +19,7 @@ public partial class PlayerTank : CharacterBody2D
         _dashComponent = GetNode<DashComponent>("DashComponent");
         _turret = GetNode<Node2D>("Turret");
         _weaponController = GetNode<WeaponController>("WeaponController");
+        _visualAnimator = GetNode<TankVisualAnimator>("TankVisualAnimator");
     }
 
     public override void _PhysicsProcess(double delta)
@@ -54,6 +56,7 @@ public partial class PlayerTank : CharacterBody2D
             _weaponController.TryFire(GetNode<Marker2D>("Turret/Muzzle").GlobalPosition, AimDirection, Team.Player);
         }
         MoveAndSlide();
+        _visualAnimator.SetMotion(Velocity, _dashComponent.IsDashing);
     }
 
     private void UpdateAimDirection()

@@ -528,3 +528,7 @@ Commit: `feat: complete roguelite tank MVP vertical slice`.
 ## Review Checkpoint After Every Task
 
 Stop and report automated results, manual acceptance, files changed, observed gameplay/balance risk and whether the next task's assumptions remain valid. Do not begin the next task while the current playable gate fails; fix it or revise this plan with user approval.
+
+## 策划验收交付标准
+
+每次交付必须附带可见验收界面与操作脚本，格式为“操作 → 预期画面/数值/状态变化”。界面需要显示本迭代关键状态，角色职责要以颜色、轮廓、预警或文字明确区分；原型期可用清晰标注的调试入口覆盖正常流程暂未易触发的边界。自动化测试通过后，开发者仍须按该脚本完成一次可见自验，才可交给策划验收。
