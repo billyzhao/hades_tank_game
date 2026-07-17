@@ -8,4 +8,4 @@
 | `game1/assets/art/actors/enemy_vehicle.png` | Codex 内置 image generation | 2026-07-16 | 三类敌军共用灰阶底盘，由运行时职责色区分 | 移除洋红背景、nearest 缩放至 48×48、保留透明通道 | 仅原型，不作最终商用资产 |
 | `game1/assets/art/actors/relay_station.png` | Codex 内置 image generation | 2026-07-16 | 绿色核心中继站视觉原型 | 移除洋红背景、nearest 缩放至 64×64、保留透明通道 | 仅原型，不作最终商用资产 |
 
-提示词和生成记录保留在当前 Codex 任务对话；最终商用素材替换前须重新审核来源与授权。
+当前精确提示词仅存在于原始 Codex 对话，仓库内没有可验证的完整提示词副本。不得根据成品反向编造提示词；若原型继续使用，应在正式素材替换前重新生成并把提示词、模型、日期和处理步骤保存到仓库外源文件区。

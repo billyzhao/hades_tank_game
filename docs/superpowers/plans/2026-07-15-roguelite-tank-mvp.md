@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- 逻辑画布固定 480×270，默认窗口 960×540，像素纹理关闭过滤与 mipmap。
+- 逻辑画布固定 480×270，默认窗口 1440×810（整数 3 倍显示，为后续经用户验收的表现窗口基线），像素纹理关闭过滤与 mipmap。
 - 移动、碰撞和弹道只在 `_PhysicsProcess` 更新，目标稳定 60 FPS。
 - `Resource` 运行时只读；中继站耐久、装甲、重启次数与协议栈存入 `RunState`。
 - MVP 固定一个城区战斗房、巡逻坦克/突击车/攻城炮车、8–12 个协议和一个路障指挥车 Boss。
@@ -18,7 +18,7 @@
 - 未经用户确认不购买或下载素材；付费素材不可用时使用程序占位图或已批准的 CC0 资源。
 - AI 只补现成资源缺失的 Boss、关键特效、UI 或宣传素材，采用前必须完成人工像素清理和授权登记。
 - 每个任务结束必须通过单元测试、构建、Godot headless 启动和一次人工 OpenGL 游玩。
-- 当前根目录不是 Git 仓库；执行 Task 1 时初始化本地 Git，但不配置远程仓库。
+- 仓库初始化和远程配置已在本计划最初编写后完成；当前及后续仓库操作遵守根目录 `AGENTS.md`，用户明确验收前不得暂存、提交或推送。
 
 ## Approved References
 
@@ -29,16 +29,16 @@
 
 ## Iteration Overview
 
-| 任务 | 可运行成果 | 进入下一阶段的门槛 |
-|---|---|---|
-| 1 | 新应用入口、测试基础和单局状态 | 构建/测试/启动全部通过 |
-| 2 | 玩家移动、独立瞄准和冲刺 | 键鼠与手柄操作稳定，车体不能穿墙 |
-| 3 | 主炮、扫掠命中和钢墙反弹 | 高速炮弹不穿墙，反弹可预测 |
-| 4 | 砖墙、中继站、装甲和战场重启 | 双生命线边界条件正确 |
-| 5 | 三类敌人、导航、波次和房间状态 | 一场守点战可以稳定完成 |
-| 6 | 三选一协议和第二场战斗 | 至少两组联动明显改变操作 |
-| 7 | 路障指挥车 Boss | 两阶段战斗和胜利结算完整 |
-| 8 | 素材、音频、存档、性能和 MVP 验收 | 完整短局可反复游玩并保持 60 FPS |
+| 任务 | 可运行成果 | 进入下一阶段的门槛 | 2026-07-17 基线状态 |
+|---|---|---|---|
+| 1 | 新应用入口、测试基础和单局状态 | 构建/测试/启动全部通过 | 完成 |
+| 2 | 玩家移动、独立瞄准和冲刺 | 键鼠与手柄操作稳定，车体不能穿墙 | 完成 |
+| 3 | 主炮、扫掠命中和钢墙反弹 | 高速炮弹不穿墙，反弹可预测 | 完成 |
+| 4 | 砖墙、中继站、装甲和战场重启 | 双生命线边界条件正确 | 功能验收完成、架构部分完成 |
+| 5 | 三类敌人、导航、波次和房间状态 | 一场守点战可以稳定完成 | 玩法验收完成、架构部分完成 |
+| 6 | 三选一协议和第二场战斗 | 至少两组联动明显改变操作 | 未开始 |
+| 7 | 路障指挥车 Boss | 两阶段战斗和胜利结算完整 | 未开始 |
+| 8 | 素材、音频、存档、性能和 MVP 验收 | 完整短局可反复游玩并保持 60 FPS | 部分提前完成：视觉、最小音效、HUD 和验收文档已由表现专项覆盖；存档、集成 runner、压力测试和完整短局未完成 |
 
 ---
 
@@ -61,7 +61,7 @@
 - Produces: `RunState.CreateNew(int seed, int relayIntegrity = 100, int armor = 100, int reboots = 1)`
 - Produces: `AppRoot.CurrentRun : RunState`
 
-- [ ] **Step 1: Initialize version control and solution**
+- [x] **Step 1: Initialize version control and solution**
 
 ```powershell
 git init
@@ -71,11 +71,11 @@ dotnet sln GodotTank.sln add game1/Game1.csproj
 
 Expected: local repository and solution exist; no remote is configured.
 
-- [ ] **Step 2: Create the NUnit project**
+- [x] **Step 2: Create the NUnit project**
 
 Use `net10.0` and exact package versions from the plan header. Add a project reference to `../../game1/Game1.csproj`, then add the test project to `GodotTank.sln`. This keeps Godot runtime compatibility on .NET 8 while using the installed .NET 10 test host.
 
-- [ ] **Step 3: Write the failing run-state test**
+- [x] **Step 3: Write the failing run-state test**
 
 ```csharp
 [Test]
@@ -98,11 +98,11 @@ Run: `dotnet test tests/Game1.Tests/Game1.Tests.csproj --filter CreateNew_UsesAp
 
 Expected: FAIL because `RunState` does not exist.
 
-- [ ] **Step 4: Implement minimal `RunState`**
+- [x] **Step 4: Implement minimal `RunState`**
 
 Use required seed plus mutable relay integrity, player armor, reboot count and room index. `CreateNew` must set the tested values exactly and must not reference Godot nodes.
 
-- [ ] **Step 5: Create the app scene**
+- [x] **Step 5: Create the app scene**
 
 Exact scene tree:
 
@@ -113,9 +113,9 @@ AppRoot (Node)
     └── StatusLabel (Label, text="MVP FOUNDATION")
 ```
 
-Set `run/main_scene` to this scene and set 480×270 viewport, 960×540 override, `canvas_items` stretch and `keep` aspect.
+Set `run/main_scene` to this scene and set 480×270 viewport, 1440×810 override (the later user-accepted presentation-window baseline), `canvas_items` stretch and `keep` aspect.
 
-- [ ] **Step 6: Verify and commit**
+- [x] **Step 6: Verify and commit**
 
 ```powershell
 dotnet test GodotTank.sln
@@ -149,7 +149,7 @@ Commit: `chore: establish roguelite tank project baseline`.
 - Produces: `PlayerTank.AimDirection : Vector2`
 - Produces events: `DashComponent.DashStarted`, `DashComponent.DashEnded`
 
-- [ ] **Step 1: Test diagonal normalization**
+- [x] **Step 1: Test diagonal normalization**
 
 ```csharp
 [Test]
@@ -162,7 +162,7 @@ public void CalculateVelocity_NormalizesDiagonalInput()
 
 Expected before implementation: FAIL.
 
-- [ ] **Step 2: Implement motion math**
+- [x] **Step 2: Implement motion math**
 
 ```csharp
 public static Vector2 CalculateVelocity(Vector2 input, float speed)
@@ -173,7 +173,7 @@ public static Vector2 CalculateVelocity(Vector2 input, float speed)
 
 Expected after implementation: PASS.
 
-- [ ] **Step 3: Build the player scene**
+- [x] **Step 3: Build the player scene**
 
 ```text
 PlayerTank (CharacterBody2D)
@@ -187,11 +187,11 @@ PlayerTank (CharacterBody2D)
 
 `PlayerTank._PhysicsProcess` reads movement input, assigns `Velocity`, calls `MoveAndSlide()`, rotates chassis toward non-zero movement and rotates turret toward mouse world position or right-stick direction. Physics position must not be rounded.
 
-- [ ] **Step 4: Add input actions and dash**
+- [x] **Step 4: Add input actions and dash**
 
 Add `aim_left/right/up/down`, `fire_primary`, `dash`, `active_ability`, `interact` and `pause`. Dash defaults: 3× speed, 0.14 s duration, 0.8 s cooldown; reject zero-direction dash and never teleport through collision.
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 Acceptance: cardinal/diagonal speed equal; mouse aim does not rotate chassis; right stick holds last valid aim; dash cannot cross room boundary; 30 seconds continuous movement has no errors.
 
@@ -219,11 +219,11 @@ Commit: `feat: add independent tank movement and aiming`.
 - Produces: `WeaponController.TryFire(Vector2 origin, Vector2 direction, Team team) : bool`
 - Produces: `Projectile.Initialize(ProjectileSpec spec, Team team, Vector2 direction)`
 
-- [ ] **Step 1: Test reflection**
+- [x] **Step 1: Test reflection**
 
 Test a horizontal wall and a 45-degree hit. Expected before implementation: FAIL.
 
-- [ ] **Step 2: Implement reflection**
+- [x] **Step 2: Implement reflection**
 
 ```csharp
 public static Vector2 Reflect(Vector2 direction, Vector2 normal)
@@ -232,15 +232,15 @@ public static Vector2 Reflect(Vector2 direction, Vector2 normal)
 }
 ```
 
-- [ ] **Step 3: Implement swept projectile movement**
+- [x] **Step 3: Implement swept projectile movement**
 
 Each physics frame casts from current to proposed position, handles the closest hit, consumes remaining frame distance after reflection, offsets 0.05 pixel along the normal, and stops after four impacts in one frame. Steel consumes one bounce; an exhausted projectile is queued for deletion.
 
-- [ ] **Step 4: Add greybox steel and weapon data**
+- [x] **Step 4: Add greybox steel and weapon data**
 
 Use collision layer `world_steel`. Default weapon: damage 10, speed 360 px/s, cooldown 0.22 s, lifetime 2.5 s, one bounce.
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 Acceptance: no thin-wall tunneling; symmetric 45-degree reflection; projectile disappears after final bounce; fire cooldown enforced; 160 debug projectiles do not crash.
 
@@ -271,15 +271,15 @@ Commit: `feat: add swept projectiles and steel ricochet`.
 - Produces: `RunState.TryConsumeReboot() : bool`
 - Produces events: `HealthComponent.ValueChanged`, `HealthComponent.Depleted`
 
-- [ ] **Step 1: Test both failure paths**
+- [x] **Step 1: Test both failure paths**
 
 Test relay integrity reaches exactly zero, one reboot succeeds, a second reboot fails, and counts never become negative.
 
-- [ ] **Step 2: Implement `RunState` transitions**
+- [x] **Step 2: Implement `RunState` transitions**
 
 Clamp relay damage to non-negative and relay integrity to zero. `TryConsumeReboot` returns false without mutation when no reboot remains.
 
-- [ ] **Step 3: Implement damage contract**
+- [x] **Step 3: Implement damage contract**
 
 Use immutable record structs. Shield applies before armor; negative damage cannot heal; depletion emits exactly once even if more hits arrive after zero.
 
@@ -287,13 +287,19 @@ Use immutable record structs. Shield applies before armor; negative damage canno
 
 Use `TileMapLayer` for ground, brick and steel. `DestructibleTerrain` owns `Dictionary<Vector2I,int>` current HP, erases the cell at zero and never modifies TileSet resources. Relay initializes from and writes back to `RunState`.
 
+> 2026-07-17 基线差距：中继站和伤害功能已可验收，但砖墙仍使用独立 `StaticBody2D`，尚未实现本步骤规定的 `TileMapLayer` 与运行时格子耐久。见[0001：单房间原型架构暂缓项](../../decisions/0001-prototype-architecture-deferrals.md)。
+
 - [ ] **Step 5: Implement reboot flow**
 
 On player depletion: disable input/collision, consume reboot, wait 1.2 s, clear hostile projectiles in 48 pixels, move to relay safe marker, restore 50% armor and grant 1.0 s invulnerability. With no reboot, fail the run.
 
+> 2026-07-17 基线差距：重启、重建位置与 50% 装甲恢复已可验收，但尚未补齐敌方炮弹清理和重启后短暂无敌。见[0001：单房间原型架构暂缓项](../../decisions/0001-prototype-architecture-deferrals.md)。
+
 - [ ] **Step 6: Verify**
 
 Acceptance: brick breaks, steel does not; relay zero fails immediately; first player death reboots; second death fails; no duplicate failure event.
+
+> 2026-07-17 基线差距：功能验收已完成，但由于 Step 4–5 的原技术架构与重启细节尚未全部满足，本步骤保持未完成。
 
 Commit: `feat: add destructible defense and reboot lifecycle`.
 
@@ -325,7 +331,7 @@ Commit: `feat: add destructible defense and reboot lifecycle`.
 - Produces: `EnemyDirector.StartEncounter(RoomDefinition definition)`
 - Produces events: `EnemyTank.Destroyed`, `EnemyDirector.AllWavesFinished`, `RoomController.RoomCleared`, `RoomController.RoomFailed`
 
-- [ ] **Step 1: Test target policy**
+- [x] **Step 1: Test target policy**
 
 Patrol and assault prefer player; siege prefers relay; all fall back safely when their preferred target is unavailable.
 
@@ -333,11 +339,15 @@ Patrol and assault prefer player; siege prefers relay; all fall back safely when
 
 Every behavior uses `AcquireTarget → Move → Telegraph → Attack → Recover`. Telegraph durations: patrol 0.35 s, assault 0.2 s, siege 0.75 s. Spawn warning lasts 0.6 s before collision and attacks enable.
 
+> 2026-07-17 基线差距：职责与目标选择已可见，但敌军逻辑仍集中在 `EnemyTank` + `BehaviorId`，尚未拆分为 `EnemyDefinition` Resource、独立行为策略及完整公共状态流。
+
 - [ ] **Step 3: Implement `AStarGrid2D` navigation**
 
 Build from blocking tiles, update only changed cells, recalculate each enemy no more than four times per second with staggered offsets, and use direct steering fallback if no path exists.
 
-- [ ] **Step 4: Implement threat waves**
+> 2026-07-17 基线差距：当前使用 `DefenseRoutePlanner` 固定通路，尚未实现 `AStarGrid2D` 及地形变化后的局部导航更新。见[0001：单房间原型架构暂缓项](../../decisions/0001-prototype-architecture-deferrals.md)。
+
+- [x] **Step 4: Implement threat waves**
 
 Threat costs: patrol 1, assault 2, siege 3. Room budgets: 4, 6, 8. No more than one siege unit alive; reject unsafe spawn points around player and relay.
 
@@ -345,9 +355,13 @@ Threat costs: patrol 1, assault 2, siege 3. Room budgets: 4, 6, 8. No more than 
 
 `Loading → Intro → Combat → Cleared → Reward → Exiting` with `Failed` from Combat. Clear hostile projectiles before reward. Clear only after last wave and all enemies are gone.
 
+> 2026-07-17 基线差距：当前是精简状态机，仅有 Loading/Combat/Cleared/Failed，尚未接入 Intro、Reward、Exiting 和奖励前清理敌方炮弹。
+
 - [ ] **Step 6: Verify**
 
 Acceptance: roles are readable with programmatic stand-ins; every attack is telegraphed; siege creates a priority decision; waves finish without stuck enemies.
+
+> 2026-07-17 基线差距：守点玩法已经用户验收，但集中式敌军逻辑、固定通路和精简状态机仍未达到原技术步骤，因此本步骤保持未完成。完整暂缓边界见[0001：单房间原型架构暂缓项](../../decisions/0001-prototype-architecture-deferrals.md)。
 
 Commit: `feat: add enemy roles and room encounter lifecycle`.
 
@@ -453,6 +467,8 @@ Commit: `feat: add roadblock commander boss encounter`.
 ### Task 8: 素材、音频、存档、性能与 MVP 验收
 
 **Iteration outcome:** 灰盒替换为统一原型表现，设置/解锁可保存，性能满足预算，完整短局通过验收。
+
+> 2026-07-17 基线状态：部分提前完成。视觉、最小音效、HUD 和验收文档已由混合表现专项覆盖；存档、headless 集成 runner、压力测试和“战斗 → 奖励 → 战斗 → Boss → 结算”完整短局仍未完成。由于本 Task 各步骤还包含未覆盖内容，以下原步骤不作整步完成标记。
 
 **Files:**
 - Modify: `asset_sources/THIRD_PARTY_ASSETS.md`
