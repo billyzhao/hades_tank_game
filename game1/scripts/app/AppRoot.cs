@@ -35,14 +35,23 @@ public partial class AppRoot : Node
     private RoomNavigationFactory _navigationFactory;
     private bool _wavesStarted;
     private ulong _runStartedAtMsec;
+    private readonly SaveService _saveService = new();
+    private SaveData _saveData = null!;
+    private DebugOverlay _debugOverlay = null!;
+    private bool _resultShown;
 
     public override void _Ready()
     {
         CurrentRun = RunState.CreateNew(System.Environment.TickCount);
+        _saveData = _saveService.LoadOrDefault();
         _runStartedAtMsec = Time.GetTicksMsec();
         ProtocolCatalog.Validate();
         _buildController = new BuildController(CurrentRun, ProtocolCatalog);
         _runController = new RunController(CurrentRun, _buildController, new RewardGenerator());
+        AddChild(new PauseController());
+        _debugOverlay = GD.Load<PackedScene>("res://scenes/ui/debug_overlay.tscn").Instantiate<DebugOverlay>();
+        AddChild(_debugOverlay);
+        _debugOverlay.Bind(CurrentRun, _saveData, () => _runController.Phase);
         Node roomHost = GetNode<Node>("RoomHost");
         RoomDefinition firstRoom = RoomDefinitions[0];
         firstRoom.Validate();
@@ -82,6 +91,7 @@ public partial class AppRoot : Node
             _eventLabel.Text = phase.ToString();
             if (phase == RoomPhase.Reward) _rewardPanel.ShowOffer(_runController.CurrentOffer, ProtocolCatalog);
             if (phase == RoomPhase.Exiting) RestartCombatRoom();
+            if (phase == RoomPhase.Failed) ShowRunFailure();
         };
         _runController.BeginRoom();
         _playerHealth.Depleted += () => _eventLabel.Text = "坦克报废：尝试战场重启";
@@ -229,12 +239,46 @@ public partial class AppRoot : Node
 
     private void ShowBossResult()
     {
+        if (_resultShown) return;
+        _resultShown = true;
         foreach (Node enemy in GetTree().GetNodesInGroup("enemies")) enemy.QueueFree();
         foreach (Node projectile in GetTree().GetNodesInGroup("enemy_projectiles")) projectile.QueueFree();
-        ulong elapsedMsec = Time.GetTicksMsec() - _runStartedAtMsec;
-        RunResultSnapshot snapshot = new(CurrentRun.Seed, CurrentRun.SelectedProtocolIds, CurrentRun.RelayIntegrity, System.TimeSpan.FromMilliseconds(elapsedMsec));
-        _runResultScreen.ShowResult(snapshot);
+        RunResultSnapshot snapshot = CreateResultSnapshot();
+        SaveLastRun(snapshot, "victory");
+        _runResultScreen.ShowResult(snapshot, true);
         _eventLabel.Text = "路障指挥车已击败：查看本局结算";
+    }
+
+    private void ShowRunFailure()
+    {
+        if (_resultShown) return;
+        _resultShown = true;
+        foreach (Node enemy in GetTree().GetNodesInGroup("enemies")) enemy.QueueFree();
+        foreach (Node projectile in GetTree().GetNodesInGroup("enemy_projectiles")) projectile.QueueFree();
+        _rewardPanel.Hide();
+        RunResultSnapshot snapshot = CreateResultSnapshot();
+        SaveLastRun(snapshot, "failed");
+        _runResultScreen.ShowResult(snapshot, false);
+        _eventLabel.Text = "护送失败：可立即重试本局";
+    }
+
+    private RunResultSnapshot CreateResultSnapshot()
+    {
+        ulong elapsedMsec = Time.GetTicksMsec() - _runStartedAtMsec;
+        return new RunResultSnapshot(CurrentRun.Seed, CurrentRun.SelectedProtocolIds, CurrentRun.RelayIntegrity,
+            System.TimeSpan.FromMilliseconds(elapsedMsec));
+    }
+
+    private void SaveLastRun(RunResultSnapshot snapshot, string result)
+    {
+        _saveData.LastRun = new LastRunSummary
+        {
+            Seed = snapshot.Seed,
+            RelayIntegrity = snapshot.RelayIntegrity,
+            ElapsedSeconds = snapshot.Elapsed.TotalSeconds,
+            Result = result
+        };
+        _saveService.SaveAtomic(_saveData);
     }
 
     private static string BehaviorName(BehaviorId behavior) => behavior switch

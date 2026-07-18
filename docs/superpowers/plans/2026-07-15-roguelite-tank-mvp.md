@@ -36,9 +36,9 @@
 | 3 | 主炮、扫掠命中和钢墙反弹 | 高速炮弹不穿墙，反弹可预测 | 完成 |
 | 4 | 砖墙、中继站、装甲和战场重启 | 双生命线边界条件正确 | 功能验收完成、架构部分完成 |
 | 5 | 三类敌人、导航、波次和房间状态 | 一场守点战可以稳定完成 | 玩法验收完成、架构部分完成 |
-| 6 | 三选一协议和第二场战斗 | 至少两组联动明显改变操作 | 未开始 |
-| 7 | 路障指挥车 Boss | 两阶段战斗和胜利结算完整 | 未开始 |
-| 8 | 素材、音频、存档、性能和 MVP 验收 | 完整短局可反复游玩并保持 60 FPS | 部分提前完成：视觉、最小音效、HUD 和验收文档已由表现专项覆盖；存档、集成 runner、压力测试和完整短局未完成 |
+| 6 | 三选一协议和第二场战斗 | 至少两组联动明显改变操作 | 完成并验收 |
+| 7 | 路障指挥车 Boss | 两阶段战斗和胜利结算完整 | 完成并验收 |
+| 8 | 素材、音频、存档、性能和 MVP 验收 | 完整短局可反复游玩并保持 60 FPS | 2026-07-19 完成并验收；MVP 纵切封版 |
 
 ---
 
@@ -540,6 +540,10 @@ godot --headless --path game1 --scene res://tests/integration/mvp_test_runner.ts
 Expected: all commands exit 0, no new warnings, complete short run remains playable at target frame rate.
 
 Commit: `feat: complete roguelite tank MVP vertical slice`.
+
+### 2026-07-19 Task 8 实施状态
+
+原子存档、损坏回退、F8 调试面板、失焦/显式恢复暂停、MVP 集成 runner、压力基线、重启清弹与短暂无敌、成功/失败结算摘要均已实现并通过集中自检。素材、基础音效和 HUD 沿用此前已验收的混合表现成果，不重复替换。2026-07-19 用户已完成 Godot 可见验收，MVP 纵切正式封版；后续内容另立 Alpha 计划。
 
 ## Review Checkpoint After Every Task
 

@@ -9,6 +9,7 @@ public partial class RunResultScreen : Control
     [Signal] public delegate void ReturnRequestedEventHandler();
 
     private Label _summary = null!;
+    private Label _title = null!;
 
     public override void _Ready()
     {
@@ -18,9 +19,9 @@ public partial class RunResultScreen : Control
         AddChild(shade);
         VBoxContainer panel = new() { Position = new Vector2(118, 70), Size = new Vector2(245, 130) };
         shade.AddChild(panel);
-        Label title = new() { Text = "中继站守住了", HorizontalAlignment = HorizontalAlignment.Center };
-        title.AddThemeFontSizeOverride("font_size", 20);
-        panel.AddChild(title);
+        _title = new Label { Text = "中继站守住了", HorizontalAlignment = HorizontalAlignment.Center };
+        _title.AddThemeFontSizeOverride("font_size", 20);
+        panel.AddChild(_title);
         _summary = new Label { HorizontalAlignment = HorizontalAlignment.Center, AutowrapMode = TextServer.AutowrapMode.WordSmart };
         panel.AddChild(_summary);
         Button retry = new() { Text = "重试本局", TooltipText = "从第一间战斗房重新开始" };
@@ -32,8 +33,9 @@ public partial class RunResultScreen : Control
         Visible = false;
     }
 
-    public void ShowResult(RunResultSnapshot snapshot)
+    public void ShowResult(RunResultSnapshot snapshot, bool victory = true)
     {
+        _title.Text = victory ? "中继站守住了" : "本次护送失败";
         string protocols = snapshot.ProtocolIds.Count == 0 ? "无" : string.Join("、", snapshot.ProtocolIds);
         _summary.Text = $"种子：{snapshot.Seed}\n协议：{protocols}\n中继站：{snapshot.RelayIntegrity}/100\n耗时：{snapshot.Elapsed.Minutes:00}:{snapshot.Elapsed.Seconds:00}";
         Visible = true;
