@@ -44,7 +44,14 @@ public partial class TileTerrainAdapter : Node
             return false;
         }
 
-        _hitPointsByCell.Remove(cell);
+        return DestroyBrick(cell);
+    }
+
+    /// <summary>供 Boss 等受控事件一次性拆除指定砖墙；已不存在的格安全返回 false。</summary>
+    public bool DestroyBrick(Vector2I cell)
+    {
+        if (!_hitPointsByCell.Remove(cell)) return false;
+
         _blockedCells.Remove(cell);
         _destructibleLayer?.EraseCell(cell);
         BrickDestroyed?.Invoke(cell);

@@ -8,3 +8,5 @@ script = ExtResource("1_definition")
 Scene = ExtResource("2_scene")
 DisplayName = "路障指挥车"
 MaximumHealth = 300
+GridSize = Vector2i(20, 12)
+CellSize = 24

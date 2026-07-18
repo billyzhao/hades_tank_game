@@ -25,6 +25,10 @@ public partial class ProtocolRuntimeTestHost : Node
         {
             RunBossPhaseSuite();
         }
+        else if (arguments.SequenceEqual(new[] { "--suite", "boss_encounter" }))
+        {
+            RunBossEncounterSuite();
+        }
         else
         {
             Fail($"不支持的测试参数：{string.Join(' ', arguments)}。期望：--suite reward_catalog 或 --suite navigation_grid");
@@ -73,6 +77,8 @@ public partial class ProtocolRuntimeTestHost : Node
         failures += Run("navigation_grid_invalid_or_blocked_path_returns_empty", NavigationGridInvalidOrBlockedPathReturnsEmpty);
         failures += Run("room_definitions_load_two_valid_distinct_rooms", RoomDefinitionsLoadTwoValidDistinctRooms);
         failures += Run("tile_terrain_destroyed_brick_updates_blocked_cells_once", TileTerrainDestroyedBrickUpdatesBlockedCellsOnce);
+        failures += Run("tile_terrain_explicit_destroy_is_once_only", TileTerrainExplicitDestroyIsOnceOnly);
+        failures += Run("room_navigation_factory_refreshes_after_brick_destroyed", RoomNavigationFactoryRefreshesAfterBrickDestroyed);
 
         GD.Print($"[ProtocolRuntimeTestHost] suite=navigation_grid failures={failures}");
         GC.Collect();
@@ -90,6 +96,17 @@ public partial class ProtocolRuntimeTestHost : Node
         failures += Run("app_has_visible_boss_validation_entry", AppHasVisibleBossValidationEntry);
 
         GD.Print($"[ProtocolRuntimeTestHost] suite=boss_phase failures={failures}");
+        GetTree().Quit(failures == 0 ? 0 : 1);
+    }
+
+    private void RunBossEncounterSuite()
+    {
+        int failures = 0;
+        failures += Run("boss_room_contains_phase_one_encounter_controller", BossRoomContainsPhaseOneEncounterController);
+        failures += Run("barrier_deployment_rejects_objectives_and_occupied_cells", BarrierDeploymentRejectsObjectivesAndOccupiedCells);
+        failures += Run("barrier_deployment_writes_only_legal_runtime_cell", BarrierDeploymentWritesOnlyLegalRuntimeCell);
+
+        GD.Print($"[ProtocolRuntimeTestHost] suite=boss_encounter failures={failures}");
         GetTree().Quit(failures == 0 ? 0 : 1);
     }
 
@@ -410,6 +427,8 @@ public partial class ProtocolRuntimeTestHost : Node
 
         Assert(definition.DisplayName == "路障指挥车", "Boss 资源必须使用已确认名称。");
         Assert(definition.MaximumHealth == 300, "07A Boss 最大生命必须为 300。");
+        Assert(definition.GridSize == new Vector2I(20, 12) && definition.CellSize == 24,
+            "BossDefinition 必须数据化声明 Boss 房导航网格尺寸。");
 
         Node2D room = GD.Load<PackedScene>("res://scenes/rooms/mvp_boss_room.tscn").Instantiate<Node2D>();
         try
@@ -422,6 +441,73 @@ public partial class ProtocolRuntimeTestHost : Node
         finally
         {
             room.Free();
+        }
+    }
+
+    private static void BossRoomContainsPhaseOneEncounterController()
+    {
+        Node2D room = GD.Load<PackedScene>("res://scenes/rooms/mvp_boss_room.tscn").Instantiate<Node2D>();
+        try
+        {
+            BossEncounterController encounter = room.GetNodeOrNull<BossEncounterController>("BossEncounterController");
+            Assert(encounter is not null, "Boss 房必须包含完整战斗编排器。");
+            Assert(encounter.GetNodeOrNull<BarrierDeployment>("BarrierDeployment") is not null,
+                "第一阶段必须包含运行时路障部署器。");
+        }
+        finally
+        {
+            room.Free();
+        }
+    }
+
+    private static void BarrierDeploymentRejectsObjectivesAndOccupiedCells()
+    {
+        TileMapLayer structure = new();
+        Node2D player = new() { GlobalPosition = new Vector2(60, 60) };
+        Node2D relay = new() { GlobalPosition = new Vector2(108, 60) };
+        BarrierDeployment deployment = new();
+        try
+        {
+            structure.SetCell(new Vector2I(1, 1), 0, Vector2I.Zero);
+            deployment.Configure(structure, player, relay, 24);
+
+            Assert(!deployment.IsLegalCell(new Vector2I(2, 2)), "玩家所在格不得部署路障。");
+            Assert(!deployment.IsLegalCell(new Vector2I(4, 2)), "中继站所在格不得部署路障。");
+            Assert(!deployment.IsLegalCell(new Vector2I(1, 1)), "已有 Structure 墙体不得被运行时路障覆盖。");
+            Assert(deployment.IsLegalCell(new Vector2I(3, 1)), "远离目标且为空的格应可作为路障候选。");
+        }
+        finally
+        {
+            deployment.Free();
+            player.Free();
+            relay.Free();
+            structure.Free();
+        }
+    }
+
+    private static void BarrierDeploymentWritesOnlyLegalRuntimeCell()
+    {
+        TileMapLayer structure = new();
+        Node2D player = new() { GlobalPosition = new Vector2(60, 60) };
+        Node2D relay = new() { GlobalPosition = new Vector2(108, 60) };
+        BarrierDeployment deployment = new();
+        int navigationRefreshes = 0;
+        try
+        {
+            deployment.Configure(structure, player, relay, 24, () => navigationRefreshes++);
+            Assert(deployment.DeployNow(new Vector2I(3, 1)), "合法候选格必须写入运行时 Structure。");
+            Assert(structure.GetCellSourceId(new Vector2I(3, 1)) == 0, "运行时路障必须成为可碰撞的 TileMap 单元。");
+            Assert(navigationRefreshes == 1, "每次成功落墙必须请求共享导航刷新。");
+            Assert(!deployment.DeployNow(new Vector2I(2, 2)), "玩家所在格不得被写入路障。");
+            Assert(navigationRefreshes == 1, "非法路障不得触发导航刷新。");
+            Assert(structure.GetCellSourceId(new Vector2I(2, 2)) == -1, "非法候选格不得修改地图。");
+        }
+        finally
+        {
+            deployment.Free();
+            player.Free();
+            relay.Free();
+            structure.Free();
         }
     }
 
@@ -524,6 +610,54 @@ public partial class ProtocolRuntimeTestHost : Node
         {
             terrain.Free();
             layer.Free();
+        }
+    }
+
+    private static void TileTerrainExplicitDestroyIsOnceOnly()
+    {
+        TileTerrainAdapter terrain = new();
+        TileMapLayer layer = new();
+        try
+        {
+            terrain.Initialize(layer, new[] { new Vector2I(2, 1) }, hitPoints: 20);
+            int eventCount = 0;
+            terrain.BrickDestroyed += _ => eventCount++;
+
+            Assert(terrain.DestroyBrick(new Vector2I(2, 1)), "指定砖墙首次销毁必须成功。");
+            Assert(!terrain.DestroyBrick(new Vector2I(2, 1)), "已销毁砖墙不得再次触发销毁。");
+            Assert(eventCount == 1, "指定砖墙销毁事件必须只发送一次。");
+        }
+        finally
+        {
+            terrain.Free();
+            layer.Free();
+        }
+    }
+
+    private static void RoomNavigationFactoryRefreshesAfterBrickDestroyed()
+    {
+        Node2D room = new();
+        TileMapLayer structure = new() { Name = "Structure" };
+        TileMapLayer destructible = new() { Name = "Destructible" };
+        TileTerrainAdapter terrain = new() { Name = "TileTerrainAdapter" };
+        room.AddChild(structure);
+        room.AddChild(destructible);
+        room.AddChild(terrain);
+
+        try
+        {
+            terrain.Initialize(destructible, new[] { new Vector2I(2, 0), new Vector2I(2, 1), new Vector2I(2, 2) }, 1);
+            using RoomNavigationFactory navigation = new(room, new Vector2I(5, 3), 16);
+
+            Assert(navigation.Provider.GetWorldPath(new Vector2(8, 24), new Vector2(72, 24)).Count == 0,
+                "完整砖墙必须阻挡工厂创建的共享路径提供器。");
+            terrain.DestroyBrick(new Vector2I(2, 1));
+            Assert(navigation.Provider.GetWorldPath(new Vector2(8, 24), new Vector2(72, 24)).Count > 0,
+                "砖墙销毁后同一个共享路径提供器必须立刻给出新路径。");
+        }
+        finally
+        {
+            room.Free();
         }
     }
 

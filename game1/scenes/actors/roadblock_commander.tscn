@@ -9,6 +9,9 @@ size = Vector2(38, 28)
 collision_layer = 8
 collision_mask = 3
 script = ExtResource("1_boss")
+PhaseOneAnchors = [Vector2(382, 88), Vector2(330, 88), Vector2(382, 136)]
+PhaseOneMoveSpeed = 30.0
+FanCooldownSeconds = 2.6
 
 [node name="Visual" type="Polygon2D" parent="."]
 polygon = PackedVector2Array(-19, -12, 11, -12, 19, -4, 19, 4, 11, 12, -19, 12, -23, 0)

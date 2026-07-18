@@ -23,6 +23,7 @@ public partial class Projectile : Node2D
         _bounces = spec.Bounces;
         _splits = spec.SplitCount;
         _team = team;
+        if (team == Team.Enemy) AddToGroup("enemy_projectiles");
         Modulate = team == Team.Player ? new Color(1f, 0.82f, 0.2f) : new Color(1f, 0.3f, 0.25f);
     }
 

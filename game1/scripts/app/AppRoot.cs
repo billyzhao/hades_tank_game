@@ -30,12 +30,16 @@ public partial class AppRoot : Node
     private RunController _runController = null!;
     private RewardPanel _rewardPanel = null!;
     private BossHudController _bossHud = null!;
+    private RunResultScreen _runResultScreen = null!;
     private EnemyDirector _director = null!;
+    private RoomNavigationFactory _navigationFactory;
     private bool _wavesStarted;
+    private ulong _runStartedAtMsec;
 
     public override void _Ready()
     {
         CurrentRun = RunState.CreateNew(System.Environment.TickCount);
+        _runStartedAtMsec = Time.GetTicksMsec();
         ProtocolCatalog.Validate();
         _buildController = new BuildController(CurrentRun, ProtocolCatalog);
         _runController = new RunController(CurrentRun, _buildController, new RewardGenerator());
@@ -67,6 +71,10 @@ public partial class AppRoot : Node
         _rewardPanel.ProtocolChosen += protocolId => _runController.ChooseProtocol(protocolId);
         _bossHud = new BossHudController { Visible = false };
         GetNode<CanvasLayer>("UI").AddChild(_bossHud);
+        _runResultScreen = new RunResultScreen();
+        GetNode<CanvasLayer>("UI").AddChild(_runResultScreen);
+        _runResultScreen.RetryRequested += () => GetTree().ReloadCurrentScene();
+        _runResultScreen.ReturnRequested += () => GetTree().ReloadCurrentScene();
         GetNode<Button>("UI/BossValidationButton").Pressed += EnterBossValidationRoom;
         _runController.PhaseChanged += phase =>
         {
@@ -81,7 +89,7 @@ public partial class AppRoot : Node
         reboot.Rebooted += () => _eventLabel.Text = "重启成功：已在中继站旁恢复 50 装甲";
         reboot.RunFailed += () => _eventLabel.Text = "本局失败：没有剩余战场重启次数";
         EnemyDirector director = room.GetNode<EnemyDirector>("EnemyDirector");
-        director.Configure(firstRoom, CreatePathProvider(room, firstRoom));
+        director.Configure(firstRoom, ReplaceNavigationFactory(room, firstRoom));
         _director = director;
         director.AllWavesFinished += () => _runController.OnCombatCleared();
         director.EnemyCountChanged += count => _enemyLabel.Text = $"敌军  {count}";
@@ -161,6 +169,7 @@ public partial class AppRoot : Node
     private void RestartCombatRoom()
     {
         _bossHud.Unbind();
+        DisposeNavigationFactory();
         Node roomHost = GetNode<Node>("RoomHost");
         foreach (Node child in roomHost.GetChildren()) child.QueueFree();
         RoomDefinition definition = RoomDefinitions[CurrentRun.RoomIndex % RoomDefinitions.Length];
@@ -177,7 +186,7 @@ public partial class AppRoot : Node
         player.GetNode<WeaponController>("WeaponController").AttachBuild(_buildController);
         player.GetNode<DashComponent>("DashComponent").AttachBuild(_buildController);
         _director = room.GetNode<EnemyDirector>("EnemyDirector");
-        _director.Configure(definition, CreatePathProvider(room, definition));
+        _director.Configure(definition, ReplaceNavigationFactory(room, definition));
         _director.EnemyCountChanged += count => _enemyLabel.Text = $"敌军  {count}";
         _director.AllWavesFinished += () => _runController.OnCombatCleared();
         _wavesStarted = false;
@@ -188,6 +197,7 @@ public partial class AppRoot : Node
     private void EnterBossValidationRoom()
     {
         _bossHud.Unbind();
+        DisposeNavigationFactory();
         _rewardPanel.Hide();
         _wavesStarted = true;
         Node roomHost = GetNode<Node>("RoomHost");
@@ -206,12 +216,25 @@ public partial class AppRoot : Node
 
         RoadblockCommander boss = room.GetNode<RoadblockCommander>("RoadblockCommander");
         boss.Initialize(RoadblockCommanderDefinition);
+        _navigationFactory = new RoomNavigationFactory(room, RoadblockCommanderDefinition.GridSize, RoadblockCommanderDefinition.CellSize);
+        room.GetNode<BossEncounterController>("BossEncounterController")
+            .Initialize(boss, room, _navigationFactory, RoadblockCommanderDefinition.CellSize);
         _bossHud.Bind(boss, RoadblockCommanderDefinition);
-        boss.Defeated += () => _eventLabel.Text = "路障指挥车已击败（07B 将接入结算）";
+        boss.Defeated += ShowBossResult;
         _eventLabel.Text = "Boss 验收：将路障指挥车打至 50% 观察阶段变化";
         _roomLabel.Text = "房间  Boss 验收";
         _waveLabel.Text = "阶段  1/2";
         UpdateHud();
+    }
+
+    private void ShowBossResult()
+    {
+        foreach (Node enemy in GetTree().GetNodesInGroup("enemies")) enemy.QueueFree();
+        foreach (Node projectile in GetTree().GetNodesInGroup("enemy_projectiles")) projectile.QueueFree();
+        ulong elapsedMsec = Time.GetTicksMsec() - _runStartedAtMsec;
+        RunResultSnapshot snapshot = new(CurrentRun.Seed, CurrentRun.SelectedProtocolIds, CurrentRun.RelayIntegrity, System.TimeSpan.FromMilliseconds(elapsedMsec));
+        _runResultScreen.ShowResult(snapshot);
+        _eventLabel.Text = "路障指挥车已击败：查看本局结算";
     }
 
     private static string BehaviorName(BehaviorId behavior) => behavior switch
@@ -222,32 +245,18 @@ public partial class AppRoot : Node
         _ => "未知单位"
     };
 
-    private static IEnemyPathProvider CreatePathProvider(Node2D room, RoomDefinition definition)
+    private IEnemyPathProvider ReplaceNavigationFactory(Node2D room, RoomDefinition definition)
     {
-        NavigationGrid grid = new(definition.GridSize);
-        TileTerrainAdapter terrain = room.GetNodeOrNull<TileTerrainAdapter>("TileTerrainAdapter");
-        void RebuildNavigation()
-        {
-            HashSet<Vector2I> blockedCells = new();
-            TileMapLayer structure = room.GetNodeOrNull<TileMapLayer>("Structure");
-            if (structure is not null)
-            {
-                foreach (Vector2I cell in structure.GetUsedCells()) blockedCells.Add(cell);
-            }
-
-            if (terrain is not null)
-            {
-                foreach (Vector2I cell in terrain.BlockedNavigationCells) blockedCells.Add(cell);
-            }
-
-            grid.Rebuild(blockedCells);
-        }
-
-        RebuildNavigation();
-        if (terrain is not null)
-        {
-            terrain.BrickDestroyed += _ => RebuildNavigation();
-        }
-        return new RoomPathProvider(grid, definition.CellSize);
+        DisposeNavigationFactory();
+        _navigationFactory = new RoomNavigationFactory(room, definition.GridSize, definition.CellSize);
+        return _navigationFactory.Provider;
     }
+
+    private void DisposeNavigationFactory()
+    {
+        _navigationFactory?.Dispose();
+        _navigationFactory = null;
+    }
+
+    public override void _ExitTree() => DisposeNavigationFactory();
 }
