@@ -1,0 +1,21 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/ProtocolDefinition.cs" id="1"]
+[ext_resource type="Script" path="res://scripts/content/ProtocolEffectDefinition.cs" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+EffectId = "arsenal_ricochet_effect"
+Stat = 6
+FlatAdd = 1.0
+
+[resource]
+script = ExtResource("1")
+Id = "arsenal_ricochet"
+DisplayName = "跳弹增幅"
+Description = "炮弹额外反弹一次。"
+Department = 0
+Rarity = 1
+BaseWeight = 1.0
+StackLimit = 1
+Effects = [SubResource("Effect")]

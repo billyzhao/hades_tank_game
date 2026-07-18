@@ -90,6 +90,18 @@ theme_override_constants/outline_size = 2
 theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.025, 1)
 theme_override_font_sizes/font_size = 8
 
+[node name="BuildLabel" type="Label" parent="UI"]
+offset_left = 12.0
+offset_top = 72.0
+offset_right = 468.0
+offset_bottom = 102.0
+text = "构筑：暂无协议"
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.88, 1, 1)
+theme_override_constants/outline_size = 2
+theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.025, 1)
+theme_override_font_sizes/font_size = 8
+
 [node name="StatusLabel" type="Label" parent="UI"]
 offset_left = 12.0
 offset_top = 250.0

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" load_steps=4 format=3]
+[ext_resource type="Script" path="res://scripts/content/ProtocolDefinition.cs" id="1"]
+[ext_resource type="Script" path="res://scripts/content/ProtocolEffectDefinition.cs" id="2"]
+[sub_resource type="Resource" id="E"]
+script = ExtResource("2")
+EffectId = "arsenal_heavy_effect"
+Stat = 0
+FlatAdd = 4.0
+[sub_resource type="Resource" id="CooldownPenalty"]
+script = ExtResource("2")
+EffectId = "arsenal_heavy_cooldown_penalty"
+Stat = 1
+AdditivePercent = 0.25
+[resource]
+script = ExtResource("1")
+Id = "arsenal_heavy"
+DisplayName = "重炮弹"
+Description = "火力提升，射速降低。"
+Department = 0
+Rarity = 2
+BaseWeight = 0.6
+StackLimit = 1
+Effects = [SubResource("E"), SubResource("CooldownPenalty")]

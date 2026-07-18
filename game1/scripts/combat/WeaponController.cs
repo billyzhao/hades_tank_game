@@ -9,6 +9,13 @@ public partial class WeaponController : Node
     [Signal] public delegate void ProjectileImpactedEventHandler(Vector2 position, bool destroyedTarget, bool reflected);
     [Export] public WeaponDefinition Definition { get; set; } = new();
     private float _cooldown;
+    private BuildController _buildController;
+
+    /// <summary>由房间编排器在本局开始时注入；武器不读取协议 Id，只读取统一数值快照。</summary>
+    public void AttachBuild(BuildController buildController)
+    {
+        _buildController = buildController ?? throw new System.ArgumentNullException(nameof(buildController));
+    }
 
     public override void _PhysicsProcess(double delta) => _cooldown = Mathf.Max(0f, _cooldown - (float)delta);
     public bool TryFire(Vector2 origin, Vector2 direction, Team team)
@@ -19,11 +26,21 @@ public partial class WeaponController : Node
         // 炮弹加入当前主场景，而非挂在坦克下：坦克移动或销毁时不会拖拽、误删已发射炮弹。
         GetTree().CurrentScene.AddChild(projectile);
         projectile.GlobalPosition = origin;
-        projectile.Initialize(Definition.CreateSpec(), team, direction);
+        int damage = Mathf.RoundToInt(EvaluateStat(StatId.Damage, Definition.Damage));
+        int bounces = Mathf.Max(0, Mathf.RoundToInt(EvaluateStat(StatId.ProjectileBounces, Definition.Bounces)));
+        int splits = Mathf.Max(0, Mathf.RoundToInt(EvaluateStat(StatId.ProjectileSplitCount, 0f)));
+        projectile.Initialize(new ProjectileSpec(damage, Definition.ProjectileSpeed, Definition.LifetimeSeconds, bounces, splits), team, direction);
         projectile.Impacted += (position, destroyedTarget, reflected) =>
+        {
+            _buildController?.OnProjectileHit();
             EmitSignal(SignalName.ProjectileImpacted, position, destroyedTarget, reflected);
-        _cooldown = Definition.CooldownSeconds;
+        };
+        _cooldown = EvaluateStat(StatId.FireCooldown, Definition.CooldownSeconds);
+        _buildController?.OnShotFired();
         EmitSignal(SignalName.Fired, origin, direction, (int)team);
         return true;
     }
+
+    private float EvaluateStat(StatId stat, float baseValue) =>
+        _buildController is null ? baseValue : _buildController.EvaluateStat(stat, baseValue);
 }

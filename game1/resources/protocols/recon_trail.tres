@@ -1,0 +1,18 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+[ext_resource type="Script" path="res://scripts/content/ProtocolDefinition.cs" id="1"]
+[ext_resource type="Script" path="res://scripts/content/ProtocolEffectDefinition.cs" id="2"]
+[sub_resource type="Resource" id="E"]
+script = ExtResource("2")
+EffectId = "recon_trail_effect"
+Stat = 8
+FlatAdd = 15.0
+[resource]
+script = ExtResource("1")
+Id = "recon_trail"
+DisplayName = "电能冲刺履带"
+Description = "冲刺起点留下电能履带，对敌造成伤害。"
+Department = 1
+Rarity = 1
+BaseWeight = 1.0
+StackLimit = 1
+Effects = [SubResource("E")]

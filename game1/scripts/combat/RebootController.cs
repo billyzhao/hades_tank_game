@@ -10,14 +10,14 @@ public partial class RebootController : Node
     private PlayerTank _player = null!;
     private HealthComponent _health = null!;
     private RelayStation _relay = null!;
-    private RunState _run = null!;
+    private AppRoot _appRoot = null!;
 
     public override void _Ready()
     {
         _player = GetParent().GetNode<PlayerTank>("PlayerTank");
         _health = _player.GetNode<HealthComponent>("HealthComponent");
         _relay = GetParent().GetNode<RelayStation>("RelayStation");
-        _run = GetTree().CurrentScene.GetNode<AppRoot>(".").CurrentRun;
+        _appRoot = GetTree().CurrentScene.GetNode<AppRoot>(".");
         _health.Depleted += OnPlayerDepleted;
     }
 
@@ -25,7 +25,7 @@ public partial class RebootController : Node
     {
         _player.SetPhysicsProcess(false);
         _player.GetNode<CollisionShape2D>("BodyCollision").SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
-        if (!_run.TryConsumeReboot())
+        if (!_appRoot.TryHandleTankDefeat())
         {
             GD.PrintErr("本局失败：坦克报废且没有剩余战场重启次数。");
             EmitSignal(SignalName.RunFailed);

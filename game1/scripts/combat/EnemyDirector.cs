@@ -34,8 +34,9 @@ public partial class EnemyDirector : Node
     public int CurrentWave => _waveIndex + 1;
     public int TotalWaves => _waves?.Count ?? 3;
 
-    public override void _Ready()
+    public void StartWaves()
     {
+        if (_waves is not null) return;
         _waves = ThreatWavePlan.CreateMvp();
         StartNextWave();
     }
@@ -57,7 +58,7 @@ public partial class EnemyDirector : Node
 
     private async void SpawnNextInCurrentWave()
     {
-        if (_finished || _spawnIndex >= _waves[_waveIndex].Count)
+        if (_waves is null || _finished || _spawnIndex >= _waves[_waveIndex].Count)
         {
             return;
         }

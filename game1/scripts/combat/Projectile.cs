@@ -4,12 +4,15 @@ namespace Game1;
 
 public partial class Projectile : Node2D
 {
+    private static readonly PackedScene ProjectileScene = GD.Load<PackedScene>("res://scenes/combat/projectile.tscn");
     [Signal] public delegate void ImpactedEventHandler(Vector2 position, bool destroyedTarget, bool reflected);
     [Export] public uint CollisionMask { get; set; } = 27;
     private ProjectileSpec _spec;
     private Vector2 _direction;
     private float _lifetime;
     private int _bounces;
+    private int _splits;
+    private Team _team;
 
     public void Initialize(ProjectileSpec spec, Team team, Vector2 direction)
     {
@@ -18,6 +21,8 @@ public partial class Projectile : Node2D
         Rotation = _direction.Angle();
         _lifetime = spec.LifetimeSeconds;
         _bounces = spec.Bounces;
+        _splits = spec.SplitCount;
+        _team = team;
         Modulate = team == Team.Player ? new Color(1f, 0.82f, 0.2f) : new Color(1f, 0.3f, 0.25f);
     }
 
@@ -39,6 +44,7 @@ public partial class Projectile : Node2D
             if (hit["collider"].AsGodotObject() is IDamageable damageable)
             {
                 DamageResult result = damageable.ApplyDamage(new DamageContext(_spec.Damage));
+                SpawnSplitShells(point);
                 EmitSignal(SignalName.Impacted, point, result.DepletedNow, false);
                 QueueFree();
                 return;
@@ -53,5 +59,26 @@ public partial class Projectile : Node2D
             _direction = ProjectileMath.Reflect(_direction, normal);
             Rotation = _direction.Angle();
         }
+    }
+
+    /// <summary>分裂效果由数据化 SplitCount 驱动，只在母弹第一次命中时生成两枚无递归子弹。</summary>
+    private void SpawnSplitShells(Vector2 point)
+    {
+        if (_splits <= 0) return;
+
+        int childDamage = Mathf.Max(1, Mathf.RoundToInt(_spec.Damage * 0.65f));
+        for (int index = 0; index < _splits; index++)
+        {
+            foreach (float angleOffset in new[] { -0.45f, 0.45f })
+            {
+                Projectile child = ProjectileScene.Instantiate<Projectile>();
+                GetTree().CurrentScene.AddChild(child);
+                Vector2 childDirection = _direction.Rotated(angleOffset);
+                child.GlobalPosition = point + childDirection * 3f;
+                child.Initialize(new ProjectileSpec(childDamage, _spec.Speed, _spec.LifetimeSeconds * 0.6f, 0, 0), _team, childDirection);
+            }
+        }
+
+        _splits = 0;
     }
 }
