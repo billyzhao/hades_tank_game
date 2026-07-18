@@ -13,12 +13,22 @@ public partial class ProtocolRuntimeTestHost : Node
     public override void _Ready()
     {
         string[] arguments = OS.GetCmdlineUserArgs();
-        if (!arguments.SequenceEqual(new[] { "--suite", "reward_catalog" }))
+        if (arguments.SequenceEqual(new[] { "--suite", "reward_catalog" }))
         {
-            Fail($"不支持的测试参数：{string.Join(' ', arguments)}。期望：--suite reward_catalog");
-            return;
+            RunRewardCatalogSuite();
         }
+        else if (arguments.SequenceEqual(new[] { "--suite", "navigation_grid" }))
+        {
+            RunNavigationGridSuite();
+        }
+        else
+        {
+            Fail($"不支持的测试参数：{string.Join(' ', arguments)}。期望：--suite reward_catalog 或 --suite navigation_grid");
+        }
+    }
 
+    private void RunRewardCatalogSuite()
+    {
         int failures = 0;
         failures += Run("catalog_validate_valid_resource", CatalogValidateValidResource);
         failures += Run("catalog_validate_confirmed_department_counts", CatalogValidateConfirmedDepartmentCounts);
@@ -46,6 +56,21 @@ public partial class ProtocolRuntimeTestHost : Node
         failures += Run("run_choice_advances_one_room_only_once", RunChoiceAdvancesOneRoomOnlyOnce);
 
         GD.Print($"[ProtocolRuntimeTestHost] suite=reward_catalog failures={failures}");
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+        GetTree().Quit(failures == 0 ? 0 : 1);
+    }
+
+    private void RunNavigationGridSuite()
+    {
+        int failures = 0;
+        failures += Run("navigation_grid_removed_brick_opens_path", NavigationGridRemovedBrickOpensPath);
+        failures += Run("navigation_grid_invalid_or_blocked_path_returns_empty", NavigationGridInvalidOrBlockedPathReturnsEmpty);
+        failures += Run("room_definitions_load_two_valid_distinct_rooms", RoomDefinitionsLoadTwoValidDistinctRooms);
+        failures += Run("tile_terrain_destroyed_brick_updates_blocked_cells_once", TileTerrainDestroyedBrickUpdatesBlockedCellsOnce);
+
+        GD.Print($"[ProtocolRuntimeTestHost] suite=navigation_grid failures={failures}");
         GC.Collect();
         GC.WaitForPendingFinalizers();
         GC.Collect();
@@ -331,6 +356,79 @@ public partial class ProtocolRuntimeTestHost : Node
 
         Assert(run.Phase == RoomPhase.Exiting, "选择协议后必须进入 Exiting。");
         Assert(state.RoomIndex == 1, "重复选择不得额外推进房间。");
+    }
+
+    private static void NavigationGridRemovedBrickOpensPath()
+    {
+        NavigationGrid grid = new(new Vector2I(5, 3));
+        grid.Rebuild(new System.Collections.Generic.HashSet<Vector2I> { new(2, 0), new(2, 1), new(2, 2) });
+        Assert(grid.FindPath(new Vector2I(0, 1), new Vector2I(4, 1)).Count == 0, "完整砖墙必须阻断路径。");
+
+        grid.Rebuild(new System.Collections.Generic.HashSet<Vector2I> { new(2, 0), new(2, 2) });
+        Assert(grid.FindPath(new Vector2I(0, 1), new Vector2I(4, 1)).Count > 0, "移除关键砖块后下一次查询必须得到路径。");
+    }
+
+    private static void NavigationGridInvalidOrBlockedPathReturnsEmpty()
+    {
+        NavigationGrid grid = new(new Vector2I(3, 3));
+        grid.Rebuild(new System.Collections.Generic.HashSet<Vector2I> { new(1, 0), new(1, 1), new(1, 2) });
+
+        Assert(grid.FindPath(new Vector2I(-1, 0), new Vector2I(2, 0)).Count == 0, "越界起点必须安全返回空路径。");
+        Assert(grid.FindPath(new Vector2I(0, 1), new Vector2I(2, 1)).Count == 0, "无可达路径必须安全返回空路径。");
+    }
+
+    private static void RoomDefinitionsLoadTwoValidDistinctRooms()
+    {
+        RoomDefinition first = GD.Load<RoomDefinition>("res://resources/rooms/mvp_combat_room.tres");
+        RoomDefinition second = GD.Load<RoomDefinition>("res://resources/rooms/industrial_flank_room.tres");
+        first.Validate();
+        second.Validate();
+
+        Assert(first.Scene.ResourcePath != second.Scene.ResourcePath, "两个房间定义必须指向不同场景。");
+        Assert(first.Waves.Count > 0 && second.Waves.Count > 0, "两个房间必须拥有非空波次定义。");
+        Assert(first.EnemySpawnPoints.Count > 0 && second.EnemySpawnPoints.Count > 0, "两个房间必须各自声明敌军出生点。");
+        Assert(!first.EnemySpawnPoints.SequenceEqual(second.EnemySpawnPoints), "工业侧翼房必须使用不同的敌军出生边配置。");
+
+        AssertRoomHasTerrainLayers(first, "首战房");
+        AssertRoomHasTerrainLayers(second, "工业侧翼房");
+    }
+
+    private static void AssertRoomHasTerrainLayers(RoomDefinition definition, string roomName)
+    {
+        Node2D room = definition.Scene.Instantiate<Node2D>();
+        try
+        {
+            Assert(room.GetNodeOrNull<TileMapLayer>("Ground") is not null, $"{roomName}必须有 Ground TileMapLayer。");
+            Assert(room.GetNodeOrNull<TileMapLayer>("Structure") is not null, $"{roomName}必须有 Structure TileMapLayer。");
+            Assert(room.GetNodeOrNull<TileMapLayer>("Destructible") is not null, $"{roomName}必须有 Destructible TileMapLayer。");
+        }
+        finally
+        {
+            room.Free();
+        }
+    }
+
+    private static void TileTerrainDestroyedBrickUpdatesBlockedCellsOnce()
+    {
+        TileTerrainAdapter terrain = new();
+        TileMapLayer layer = new();
+        try
+        {
+            terrain.Initialize(layer, new[] { new Vector2I(1, 1) }, hitPoints: 2);
+            int eventCount = 0;
+            terrain.BrickDestroyed += _ => eventCount++;
+
+            terrain.DamageBrick(new Vector2I(1, 1), 2);
+            terrain.DamageBrick(new Vector2I(1, 1), 2);
+
+            Assert(!terrain.BlockedNavigationCells.Contains(new Vector2I(1, 1)), "砖块耐久归零后必须从阻塞格集合移除。");
+            Assert(eventCount == 1, "同一砖块的破坏事件只能发送一次。");
+        }
+        finally
+        {
+            terrain.Free();
+            layer.Free();
+        }
     }
 
     private static ContentCatalog CreateCatalog()

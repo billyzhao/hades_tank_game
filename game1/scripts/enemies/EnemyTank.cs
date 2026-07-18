@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 
 namespace Game1;
 
@@ -18,6 +19,12 @@ public partial class EnemyTank : CharacterBody2D, IDamageable
     private Line2D _attackWarning = null!;
     private float _baseVisualScale;
     private float _motionClock;
+    private IEnemyPathProvider _pathProvider;
+    private IReadOnlyList<Vector2> _path = System.Array.Empty<Vector2>();
+    private int _pathIndex;
+    private float _repathRemaining;
+
+    public void SetPathProvider(IEnemyPathProvider pathProvider) => _pathProvider = pathProvider;
 
     public override void _Ready()
     {
@@ -80,7 +87,21 @@ public partial class EnemyTank : CharacterBody2D, IDamageable
             return;
         }
         _attackWarning.Visible = false;
-        Vector2 nextPoint = DefenseRoutePlanner.GetNextPoint(GlobalPosition, targetNode.GlobalPosition);
+        _repathRemaining -= (float)delta;
+        if (_pathProvider is not null && _repathRemaining <= 0f)
+        {
+            _path = _pathProvider.GetWorldPath(GlobalPosition, targetNode.GlobalPosition);
+            _pathIndex = _path.Count > 1 ? 1 : 0;
+            _repathRemaining = 0.25f;
+        }
+        if (_pathProvider is not null && _path.Count == 0)
+        {
+            Velocity = Vector2.Zero;
+            ApplyMovementPose((float)delta, false);
+            return;
+        }
+        while (_pathProvider is not null && _pathIndex < _path.Count - 1 && GlobalPosition.DistanceTo(_path[_pathIndex]) < 10f) _pathIndex++;
+        Vector2 nextPoint = _pathProvider is null ? targetNode.GlobalPosition : _path[_pathIndex];
         Velocity = GlobalPosition.DirectionTo(nextPoint) * MoveSpeed;
         if (!Velocity.IsZeroApprox()) Rotation = Velocity.Angle();
         MoveAndSlide();

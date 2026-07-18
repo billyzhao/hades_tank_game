@@ -1,0 +1,25 @@
+[gd_resource type="Resource" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/RoomDefinition.cs" id="1_room"]
+[ext_resource type="PackedScene" path="res://scenes/rooms/mvp_combat_room.tscn" id="2_scene"]
+[ext_resource type="Script" path="res://scripts/content/RoomWaveDefinition.cs" id="3_wave"]
+
+[sub_resource type="Resource" id="Wave1"]
+script = ExtResource("3_wave")
+Behaviors = [0, 0]
+
+[sub_resource type="Resource" id="Wave2"]
+script = ExtResource("3_wave")
+Behaviors = [1, 0]
+
+[sub_resource type="Resource" id="Wave3"]
+script = ExtResource("3_wave")
+Behaviors = [2]
+
+[resource]
+script = ExtResource("1_room")
+Scene = ExtResource("2_scene")
+GridSize = Vector2i(20, 12)
+CellSize = 24
+EnemySpawnPoints = [Vector2(438, 42), Vector2(438, 228), Vector2(390, 42), Vector2(390, 228)]
+Waves = [SubResource("Wave1"), SubResource("Wave2"), SubResource("Wave3")]

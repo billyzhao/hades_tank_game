@@ -11,6 +11,9 @@
 [ext_resource type="Script" path="res://scripts/presentation/CameraShakeController.cs" id="9_camera_shake"]
 [ext_resource type="Script" path="res://scripts/presentation/VisualFeedbackController.cs" id="10_visual_feedback"]
 [ext_resource type="Script" path="res://scripts/presentation/AudioFeedbackController.cs" id="11_audio_feedback"]
+[ext_resource type="TileSet" path="res://resources/tiles/industrial_tileset.tres" id="12_tileset"]
+[ext_resource type="Script" path="res://scripts/terrain/TileTerrainAdapter.cs" id="13_terrain"]
+[ext_resource type="Script" path="res://scripts/terrain/TileLayerPainter.cs" id="14_painter"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_top_bottom"]
 size = Vector2(480, 12)
@@ -39,34 +42,34 @@ texture_filter = 1
 centered = false
 z_index = -10
 
+[node name="Ground" type="TileMapLayer" parent="."]
+tile_set = ExtResource("12_tileset")
+
+[node name="GroundPainter" type="Node" parent="Ground"]
+script = ExtResource("14_painter")
+Cells = Array[Vector2i]([Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1), Vector2i(4, 1), Vector2i(5, 1), Vector2i(6, 1), Vector2i(7, 1), Vector2i(8, 1), Vector2i(9, 1), Vector2i(10, 1), Vector2i(11, 1), Vector2i(12, 1), Vector2i(13, 1), Vector2i(14, 1), Vector2i(15, 1), Vector2i(16, 1), Vector2i(17, 1), Vector2i(18, 1)])
+
+[node name="Structure" type="TileMapLayer" parent="."]
+tile_set = ExtResource("12_tileset")
+
+[node name="StructurePainter" type="Node" parent="Structure"]
+script = ExtResource("14_painter")
+Cells = Array[Vector2i]([Vector2i(15, 3), Vector2i(15, 4), Vector2i(15, 5), Vector2i(15, 6), Vector2i(15, 7)])
+
+[node name="Destructible" type="TileMapLayer" parent="."]
+tile_set = ExtResource("12_tileset")
+
+[node name="TileTerrainAdapter" type="Node" parent="."]
+script = ExtResource("13_terrain")
+InitialBrickCells = Array[Vector2i]([Vector2i(7, 4), Vector2i(7, 5), Vector2i(7, 6)])
+BrickHitPoints = 20
+
 [node name="BoundaryVisual" type="Line2D" parent="."]
 points = PackedVector2Array(6, 6, 474, 6, 474, 264, 6, 264, 6, 6)
 width = 3.0
 default_color = Color(0.407843, 0.529412, 0.611765, 1)
 
 [node name="Walls" type="Node2D" parent="."]
-
-[node name="BrickWall" type="StaticBody2D" parent="Walls"]
-position = Vector2(180, 135)
-collision_layer = 2
-collision_mask = 0
-script = ExtResource("2_brick")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/BrickWall"]
-shape = SubResource("RectangleShape2D_brick")
-
-[node name="Visual" type="Polygon2D" parent="Walls/BrickWall"]
-polygon = PackedVector2Array(-12, -32, 12, -32, 12, 32, -12, 32)
-color = Color(0.56, 0.20, 0.12, 1)
-
-[node name="MortarLines" type="Line2D" parent="Walls/BrickWall"]
-points = PackedVector2Array(-11, -18, 11, -18, -11, -2, 11, -2, -11, 14, 11, 14)
-width = 2.0
-default_color = Color(0.92, 0.48, 0.20, 0.9)
-
-[node name="DamageMark" type="Polygon2D" parent="Walls/BrickWall"]
-polygon = PackedVector2Array(-5, -31, 2, -31, -2, -22, 6, -22, 1, -13, -6, -13)
-color = Color(0.22, 0.10, 0.07, 0.9)
 
 [node name="RelayStation" type="StaticBody2D" parent="." groups=["relay"]]
 position = Vector2(80, 135)
@@ -86,27 +89,6 @@ texture = ExtResource("8_relay_sprite")
 texture_filter = 1
 scale = Vector2(0.62, 0.62)
 z_index = 1
-
-[node name="SteelWall" type="StaticBody2D" parent="Walls"]
-position = Vector2(360, 135)
-collision_layer = 1
-collision_mask = 0
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/SteelWall"]
-shape = SubResource("RectangleShape2D_steel")
-
-[node name="Visual" type="Polygon2D" parent="Walls/SteelWall"]
-polygon = PackedVector2Array(-12, -50, 12, -50, 12, 50, -12, 50)
-color = Color(0.20, 0.30, 0.38, 1)
-
-[node name="HazardStripes" type="Polygon2D" parent="Walls/SteelWall"]
-polygon = PackedVector2Array(-10, -40, -2, -46, 10, -34, 10, -24, 2, -18, -10, -30)
-color = Color(0.95, 0.67, 0.15, 0.85)
-
-[node name="RivetLines" type="Line2D" parent="Walls/SteelWall"]
-points = PackedVector2Array(-8, -10, 8, -10, -8, 12, 8, 12, -8, 34, 8, 34)
-width = 2.0
-default_color = Color(0.52, 0.73, 0.78, 0.75)
 
 [node name="Top" type="StaticBody2D" parent="Walls"]
 position = Vector2(240, 6)

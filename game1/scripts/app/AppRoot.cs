@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
@@ -5,7 +6,11 @@ namespace Game1;
 
 public partial class AppRoot : Node
 {
-    private static readonly PackedScene MvpCombatRoomScene = GD.Load<PackedScene>("res://scenes/rooms/mvp_combat_room.tscn");
+    private static readonly RoomDefinition[] RoomDefinitions =
+    [
+        GD.Load<RoomDefinition>("res://resources/rooms/mvp_combat_room.tres"),
+        GD.Load<RoomDefinition>("res://resources/rooms/industrial_flank_room.tres")
+    ];
     private static readonly ContentCatalog ProtocolCatalog = GD.Load<ContentCatalog>("res://resources/content_catalog.tres");
 
     public RunState CurrentRun { get; private set; } = null!;
@@ -32,7 +37,9 @@ public partial class AppRoot : Node
         _buildController = new BuildController(CurrentRun, ProtocolCatalog);
         _runController = new RunController(CurrentRun, _buildController, new RewardGenerator());
         Node roomHost = GetNode<Node>("RoomHost");
-        Node2D room = MvpCombatRoomScene.Instantiate<Node2D>();
+        RoomDefinition firstRoom = RoomDefinitions[0];
+        firstRoom.Validate();
+        Node2D room = firstRoom.Scene.Instantiate<Node2D>();
         roomHost.AddChild(room);
         _relay = room.GetNode<RelayStation>("RelayStation");
         _relay.Initialize(CurrentRun);
@@ -68,6 +75,7 @@ public partial class AppRoot : Node
         reboot.Rebooted += () => _eventLabel.Text = "重启成功：已在中继站旁恢复 50 装甲";
         reboot.RunFailed += () => _eventLabel.Text = "本局失败：没有剩余战场重启次数";
         EnemyDirector director = room.GetNode<EnemyDirector>("EnemyDirector");
+        director.Configure(firstRoom, CreatePathProvider(room, firstRoom));
         _director = director;
         director.AllWavesFinished += () => _runController.OnCombatCleared();
         director.EnemyCountChanged += count => _enemyLabel.Text = $"敌军  {count}";
@@ -148,7 +156,9 @@ public partial class AppRoot : Node
     {
         Node roomHost = GetNode<Node>("RoomHost");
         foreach (Node child in roomHost.GetChildren()) child.QueueFree();
-        Node2D room = MvpCombatRoomScene.Instantiate<Node2D>();
+        RoomDefinition definition = RoomDefinitions[CurrentRun.RoomIndex % RoomDefinitions.Length];
+        definition.Validate();
+        Node2D room = definition.Scene.Instantiate<Node2D>();
         roomHost.AddChild(room);
         _relay = room.GetNode<RelayStation>("RelayStation");
         _relay.Initialize(CurrentRun);
@@ -160,6 +170,7 @@ public partial class AppRoot : Node
         player.GetNode<WeaponController>("WeaponController").AttachBuild(_buildController);
         player.GetNode<DashComponent>("DashComponent").AttachBuild(_buildController);
         _director = room.GetNode<EnemyDirector>("EnemyDirector");
+        _director.Configure(definition, CreatePathProvider(room, definition));
         _director.EnemyCountChanged += count => _enemyLabel.Text = $"敌军  {count}";
         _director.AllWavesFinished += () => _runController.OnCombatCleared();
         _wavesStarted = false;
@@ -173,4 +184,33 @@ public partial class AppRoot : Node
         BehaviorId.Siege => "攻城炮车（攻击中继站）",
         _ => "未知单位"
     };
+
+    private static IEnemyPathProvider CreatePathProvider(Node2D room, RoomDefinition definition)
+    {
+        NavigationGrid grid = new(definition.GridSize);
+        TileTerrainAdapter terrain = room.GetNodeOrNull<TileTerrainAdapter>("TileTerrainAdapter");
+        void RebuildNavigation()
+        {
+            HashSet<Vector2I> blockedCells = new();
+            TileMapLayer structure = room.GetNodeOrNull<TileMapLayer>("Structure");
+            if (structure is not null)
+            {
+                foreach (Vector2I cell in structure.GetUsedCells()) blockedCells.Add(cell);
+            }
+
+            if (terrain is not null)
+            {
+                foreach (Vector2I cell in terrain.BlockedNavigationCells) blockedCells.Add(cell);
+            }
+
+            grid.Rebuild(blockedCells);
+        }
+
+        RebuildNavigation();
+        if (terrain is not null)
+        {
+            terrain.BrickDestroyed += _ => RebuildNavigation();
+        }
+        return new RoomPathProvider(grid, definition.CellSize);
+    }
 }

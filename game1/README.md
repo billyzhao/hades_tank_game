@@ -50,3 +50,9 @@ If Vulkan pipeline errors appear, use the OpenGL compatibility launchers:
 - M：切换 SFX 静音
 
 Z/X 仅用于当前原型的可见验收，帮助稳定触发玩家伤害、中继站伤害和重启边界；它们不是正式玩家功能。
+# 迭代 06B 新增（待用户验收）
+
+- 清完首房并选择协议后，第二房加载为非镜像的工业侧翼布局；
+- 每张房间均包含 `Ground`、`Structure`、`Destructible` 三层 TileMap；
+- 炮弹可摧毁砖块，敌军在 0.25 秒内重新查询 A* 路径；封死时会停下并持续重试；
+- 敌军出生边由房间资源定义，工业侧翼房包含左右侧夹击入口。

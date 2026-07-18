@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 namespace Game1;
@@ -12,14 +14,6 @@ public partial class EnemyDirector : Node
     private const float SpawnIntervalSeconds = 0.6f;
     private const float SafeSpawnDistance = 72f;
     private static readonly PackedScene EnemyScene = GD.Load<PackedScene>("res://scenes/actors/enemy_tank.tscn");
-    private static readonly Vector2[] SpawnPoints =
-    [
-        new Vector2(438, 42),
-        new Vector2(438, 228),
-        new Vector2(390, 42),
-        new Vector2(390, 228)
-    ];
-
     [Signal] public delegate void EnemyCountChangedEventHandler(int count);
     [Signal] public delegate void EnemySpawnedEventHandler(int behavior, int waveIndex);
     [Signal] public delegate void WaveChangedEventHandler(int currentWave, int totalWaves);
@@ -30,6 +24,17 @@ public partial class EnemyDirector : Node
     private int _spawnIndex;
     private int _alive;
     private bool _finished;
+    private IEnemyPathProvider _pathProvider;
+    private IReadOnlyList<IReadOnlyList<BehaviorId>> _configuredWaves;
+    private IReadOnlyList<Vector2> _spawnPoints;
+
+    public void Configure(RoomDefinition definition, IEnemyPathProvider pathProvider)
+    {
+        definition.Validate();
+        _configuredWaves = definition.Waves.Select(wave => (IReadOnlyList<BehaviorId>)wave.Behaviors.ToArray()).ToArray();
+        _spawnPoints = definition.EnemySpawnPoints.ToArray();
+        _pathProvider = pathProvider;
+    }
 
     public int CurrentWave => _waveIndex + 1;
     public int TotalWaves => _waves?.Count ?? 3;
@@ -37,7 +42,9 @@ public partial class EnemyDirector : Node
     public void StartWaves()
     {
         if (_waves is not null) return;
-        _waves = ThreatWavePlan.CreateMvp();
+        if (_configuredWaves is null || _spawnPoints is null || _pathProvider is null)
+            throw new InvalidOperationException("EnemyDirector 必须使用当前 RoomDefinition 和导航提供器完成配置后才能启动波次。");
+        _waves = _configuredWaves;
         StartNextWave();
     }
 
@@ -72,6 +79,7 @@ public partial class EnemyDirector : Node
         BehaviorId behavior = _waves[_waveIndex][_spawnIndex];
         EnemyTank enemy = EnemyScene.Instantiate<EnemyTank>();
         enemy.Behavior = behavior;
+        if (_pathProvider is not null) enemy.SetPathProvider(_pathProvider);
         enemy.GlobalPosition = FindSafeSpawnPoint(_spawnIndex);
         enemy.Destroyed += OnEnemyDestroyed;
         GetParent().AddChild(enemy);
@@ -103,9 +111,9 @@ public partial class EnemyDirector : Node
     {
         Node2D player = GetTree().GetFirstNodeInGroup("player") as Node2D;
         Node2D relay = GetTree().GetFirstNodeInGroup("relay") as Node2D;
-        for (int index = 0; index < SpawnPoints.Length; index++)
+        for (int index = 0; index < _spawnPoints.Count; index++)
         {
-            Vector2 candidate = SpawnPoints[(offset + index) % SpawnPoints.Length];
+            Vector2 candidate = _spawnPoints[(offset + index) % _spawnPoints.Count];
             bool safeFromPlayer = player is null || candidate.DistanceTo(player.GlobalPosition) >= SafeSpawnDistance;
             bool safeFromRelay = relay is null || candidate.DistanceTo(relay.GlobalPosition) >= SafeSpawnDistance;
             if (safeFromPlayer && safeFromRelay)
@@ -115,6 +123,6 @@ public partial class EnemyDirector : Node
         }
 
         // 所有点都暂时不安全时，取最远候选点；预警时间仍会给玩家反应空间。
-        return SpawnPoints[(offset + SpawnPoints.Length - 1) % SpawnPoints.Length];
+        return _spawnPoints[(offset + _spawnPoints.Count - 1) % _spawnPoints.Count];
     }
 }

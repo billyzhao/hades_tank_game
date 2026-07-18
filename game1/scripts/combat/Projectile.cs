@@ -50,6 +50,19 @@ public partial class Projectile : Node2D
                 return;
             }
             // 命中后保留本物理帧尚未走完的距离，使反弹不会因帧率不同而缩短或变慢。
+            // 可破坏砖墙由 TileMapLayer 承载，不能再依赖逐块 StaticBody2D。
+            // 砖块耐久归零时，适配器会清除 tile 并刷新房间的导航阻塞集合。
+            if (hit["collider"].AsGodotObject() is TileMapLayer destructibleLayer
+                && destructibleLayer.Name == "Destructible"
+                && destructibleLayer.GetParent()?.GetNodeOrNull<TileTerrainAdapter>("TileTerrainAdapter") is TileTerrainAdapter terrain)
+            {
+                Vector2I cell = destructibleLayer.LocalToMap(destructibleLayer.ToLocal(point));
+                terrain.DamageBrick(cell, _spec.Damage);
+                SpawnSplitShells(point);
+                EmitSignal(SignalName.Impacted, point, false, false);
+                QueueFree();
+                return;
+            }
             remaining -= GlobalPosition.DistanceTo(point);
             // 轻微沿法线偏移，防止下一次射线从墙面内部开始而在墙角反复命中。
             GlobalPosition = point + normal * 0.05f;
