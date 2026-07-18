@@ -12,6 +12,8 @@ public partial class AppRoot : Node
         GD.Load<RoomDefinition>("res://resources/rooms/industrial_flank_room.tres")
     ];
     private static readonly ContentCatalog ProtocolCatalog = GD.Load<ContentCatalog>("res://resources/content_catalog.tres");
+    private static readonly BossDefinition RoadblockCommanderDefinition = GD.Load<BossDefinition>("res://resources/bosses/roadblock_commander.tres");
+    private static readonly PackedScene BossValidationRoomScene = GD.Load<PackedScene>("res://scenes/rooms/mvp_boss_room.tscn");
 
     public RunState CurrentRun { get; private set; } = null!;
     private HealthComponent _playerHealth = null!;
@@ -27,6 +29,7 @@ public partial class AppRoot : Node
     private BuildController _buildController = null!;
     private RunController _runController = null!;
     private RewardPanel _rewardPanel = null!;
+    private BossHudController _bossHud = null!;
     private EnemyDirector _director = null!;
     private bool _wavesStarted;
 
@@ -62,6 +65,9 @@ public partial class AppRoot : Node
         _rewardPanel = new RewardPanel { Position = new Vector2(24, 88) };
         GetNode<CanvasLayer>("UI").AddChild(_rewardPanel);
         _rewardPanel.ProtocolChosen += protocolId => _runController.ChooseProtocol(protocolId);
+        _bossHud = new BossHudController { Visible = false };
+        GetNode<CanvasLayer>("UI").AddChild(_bossHud);
+        GetNode<Button>("UI/BossValidationButton").Pressed += EnterBossValidationRoom;
         _runController.PhaseChanged += phase =>
         {
             _roomLabel.Text = $"房间  {phase}";
@@ -154,6 +160,7 @@ public partial class AppRoot : Node
 
     private void RestartCombatRoom()
     {
+        _bossHud.Unbind();
         Node roomHost = GetNode<Node>("RoomHost");
         foreach (Node child in roomHost.GetChildren()) child.QueueFree();
         RoomDefinition definition = RoomDefinitions[CurrentRun.RoomIndex % RoomDefinitions.Length];
@@ -175,6 +182,36 @@ public partial class AppRoot : Node
         _director.AllWavesFinished += () => _runController.OnCombatCleared();
         _wavesStarted = false;
         _runController.BeginRoom();
+    }
+
+    /// <summary>仅供 07A 可见验收使用：不改变 RoomIndex、奖励或胜利结算。</summary>
+    private void EnterBossValidationRoom()
+    {
+        _bossHud.Unbind();
+        _rewardPanel.Hide();
+        _wavesStarted = true;
+        Node roomHost = GetNode<Node>("RoomHost");
+        foreach (Node child in roomHost.GetChildren()) child.QueueFree();
+
+        Node2D room = BossValidationRoomScene.Instantiate<Node2D>();
+        roomHost.AddChild(room);
+        _relay = room.GetNode<RelayStation>("RelayStation");
+        _relay.Initialize(CurrentRun);
+        _relay.AttachBuild(_buildController);
+        _relay.Destroyed += () => _runController.OnRelayDestroyed();
+        PlayerTank player = room.GetNode<PlayerTank>("PlayerTank");
+        _playerHealth = player.GetNode<HealthComponent>("HealthComponent");
+        player.GetNode<WeaponController>("WeaponController").AttachBuild(_buildController);
+        player.GetNode<DashComponent>("DashComponent").AttachBuild(_buildController);
+
+        RoadblockCommander boss = room.GetNode<RoadblockCommander>("RoadblockCommander");
+        boss.Initialize(RoadblockCommanderDefinition);
+        _bossHud.Bind(boss, RoadblockCommanderDefinition);
+        boss.Defeated += () => _eventLabel.Text = "路障指挥车已击败（07B 将接入结算）";
+        _eventLabel.Text = "Boss 验收：将路障指挥车打至 50% 观察阶段变化";
+        _roomLabel.Text = "房间  Boss 验收";
+        _waveLabel.Text = "阶段  1/2";
+        UpdateHud();
     }
 
     private static string BehaviorName(BehaviorId behavior) => behavior switch

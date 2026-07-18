@@ -1,0 +1,67 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actors/player_tank.tscn" id="1_player"]
+[ext_resource type="PackedScene" path="res://scenes/actors/roadblock_commander.tscn" id="2_boss"]
+[ext_resource type="Script" path="res://scripts/combat/RelayStation.cs" id="3_relay"]
+[ext_resource type="Script" path="res://scripts/combat/RebootController.cs" id="4_reboot"]
+[ext_resource type="Texture2D" path="res://assets/art/tiles/desert_industrial_arena.png" id="5_background"]
+[ext_resource type="Texture2D" path="res://assets/art/actors/relay_station.png" id="6_relay_sprite"]
+[ext_resource type="TileSet" path="res://resources/tiles/industrial_tileset.tres" id="7_tileset"]
+[ext_resource type="Script" path="res://scripts/terrain/TileLayerPainter.cs" id="8_painter"]
+
+[sub_resource type="RectangleShape2D" id="RelayShape"]
+size = Vector2(24, 64)
+
+[node name="MvpBossRoom" type="Node2D"]
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(240, 135)
+enabled = true
+
+[node name="Background" type="Sprite2D" parent="."]
+texture = ExtResource("5_background")
+texture_filter = 1
+centered = false
+modulate = Color(0.78, 0.67, 0.48, 1)
+z_index = -10
+
+[node name="Ground" type="TileMapLayer" parent="."]
+tile_set = ExtResource("7_tileset")
+
+[node name="GroundPainter" type="Node" parent="Ground"]
+script = ExtResource("8_painter")
+Cells = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0), Vector2i(5, 0), Vector2i(6, 0), Vector2i(7, 0), Vector2i(8, 0), Vector2i(9, 0), Vector2i(10, 0), Vector2i(11, 0), Vector2i(12, 0), Vector2i(13, 0), Vector2i(14, 0), Vector2i(15, 0), Vector2i(16, 0), Vector2i(17, 0), Vector2i(18, 0), Vector2i(19, 0)]
+
+[node name="Structure" type="TileMapLayer" parent="."]
+tile_set = ExtResource("7_tileset")
+
+[node name="StructurePainter" type="Node" parent="Structure"]
+script = ExtResource("8_painter")
+Cells = [Vector2i(7, 3), Vector2i(7, 4), Vector2i(7, 5), Vector2i(12, 6), Vector2i(12, 7), Vector2i(12, 8)]
+
+[node name="Destructible" type="TileMapLayer" parent="."]
+tile_set = ExtResource("7_tileset")
+
+[node name="RelayStation" type="StaticBody2D" parent="." groups=["relay"]]
+position = Vector2(92, 204)
+collision_layer = 16
+collision_mask = 0
+script = ExtResource("3_relay")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RelayStation"]
+shape = SubResource("RelayShape")
+
+[node name="Sprite" type="Sprite2D" parent="RelayStation"]
+texture = ExtResource("6_relay_sprite")
+texture_filter = 1
+scale = Vector2(0.62, 0.62)
+z_index = 1
+
+[node name="PlayerTank" parent="." groups=["player"] instance=ExtResource("1_player")]
+position = Vector2(218, 202)
+
+[node name="RoadblockCommander" parent="." instance=ExtResource("2_boss")]
+position = Vector2(382, 88)
+
+[node name="RebootController" type="Node" parent="."]
+script = ExtResource("4_reboot")

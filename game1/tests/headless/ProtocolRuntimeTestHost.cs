@@ -21,6 +21,10 @@ public partial class ProtocolRuntimeTestHost : Node
         {
             RunNavigationGridSuite();
         }
+        else if (arguments.SequenceEqual(new[] { "--suite", "boss_phase" }))
+        {
+            RunBossPhaseSuite();
+        }
         else
         {
             Fail($"不支持的测试参数：{string.Join(' ', arguments)}。期望：--suite reward_catalog 或 --suite navigation_grid");
@@ -74,6 +78,18 @@ public partial class ProtocolRuntimeTestHost : Node
         GC.Collect();
         GC.WaitForPendingFinalizers();
         GC.Collect();
+        GetTree().Quit(failures == 0 ? 0 : 1);
+    }
+
+    private void RunBossPhaseSuite()
+    {
+        int failures = 0;
+        failures += Run("boss_phase_transitions_once_and_is_irrevocable", BossPhaseTransitionsOnceAndIsIrrevocable);
+        failures += Run("boss_definition_and_room_are_valid", BossDefinitionAndRoomAreValid);
+        failures += Run("boss_hud_tracks_health_and_phase", BossHudTracksHealthAndPhase);
+        failures += Run("app_has_visible_boss_validation_entry", AppHasVisibleBossValidationEntry);
+
+        GD.Print($"[ProtocolRuntimeTestHost] suite=boss_phase failures={failures}");
         GetTree().Quit(failures == 0 ? 0 : 1);
     }
 
@@ -366,6 +382,86 @@ public partial class ProtocolRuntimeTestHost : Node
 
         grid.Rebuild(new System.Collections.Generic.HashSet<Vector2I> { new(2, 0), new(2, 2) });
         Assert(grid.FindPath(new Vector2I(0, 1), new Vector2I(4, 1)).Count > 0, "移除关键砖块后下一次查询必须得到路径。");
+    }
+
+    private static void BossPhaseTransitionsOnceAndIsIrrevocable()
+    {
+        BossPhaseController controller = new();
+        int phaseEvents = 0;
+        int defeatedEvents = 0;
+        controller.PhaseChanged += _ => phaseEvents++;
+        controller.Defeated += () => defeatedEvents++;
+
+        Assert(controller.ReportHealth(100, 100) == BossPhase.PhaseOne, "满血必须为第一阶段。");
+        Assert(controller.ReportHealth(50, 100) == BossPhase.PhaseTwo, "生命值首次到 50% 必须进入第二阶段。");
+        controller.ReportHealth(40, 100);
+        controller.ReportHealth(0, 100);
+        controller.ReportHealth(0, 100);
+
+        Assert(phaseEvents == 1, "阶段变化事件只能触发一次。");
+        Assert(defeatedEvents == 1, "击败事件只能触发一次。");
+        Assert(controller.ReportHealth(100, 100) == BossPhase.Defeated, "击败后状态不可逆。");
+    }
+
+    private static void BossDefinitionAndRoomAreValid()
+    {
+        BossDefinition definition = GD.Load<BossDefinition>("res://resources/bosses/roadblock_commander.tres");
+        definition.Validate();
+
+        Assert(definition.DisplayName == "路障指挥车", "Boss 资源必须使用已确认名称。");
+        Assert(definition.MaximumHealth == 300, "07A Boss 最大生命必须为 300。");
+
+        Node2D room = GD.Load<PackedScene>("res://scenes/rooms/mvp_boss_room.tscn").Instantiate<Node2D>();
+        try
+        {
+            Assert(room.GetNodeOrNull<TileMapLayer>("Ground") is not null, "Boss 房必须有 Ground TileMapLayer。");
+            Assert(room.GetNodeOrNull<TileMapLayer>("Structure") is not null, "Boss 房必须有 Structure TileMapLayer。");
+            Assert(room.GetNodeOrNull<TileMapLayer>("Destructible") is not null, "Boss 房必须有 Destructible TileMapLayer。");
+            Assert(room.GetNodeOrNull<RoadblockCommander>("RoadblockCommander") is not null, "Boss 房必须实例化路障指挥车。");
+        }
+        finally
+        {
+            room.Free();
+        }
+    }
+
+    private void BossHudTracksHealthAndPhase()
+    {
+        BossDefinition definition = GD.Load<BossDefinition>("res://resources/bosses/roadblock_commander.tres");
+        RoadblockCommander boss = definition.Scene.Instantiate<RoadblockCommander>();
+        BossHudController hud = new();
+        AddChild(boss);
+        AddChild(hud);
+        try
+        {
+            boss.Initialize(definition);
+            hud.Bind(boss, definition);
+            boss.ApplyDamage(new DamageContext(150));
+
+            Assert(hud.GetNode<Label>("PhaseLabel").Text == "第二阶段", "Boss HUD 必须显示第二阶段文字。");
+            Assert(hud.GetNode<ProgressBar>("HealthBar").Value == 150d, "Boss HUD 必须同步当前生命值。");
+        }
+        finally
+        {
+            hud.Unbind();
+            boss.Free();
+            hud.Free();
+        }
+    }
+
+    private static void AppHasVisibleBossValidationEntry()
+    {
+        Node app = GD.Load<PackedScene>("res://scenes/app/main.tscn").Instantiate<Node>();
+        try
+        {
+            Button button = app.GetNodeOrNull<Button>("UI/BossValidationButton");
+            Assert(button is not null, "应用 HUD 必须提供可点击的 Boss 验收入口。");
+            Assert(button.Text == "Boss 验收", "Boss 验收入口文案必须明确。");
+        }
+        finally
+        {
+            app.Free();
+        }
     }
 
     private static void NavigationGridInvalidOrBlockedPathReturnsEmpty()
