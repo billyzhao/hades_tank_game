@@ -8,33 +8,30 @@ public partial class BarrierDeployment : Node
     private const float DefaultPreviewSeconds = .8f;
     private TileMapLayer _structure;
     private Node2D _player;
-    private Node2D _relay;
     private int _cellSize;
     private System.Action _navigationRefresh;
     private Polygon2D _preview;
     private bool _previewing;
 
     /// <summary>由遭遇编排器注入房间实例对象；不保存或修改任何静态 TileSet 资源。</summary>
-    public void Configure(TileMapLayer structure, Node2D player, Node2D relay, int cellSize, System.Action navigationRefresh = null)
+    public void Configure(TileMapLayer structure, Node2D player, int cellSize, System.Action navigationRefresh = null)
     {
         _structure = structure ?? throw new System.ArgumentNullException(nameof(structure));
         _player = player ?? throw new System.ArgumentNullException(nameof(player));
-        _relay = relay ?? throw new System.ArgumentNullException(nameof(relay));
         if (cellSize <= 0) throw new System.ArgumentOutOfRangeException(nameof(cellSize));
         _cellSize = cellSize;
         _navigationRefresh = navigationRefresh;
     }
 
-    /// <summary>只接受空格，且不能覆盖玩家或中继站所处的格子。</summary>
+    /// <summary>只接受空格，且不能覆盖玩家当前占用格。</summary>
     public bool IsLegalCell(Vector2I cell)
     {
-        if (_structure is null || _player is null || _relay is null || _cellSize <= 0) return false;
+        if (_structure is null || _player is null || _cellSize <= 0) return false;
         if (_structure.GetCellSourceId(cell) != -1) return false;
 
         Vector2 center = new((cell.X + .5f) * _cellSize, (cell.Y + .5f) * _cellSize);
         float protectedRadius = _cellSize * .7f;
-        return center.DistanceTo(_player.GlobalPosition) > protectedRadius
-            && center.DistanceTo(_relay.GlobalPosition) > protectedRadius;
+        return center.DistanceTo(_player.GlobalPosition) > protectedRadius;
     }
 
     /// <summary>仅写入当前房间实例的 Structure 层；调用方可在此后重建共享导航网格。</summary>

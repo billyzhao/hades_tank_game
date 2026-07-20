@@ -7,7 +7,7 @@ namespace Game1;
 /// <summary>MVP 持久化 DTO；仅保存设置、局外解锁和最近一局摘要，不保存战斗中途状态。</summary>
 public sealed class SaveData
 {
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
 
     [JsonPropertyName("schema_version")]
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
@@ -48,8 +48,17 @@ public sealed class LastRunSummary
     [JsonPropertyName("seed")]
     public int Seed { get; set; }
 
-    [JsonPropertyName("relay_integrity")]
-    public int RelayIntegrity { get; set; }
+    [JsonPropertyName("core_id")]
+    public string CoreId { get; set; } = string.Empty;
+
+    [JsonPropertyName("arena_index")]
+    public int ArenaIndex { get; set; }
+
+    [JsonPropertyName("wave_index")]
+    public int WaveIndex { get; set; }
+
+    [JsonPropertyName("level")]
+    public int Level { get; set; } = 1;
 
     [JsonPropertyName("elapsed_seconds")]
     public double ElapsedSeconds { get; set; }

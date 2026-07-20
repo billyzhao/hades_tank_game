@@ -19,8 +19,6 @@ public partial class VisualFeedbackController : Node2D
             Flash(player.GetNode<CanvasItem>("Turret/TurretVisual"), Colors.White);
             lastArmor = armor;
         };
-        room.GetNode<RelayStation>("RelayStation").Damaged += _ =>
-            Flash(room.GetNode<CanvasItem>("RelayStation/Sprite"), new Color(0.75f, 1f, 0.72f));
     }
 
     private void SpawnImpact(Vector2 position, bool destroyedTarget, bool reflected)

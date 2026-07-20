@@ -10,9 +10,9 @@ public sealed class RunState
 
     public required int Seed { get; init; }
 
-    public int RelayIntegrity { get; set; }
+    public int PlayerArmor { get; private set; }
 
-    public int PlayerArmor { get; set; }
+    public int MaximumArmor { get; private set; }
 
     public int RebootsRemaining { get; set; }
 
@@ -26,34 +26,43 @@ public sealed class RunState
 
     public static RunState CreateNew(
         int seed,
-        int relayIntegrity = 100,
-        int armor = 100,
+        int maximumArmor = 100,
         int reboots = 1)
     {
+        if (maximumArmor <= 0) throw new System.ArgumentOutOfRangeException(nameof(maximumArmor));
+        if (reboots < 0) throw new System.ArgumentOutOfRangeException(nameof(reboots));
         return new RunState
         {
             Seed = seed,
-            RelayIntegrity = relayIntegrity,
-            PlayerArmor = armor,
+            PlayerArmor = maximumArmor,
+            MaximumArmor = maximumArmor,
             RebootsRemaining = reboots,
             RoomIndex = 0
         };
     }
 
-    /// <summary>扣除中继站耐久；返回值表示中继站是否仍可维持本局。</summary>
-    public bool ApplyRelayDamage(int amount)
+    /// <summary>把当前玩家实例的装甲同步为跨场景真值；所有入口都统一钳制到有效范围。</summary>
+    public void SynchronizeArmor(int armor, int maximumArmor)
     {
-        RelayIntegrity = System.Math.Max(0, RelayIntegrity - System.Math.Max(0, amount));
-        return RelayIntegrity > 0;
+        if (maximumArmor <= 0) throw new System.ArgumentOutOfRangeException(nameof(maximumArmor));
+        MaximumArmor = maximumArmor;
+        PlayerArmor = System.Math.Clamp(armor, 0, maximumArmor);
     }
 
-    /// <summary>清场维修只能恢复中继站耐久，且永远不能超过其设计总血量。</summary>
-    public int RestoreRelayIntegrity(int amount, int maximumIntegrity = 100)
+    /// <summary>战场重启固定恢复向上取整的 50% 最大装甲。</summary>
+    public void RestoreAfterReboot()
     {
-        if (maximumIntegrity <= 0) throw new System.ArgumentOutOfRangeException(nameof(maximumIntegrity));
-        RelayIntegrity = System.Math.Min(maximumIntegrity, RelayIntegrity + System.Math.Max(0, amount));
-        return RelayIntegrity;
+        PlayerArmor = (MaximumArmor + 1) / 2;
     }
+
+    public void RepairArmor(int amount)
+    {
+        if (amount < 0) throw new System.ArgumentOutOfRangeException(nameof(amount));
+        PlayerArmor = System.Math.Min(MaximumArmor, PlayerArmor + amount);
+    }
+
+    /// <summary>击败竞技场 Boss 后只全修装甲，重启次数跨完整单局持续。</summary>
+    public void RestoreArmorForNextArena() => PlayerArmor = MaximumArmor;
 
     /// <summary>仅在仍有次数时消耗一次战场重启，绝不让计数变为负数。</summary>
     public bool TryConsumeReboot()

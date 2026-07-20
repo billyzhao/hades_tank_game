@@ -12,7 +12,7 @@ public partial class BossEncounterController : Node
     private BarrierDeployment _barrier;
     private int _nextBarrierIndex;
     private bool _phaseOneActive;
-    private Node2D _relay = null!;
+    private Node2D _player = null!;
     private bool _phaseTwoActive;
     private TileTerrainAdapter _terrain;
     private BossGunEmplacement _gun;
@@ -26,15 +26,14 @@ public partial class BossEncounterController : Node
         if (navigation is null) throw new System.ArgumentNullException(nameof(navigation));
 
         _barrier = GetNode<BarrierDeployment>("BarrierDeployment");
-        _relay = room.GetNode<Node2D>("RelayStation");
+        _player = room.GetNode<Node2D>("PlayerTank");
         _terrain = room.GetNodeOrNull<TileTerrainAdapter>("TileTerrainAdapter");
         _gun = GetNode<BossGunEmplacement>("BossGunEmplacement");
         _summons = GetNode<BossSummonController>("BossSummonController");
         _summons.Initialize(room, navigation.Provider);
         _barrier.Configure(
             room.GetNode<TileMapLayer>("Structure"),
-            room.GetNode<Node2D>("PlayerTank"),
-            _relay,
+            _player,
             cellSize,
             navigation.Rebuild);
         Boss.PhaseChanged += OnBossPhaseChanged;
@@ -97,7 +96,7 @@ public partial class BossEncounterController : Node
         while (_phaseTwoActive && IsInsideTree())
         {
             await ToSignal(GetTree().CreateTimer(1.4f), SceneTreeTimer.SignalName.Timeout);
-            if (_phaseTwoActive && IsInsideTree()) Boss.BeginCharge(_relay.GlobalPosition);
+            if (_phaseTwoActive && IsInsideTree()) Boss.BeginCharge(_player.GlobalPosition);
         }
     }
 }

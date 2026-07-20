@@ -4,7 +4,7 @@ namespace Game1;
 
 /// <summary>
 /// MVP 守点战的固定波次编排。数值直接对应策划确认的 4 / 6 / 8 威胁预算，
-/// 每波至多包含一台攻城炮车，避免同一时间出现无法处理的中继站集火。
+/// 每波至多包含一台重炮单位，避免同一时间形成无法处理的远程集火。
 /// </summary>
 public static class ThreatWavePlan
 {

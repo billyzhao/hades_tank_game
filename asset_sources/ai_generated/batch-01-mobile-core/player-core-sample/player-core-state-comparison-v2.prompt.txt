@@ -1,0 +1,7 @@
+Use case: precise-object-edit
+Asset type: corrected Batch 1 player tank visual gate
+Input images: Image 1 is the accepted Gate 0 gameplay style and scale reference. Image 2 is the first side-by-side tank sample to correct while preserving its identity.
+Primary request: preserve the two-state side-by-side comparison, the same heavy cream-and-steel tracked hull, identical silhouette between left and right, cyan dormant/activated core distinction, strict orthographic top-down pixel-art style, and flat magenta background. Make one targeted correction: add an unmistakable independent rotating turret assembly with a clearly visible long cannon barrel projecting straight upward from each tank. The barrel must extend beyond the turret body with generous magenta clearance, remain fully inside each half, and read clearly when reduced to a 32x32 source sprite. Place the cyan mobile-core reactor within or immediately behind the turret ring without replacing, hiding, or shortening the cannon barrel.
+Composition: exactly two isolated versions of the SAME tank, left dormant and right activated, centered in equal left/right cells, same size and orientation, both facing upward.
+Background: perfectly flat uniform #FF00FF, no shadow, texture, gradient, floor or reflection; no magenta on the tank.
+Constraints: change only turret/barrel readability; no UI, text, labels, arrows, arena, enemies, projectiles, relay station, base, shield bubble, frame or watermark; keep both tank identities and dimensions consistent.

@@ -5,17 +5,6 @@ namespace Game1.Tests.Run;
 public sealed class RunFailureTests
 {
     [Test]
-    public void ApplyRelayDamage_ReachingZeroFailsAndClampsIntegrity()
-    {
-        RunState state = RunState.CreateNew(seed: 1, relayIntegrity: 10);
-
-        bool stillOperational = state.ApplyRelayDamage(10);
-
-        Assert.That(stillOperational, Is.False);
-        Assert.That(state.RelayIntegrity, Is.Zero);
-    }
-
-    [Test]
     public void TryConsumeReboot_ConsumesOnceWithoutGoingNegative()
     {
         RunState state = RunState.CreateNew(seed: 1, reboots: 1);

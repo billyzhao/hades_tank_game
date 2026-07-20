@@ -41,7 +41,7 @@ public partial class Projectile : Node2D
             if (hit.Count == 0) { GlobalPosition = target; return; }
             Vector2 point = hit["position"].AsVector2();
             Vector2 normal = hit["normal"].AsVector2();
-            // 命中可受伤实体时先结算伤害；砖墙和中继站不会进入反弹分支。
+            // 命中可受伤实体时先结算伤害；砖墙不会进入反弹分支。
             if (hit["collider"].AsGodotObject() is IDamageable damageable)
             {
                 DamageResult result = damageable.ApplyDamage(new DamageContext(_spec.Damage));

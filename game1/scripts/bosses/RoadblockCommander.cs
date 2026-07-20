@@ -27,6 +27,7 @@ public partial class RoadblockCommander : CharacterBody2D, IDamageable
     private bool _charging;
     private bool _chargeTelegraph;
     private Line2D _chargeWarning = null!;
+    private Vector2 _chargeTarget;
 
     public int CurrentHealth => _currentHealth;
     public int MaximumHealth => Definition is null ? 0 : Definition.MaximumHealth;
@@ -78,12 +79,13 @@ public partial class RoadblockCommander : CharacterBody2D, IDamageable
         if (_fanCooldown <= 0f) FireFanAtPlayer();
     }
 
-    public void BeginCharge(Vector2 relayPosition)
+    public void BeginCharge(Vector2 targetPosition)
     {
         if (!_initialized || _phaseController.CurrentPhase != BossPhase.PhaseTwo || _charging || _chargeTelegraph || _vulnerableTimer > 0f) return;
         _chargeTelegraph = true;
         _chargeTimer = ChargeTelegraphSeconds;
-        _chargeWarning.Points = new Vector2[] { Vector2.Zero, ToLocal(relayPosition) };
+        _chargeTarget = targetPosition;
+        _chargeWarning.Points = new Vector2[] { Vector2.Zero, ToLocal(targetPosition) };
         _chargeWarning.Visible = true;
     }
 
@@ -103,9 +105,7 @@ public partial class RoadblockCommander : CharacterBody2D, IDamageable
             return;
         }
         if (!_charging) return;
-        Node2D relay = GetTree().GetFirstNodeInGroup("relay") as Node2D;
-        if (relay is null) return;
-        KinematicCollision2D collision = MoveAndCollide(GlobalPosition.DirectionTo(relay.GlobalPosition) * 175f * delta);
+        KinematicCollision2D collision = MoveAndCollide(GlobalPosition.DirectionTo(_chargeTarget) * 175f * delta);
         if (collision is not null)
         {
             _charging = false;

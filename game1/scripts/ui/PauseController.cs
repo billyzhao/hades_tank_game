@@ -6,9 +6,16 @@ namespace Game1;
 public partial class PauseController : CanvasLayer
 {
     private Control _overlay = null!;
+    private PauseCoordinator _coordinator = null!;
+
+    public void Configure(PauseCoordinator coordinator) =>
+        _coordinator = coordinator ?? throw new System.ArgumentNullException(nameof(coordinator));
 
     public override void _Ready()
     {
+        if (_coordinator is null)
+            throw new System.InvalidOperationException("PauseController 必须先注入 PauseCoordinator。");
+
         Layer = 100;
         ProcessMode = ProcessModeEnum.Always;
         _overlay = new ColorRect
@@ -29,21 +36,31 @@ public partial class PauseController : CanvasLayer
         };
         label.AddThemeFontSizeOverride("font_size", 14);
         _overlay.AddChild(label);
+        _coordinator.PauseChanged += OnPauseChanged;
+        OnPauseChanged(_coordinator.IsPaused);
     }
 
     public override void _Process(double delta)
     {
-        if (Input.IsActionJustPressed("pause")) SetPaused(!GetTree().Paused);
+        if (!Input.IsActionJustPressed("pause")) return;
+        if (_coordinator.Contains(PauseReason.Manual)) _coordinator.Release(PauseReason.Manual);
+        else _coordinator.Acquire(PauseReason.Manual);
     }
 
     public override void _Notification(int what)
     {
-        if (what == NotificationApplicationFocusOut && IsInsideTree()) SetPaused(true);
+        if (_coordinator is null || !IsInsideTree()) return;
+        if (what == NotificationApplicationFocusOut) _coordinator.Acquire(PauseReason.FocusLost);
+        else if (what == NotificationApplicationFocusIn) _coordinator.Release(PauseReason.FocusLost);
     }
 
-    private void SetPaused(bool paused)
+    private void OnPauseChanged(bool paused)
     {
-        GetTree().Paused = paused;
         if (_overlay is not null) _overlay.Visible = paused;
+    }
+
+    public override void _ExitTree()
+    {
+        if (_coordinator is not null) _coordinator.PauseChanged -= OnPauseChanged;
     }
 }

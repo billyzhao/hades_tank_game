@@ -61,7 +61,6 @@ public partial class ProtocolRuntimeTestHost : Node
         failures += Run("run_rejects_clear_before_combat", RunRejectsClearBeforeCombat);
         failures += Run("run_defeat_outside_combat_does_not_fail", RunDefeatOutsideCombatDoesNotFail);
         failures += Run("run_defeat_in_combat_without_reboot_fails", RunDefeatInCombatWithoutRebootFails);
-        failures += Run("run_relay_destroyed_in_combat_fails", RunRelayDestroyedInCombatFails);
         failures += Run("run_choice_advances_one_room_only_once", RunChoiceAdvancesOneRoomOnlyOnce);
 
         GD.Print($"[ProtocolRuntimeTestHost] suite=reward_catalog failures={failures}");
@@ -97,7 +96,7 @@ public partial class ProtocolRuntimeTestHost : Node
         failures += Run("boss_phase_transitions_once_and_is_irrevocable", BossPhaseTransitionsOnceAndIsIrrevocable);
         failures += Run("boss_definition_and_room_are_valid", BossDefinitionAndRoomAreValid);
         failures += Run("boss_hud_tracks_health_and_phase", BossHudTracksHealthAndPhase);
-        failures += Run("app_has_visible_boss_validation_entry", AppHasVisibleBossValidationEntry);
+        failures += Run("app_has_visible_acceptance_menu", AppHasVisibleAcceptanceMenu);
 
         GD.Print($"[ProtocolRuntimeTestHost] suite=boss_phase failures={failures}");
         GetTree().Quit(failures == 0 ? 0 : 1);
@@ -141,11 +140,11 @@ public partial class ProtocolRuntimeTestHost : Node
         ContentCatalog catalog = CreateCatalog();
         catalog.Validate();
 
-        Assert(catalog.Protocols.Count == 10, "确认目录必须包含十项协议。");
+        Assert(catalog.Protocols.Count == 8, "移动核心迁移目录必须包含八项非中继协议。");
         Assert(catalog.Protocols.Count(protocol => protocol.Department == ProtocolDepartment.Arsenal) == 5, "兵工局协议必须为五项。");
         Assert(catalog.Protocols.Count(protocol => protocol.Department == ProtocolDepartment.Recon) == 2, "侦察组协议必须为两项。");
-        Assert(catalog.Protocols.Count(protocol => protocol.Department == ProtocolDepartment.Logistics) == 2, "后勤组协议必须为两项。");
-        Assert(catalog.Protocols.Count(protocol => protocol.Department == ProtocolDepartment.Engineering) == 1, "工程组协议必须为一项。");
+        Assert(catalog.Protocols.Count(protocol => protocol.Department == ProtocolDepartment.Logistics) == 1, "后勤组当前保留一项坦克装甲协议。");
+        Assert(catalog.Protocols.Count(protocol => protocol.Department == ProtocolDepartment.Engineering) == 0, "工程组旧中继协议不得继续进入运行目录。");
     }
 
     private static void CatalogValidateRejectsDuplicateProtocolIds()
@@ -257,7 +256,7 @@ public partial class ProtocolRuntimeTestHost : Node
         ProtocolDefinition satisfiedCandidate = catalog.Protocols.First(protocol => protocol.Id == "arsenal_damage");
         satisfiedCandidate.RequiredTags.Add("kinetic");
         satisfiedCandidate.BaseWeight = 1_000_000_000f;
-        catalog.Protocols.First(protocol => protocol.Id == "engineering_shield").Tags.Add("repair");
+        catalog.Protocols.First(protocol => protocol.Id == "logistics_armor").Tags.Add("repair");
         catalog.Protocols.First(protocol => protocol.Id == "arsenal_split").RequiredTags.Add("repair");
         catalog.Protocols.First(protocol => protocol.Id == "arsenal_rapid").ConflictTags.Add("kinetic");
         RewardGenerationInput input = new(194, 1, new[] { "arsenal_ricochet" }, catalog.Version);
@@ -277,7 +276,7 @@ public partial class ProtocolRuntimeTestHost : Node
             protocol.BaseWeight = 1f;
         }
 
-        ProtocolDefinition dominant = catalog.Protocols.First(protocol => protocol.Id == "engineering_shield");
+        ProtocolDefinition dominant = catalog.Protocols.First(protocol => protocol.Id == "logistics_armor");
         dominant.BaseWeight = 1_000_000_000f;
         RewardGenerationInput input = new(812, 0, Array.Empty<string>(), catalog.Version);
 
@@ -289,7 +288,7 @@ public partial class ProtocolRuntimeTestHost : Node
     private static void RewardGenerateForcesFullyUniversalFirstCard()
     {
         ContentCatalog catalog = CreateCatalog();
-        ProtocolDefinition constrained = catalog.Protocols.First(protocol => protocol.Id == "engineering_shield");
+        ProtocolDefinition constrained = catalog.Protocols.First(protocol => protocol.Id == "logistics_armor");
         constrained.ConflictIds.Add("arsenal_damage");
         constrained.ConflictTags.Add("kinetic");
         constrained.BaseWeight = 1_000_000_000f;
@@ -367,16 +366,6 @@ public partial class ProtocolRuntimeTestHost : Node
         run.OnTankDefeated();
 
         Assert(run.Phase == RoomPhase.Failed, "Combat 阶段且无重启次数时必须进入 Failed。");
-    }
-
-    private static void RunRelayDestroyedInCombatFails()
-    {
-        RunController run = CreateRunController();
-        run.BeginRoom();
-        run.Advance(.6d);
-        run.OnRelayDestroyed();
-
-        Assert(run.Phase == RoomPhase.Failed, "Combat 阶段中继站摧毁时必须进入 Failed。");
     }
 
     private static void RunChoiceAdvancesOneRoomOnlyOnce()
@@ -468,15 +457,13 @@ public partial class ProtocolRuntimeTestHost : Node
     {
         TileMapLayer structure = new();
         Node2D player = new() { GlobalPosition = new Vector2(60, 60) };
-        Node2D relay = new() { GlobalPosition = new Vector2(108, 60) };
         BarrierDeployment deployment = new();
         try
         {
             structure.SetCell(new Vector2I(1, 1), 0, Vector2I.Zero);
-            deployment.Configure(structure, player, relay, 24);
+            deployment.Configure(structure, player, 24);
 
             Assert(!deployment.IsLegalCell(new Vector2I(2, 2)), "玩家所在格不得部署路障。");
-            Assert(!deployment.IsLegalCell(new Vector2I(4, 2)), "中继站所在格不得部署路障。");
             Assert(!deployment.IsLegalCell(new Vector2I(1, 1)), "已有 Structure 墙体不得被运行时路障覆盖。");
             Assert(deployment.IsLegalCell(new Vector2I(3, 1)), "远离目标且为空的格应可作为路障候选。");
         }
@@ -484,7 +471,6 @@ public partial class ProtocolRuntimeTestHost : Node
         {
             deployment.Free();
             player.Free();
-            relay.Free();
             structure.Free();
         }
     }
@@ -493,12 +479,11 @@ public partial class ProtocolRuntimeTestHost : Node
     {
         TileMapLayer structure = new();
         Node2D player = new() { GlobalPosition = new Vector2(60, 60) };
-        Node2D relay = new() { GlobalPosition = new Vector2(108, 60) };
         BarrierDeployment deployment = new();
         int navigationRefreshes = 0;
         try
         {
-            deployment.Configure(structure, player, relay, 24, () => navigationRefreshes++);
+            deployment.Configure(structure, player, 24, () => navigationRefreshes++);
             Assert(deployment.DeployNow(new Vector2I(3, 1)), "合法候选格必须写入运行时 Structure。");
             Assert(structure.GetCellSourceId(new Vector2I(3, 1)) == 0, "运行时路障必须成为可碰撞的 TileMap 单元。");
             Assert(navigationRefreshes == 1, "每次成功落墙必须请求共享导航刷新。");
@@ -510,7 +495,6 @@ public partial class ProtocolRuntimeTestHost : Node
         {
             deployment.Free();
             player.Free();
-            relay.Free();
             structure.Free();
         }
     }
@@ -539,14 +523,13 @@ public partial class ProtocolRuntimeTestHost : Node
         }
     }
 
-    private static void AppHasVisibleBossValidationEntry()
+    private static void AppHasVisibleAcceptanceMenu()
     {
         Node app = GD.Load<PackedScene>("res://scenes/app/main.tscn").Instantiate<Node>();
         try
         {
-            Button button = app.GetNodeOrNull<Button>("UI/BossValidationButton");
-            Assert(button is not null, "应用 HUD 必须提供可点击的 Boss 验收入口。");
-            Assert(button.Text == "Boss 验收", "Boss 验收入口文案必须明确。");
+            AcceptanceMenu menu = app.GetNodeOrNull<AcceptanceMenu>("UI/AcceptanceMenu");
+            Assert(menu is not null, "应用 HUD 必须提供常驻可见的策划验收菜单入口。");
         }
         finally
         {
@@ -616,12 +599,13 @@ public partial class ProtocolRuntimeTestHost : Node
             Node2D room = definition.Scene.Instantiate<Node2D>();
             try
             {
-                Node2D relay = room.GetNode<Node2D>("RelayStation");
                 Node2D player = room.GetNode<Node2D>("PlayerTank");
-                Assert(relay.Position.Y >= 220f, $"{definition.Scene.ResourcePath} 的中继站必须位于底部防区。");
-                Assert(player.Position.Y < relay.Position.Y, $"{definition.Scene.ResourcePath} 的玩家必须出生在中继站前方。");
+                Assert(room.GetNodeOrNull<Node2D>("RelayStation") is null,
+                    $"{definition.Scene.ResourcePath} 不得保留中继站节点。");
+                Assert(player.Position.Y >= 180f,
+                    $"{definition.Scene.ResourcePath} 的玩家坦克必须出生在南侧安全区。");
                 Assert(room.GetNodeOrNull<Node2D>("ArenaBounds") is not null, $"{definition.Scene.ResourcePath} 必须使用共用战场边界。");
-                Assert(definition.EnemySpawnPoints.All(point => point.Y <= 126f && point.Y < relay.Position.Y),
+                Assert(definition.EnemySpawnPoints.All(point => point.Y <= 126f && point.Y < player.Position.Y),
                     $"{definition.Scene.ResourcePath} 的普通敌军只能从上半区出生。");
 
                 HashSet<Vector2I> blocked = new();
@@ -629,11 +613,11 @@ public partial class ProtocolRuntimeTestHost : Node
                 foreach (Vector2I cell in room.GetNode<TileTerrainAdapter>("TileTerrainAdapter").InitialBrickCells) blocked.Add(cell);
                 NavigationGrid grid = new(definition.GridSize);
                 grid.Rebuild(blocked);
-                Vector2I target = ToCell(relay.Position, definition.CellSize);
+                Vector2I target = ToCell(player.Position, definition.CellSize);
                 foreach (Vector2 spawn in definition.EnemySpawnPoints)
                 {
                     Assert(grid.FindPath(ToCell(spawn, definition.CellSize), target).Count > 0,
-                        $"出生点 {spawn} 必须存在通往中继站防区的导航路径。");
+                        $"出生点 {spawn} 必须存在通往玩家坦克的导航路径。");
                 }
             }
             finally
@@ -648,7 +632,6 @@ public partial class ProtocolRuntimeTestHost : Node
         Node2D room = GD.Load<PackedScene>("res://scenes/rooms/mvp_boss_room.tscn").Instantiate<Node2D>();
         try
         {
-            Node2D relay = room.GetNode<Node2D>("RelayStation");
             Node2D player = room.GetNode<Node2D>("PlayerTank");
             RoadblockCommander boss = room.GetNode<RoadblockCommander>("RoadblockCommander");
             BossEncounterController encounter = room.GetNode<BossEncounterController>("BossEncounterController");
@@ -656,13 +639,14 @@ public partial class ProtocolRuntimeTestHost : Node
             HashSet<Vector2I> bricks = terrain.InitialBrickCells.ToHashSet();
             HashSet<Vector2I> steel = room.GetNode<TileLayerPainter>("Structure/StructurePainter").Cells.ToHashSet();
 
-            Assert(relay.Position.Y >= 220f && player.Position.Y < relay.Position.Y, "Boss 房必须保持底部中继站与前置玩家出生位。");
-            Assert(Mathf.Abs(relay.Position.X - boss.Position.X) <= 1f && boss.Position.Y <= 96f,
-                "Boss 与中继站必须形成从顶部到防区的中央冲锋轴。");
-            Assert(boss.PhaseOneAnchors.All(anchor => anchor.Y < relay.Position.Y), "Boss 第一阶段锚点必须全部位于中继站上方。");
+            Assert(room.GetNodeOrNull<Node2D>("RelayStation") is null, "Boss 房不得保留中继站节点。");
+            Assert(player.Position.Y >= 180f && boss.Position.Y <= 96f, "Boss 房必须保持南侧玩家与北侧 Boss 出生位。");
+            Assert(Mathf.Abs(player.Position.X - boss.Position.X) <= 48f,
+                "Boss 与玩家出生位必须保持在两格内的可读南北交战轴。");
+            Assert(boss.PhaseOneAnchors.All(anchor => anchor.Y < player.Position.Y), "Boss 第一阶段锚点必须全部位于玩家出生位上方。");
             Assert(encounter.PhaseTwoOpeningCells.All(bricks.Contains), "二阶段开路格必须全部来自可破坏中央砖墙。");
             Assert(steel.Contains(new Vector2I(9, 8)) && steel.Contains(new Vector2I(10, 8)),
-                "中继站前必须保留两格中央钢墙供冲锋碰撞和脆弱窗口使用。");
+                "中央轴前必须保留两格钢墙供冲锋碰撞和脆弱窗口使用。");
             Assert(room.GetNodeOrNull<Node2D>("ArenaBounds") is not null, "Boss 房必须使用共用战场边界。");
         }
         finally
@@ -774,9 +758,7 @@ public partial class ProtocolRuntimeTestHost : Node
                 CreateProtocol("arsenal_heavy", ProtocolDepartment.Arsenal, StatId.Damage),
                 CreateProtocol("recon_trail", ProtocolDepartment.Recon, StatId.DashCooldown),
                 CreateProtocol("recon_cooldown", ProtocolDepartment.Recon, StatId.DashCooldown),
-                CreateProtocol("logistics_armor", ProtocolDepartment.Logistics, StatId.ArmorMax),
-                CreateProtocol("logistics_repair", ProtocolDepartment.Logistics, StatId.RelayRepair),
-                CreateProtocol("engineering_shield", ProtocolDepartment.Engineering, StatId.RelayShield)
+                CreateProtocol("logistics_armor", ProtocolDepartment.Logistics, StatId.ArmorMax)
             }
         };
     }

@@ -2,10 +2,8 @@
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player_tank.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/actors/roadblock_commander.tscn" id="2_boss"]
-[ext_resource type="Script" path="res://scripts/combat/RelayStation.cs" id="3_relay"]
 [ext_resource type="Script" path="res://scripts/combat/RebootController.cs" id="4_reboot"]
 [ext_resource type="Texture2D" path="res://assets/art/tiles/desert_industrial_arena.png" id="5_background"]
-[ext_resource type="Texture2D" path="res://assets/art/actors/relay_station.png" id="6_relay_sprite"]
 [ext_resource type="TileSet" path="res://resources/tiles/industrial_tileset.tres" id="7_tileset"]
 [ext_resource type="Script" path="res://scripts/terrain/TileLayerPainter.cs" id="8_painter"]
 [ext_resource type="Script" path="res://scripts/bosses/BossEncounterController.cs" id="9_encounter"]
@@ -14,9 +12,6 @@
 [ext_resource type="Script" path="res://scripts/bosses/BossGunEmplacement.cs" id="12_gun"]
 [ext_resource type="Script" path="res://scripts/bosses/BossSummonController.cs" id="13_summons"]
 [ext_resource type="PackedScene" path="res://scenes/rooms/components/arena_bounds.tscn" id="14_bounds"]
-
-[sub_resource type="RectangleShape2D" id="RelayShape"]
-size = Vector2(30, 42)
 
 [node name="MvpBossRoom" type="Node2D"]
 
@@ -54,21 +49,6 @@ tile_set = ExtResource("7_tileset")
 script = ExtResource("11_terrain")
 InitialBrickCells = [Vector2i(9, 4), Vector2i(10, 4), Vector2i(9, 5), Vector2i(10, 5), Vector2i(9, 6), Vector2i(10, 6)]
 BrickHitPoints = 20
-
-[node name="RelayStation" type="StaticBody2D" parent="." groups=["relay"]]
-position = Vector2(240, 232)
-collision_layer = 16
-collision_mask = 0
-script = ExtResource("3_relay")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="RelayStation"]
-shape = SubResource("RelayShape")
-
-[node name="Sprite" type="Sprite2D" parent="RelayStation"]
-texture = ExtResource("6_relay_sprite")
-texture_filter = 1
-scale = Vector2(0.62, 0.62)
-z_index = 1
 
 [node name="PlayerTank" parent="." groups=["player"] instance=ExtResource("1_player")]
 position = Vector2(192, 216)

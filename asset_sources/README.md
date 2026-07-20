@@ -18,7 +18,7 @@
 - [`THIRD_PARTY_ASSETS.md`](THIRD_PARTY_ASSETS.md) 中的第三方候选仍未下载或购买；
 - 已生成并在 [`AI_PROTOTYPE_ASSETS.md`](AI_PROTOTYPE_ASSETS.md) 登记一批内部 AI 像素原型；
 - 当前素材生产以 [`MOBILE_CORE_ASSET_PLAN.md`](MOBILE_CORE_ASSET_PLAN.md) 为权威批次方案；
-- `batch-00-style` 中包含中继站的旧风格图、旧比例稿与提示词已经失效，不再作为新素材参考；
+- `batch-00-style` 中包含中继站的旧风格图、旧比例稿与提示词已经失效，并已在 Alpha 02B 删除；
 - `batch-01-units` 是尚未通过批次门禁的本地候选，不会直接进入游戏；
 - 这些 AI 原型只用于内部玩法与表现验收，不视为最终商用素材；
 - 未来下载或购买第三方素材时，仍必须先登记来源、授权和状态，并获得用户明确确认。

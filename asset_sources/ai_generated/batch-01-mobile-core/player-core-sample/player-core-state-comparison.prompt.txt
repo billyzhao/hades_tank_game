@@ -1,0 +1,9 @@
+Use case: stylized-concept
+Asset type: Batch 1 visual gate for a top-down 2D Godot tank roguelite
+Input image: the accepted Gate 0 full-gameplay image is the sole active visual reference; match the central player tank's scale language, heavy mechanical construction, bright desert readability, steel materials, cyan energy accent, and crisp arcade pixel-art treatment.
+Primary request: create one clean side-by-side comparison sheet of the SAME compact player tank in two states. Left: normal mobile-core tank with the core dormant, restrained cyan indicator. Right: the identical tank with its embedded mobile core activated, brighter cyan reactor glow and subtle energized seams. The hull silhouette, track width, turret proportions, top-down angle, materials, and pixel scale must remain identical between both states; only the embedded core energy state changes.
+View: strict orthographic top-down, no perspective tilt.
+Composition: two large isolated tank sprites centered left and right with generous padding; each tank fully contained; both facing straight upward; no UI, no arena, no enemies, no projectiles, no labels, no arrows, no text.
+Style: high-quality pixel arcade art, heavy Hades-like sci-fi mechanical tank, B-style detailed machinery plus A-style bright readable silhouettes, suitable to be reduced toward a 32x32 source canvas and displayed around one 24x24 gameplay grid cell.
+Background: perfectly flat solid #FF00FF chroma-key background, uniform edge to edge, no shadows, gradients, texture, floor plane, reflections, or lighting variation. Do not use magenta anywhere on the tanks.
+Constraints: player tank only; independent turret visibly readable; no relay station, no base, no shield bubble, no decorative presentation frame, no watermark; preserve identical identity across the two states.

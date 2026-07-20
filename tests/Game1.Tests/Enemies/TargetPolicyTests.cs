@@ -4,19 +4,19 @@ namespace Game1.Tests.Enemies;
 
 public sealed class TargetPolicyTests
 {
-    [TestCase(BehaviorId.Patrol, TargetId.Player)]
-    [TestCase(BehaviorId.Assault, TargetId.Player)]
-    [TestCase(BehaviorId.Siege, TargetId.Relay)]
-    public void SelectTarget_UsesRolePreferredTarget(BehaviorId behavior, TargetId expected)
+    [TestCase(BehaviorId.Patrol)]
+    [TestCase(BehaviorId.Assault)]
+    [TestCase(BehaviorId.Siege)]
+    public void SelectTarget_AllCurrentRolesTargetPlayer(BehaviorId behavior)
     {
-        TargetId target = TargetPolicy.SelectTarget(behavior, new TargetSnapshot(PlayerAvailable: true, RelayAvailable: true));
-        Assert.That(target, Is.EqualTo(expected));
+        TargetId target = TargetPolicy.SelectTarget(behavior, new TargetSnapshot(PlayerAvailable: true));
+        Assert.That(target, Is.EqualTo(TargetId.Player));
     }
 
     [Test]
-    public void SelectTarget_FallsBackWhenPreferredTargetIsUnavailable()
+    public void SelectTarget_ReturnsNoneWhenPlayerIsUnavailable()
     {
-        TargetId target = TargetPolicy.SelectTarget(BehaviorId.Siege, new TargetSnapshot(PlayerAvailable: true, RelayAvailable: false));
-        Assert.That(target, Is.EqualTo(TargetId.Player));
+        TargetId target = TargetPolicy.SelectTarget(BehaviorId.Siege, new TargetSnapshot(PlayerAvailable: false));
+        Assert.That(target, Is.EqualTo(TargetId.None));
     }
 }

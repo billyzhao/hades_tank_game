@@ -1,0 +1,101 @@
+{
+  "target": "player",
+  "mode": "player",
+  "prompt": "",
+  "role": "",
+  "input": "D:\\my program\\codex\\godot\\asset_sources\\ai_generated\\batch-01-mobile-core\\player-core-sample\\player-core-state-comparison-v2-raw.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 200,
+  "rows": 1,
+  "cols": 2,
+  "cell_size": 256,
+  "fit_scale": 0.75,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "largest",
+  "component_padding": 8,
+  "min_component_area": 1,
+  "edge_touch_margin": 2,
+  "frame_labels": [
+    "core_state-1",
+    "core_state-2"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        836,
+        941
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 216084,
+      "selected_component_bbox": [
+        202,
+        67,
+        715,
+        788
+      ],
+      "crop_bbox": [
+        194,
+        59,
+        723,
+        796
+      ],
+      "edge_touch": false,
+      "output_size": [
+        137,
+        191
+      ],
+      "paste_position": [
+        59,
+        32
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        836,
+        0,
+        1672,
+        941
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 216035,
+      "selected_component_bbox": [
+        74,
+        67,
+        587,
+        788
+      ],
+      "crop_bbox": [
+        66,
+        59,
+        595,
+        796
+      ],
+      "edge_touch": false,
+      "output_size": [
+        137,
+        191
+      ],
+      "paste_position": [
+        59,
+        32
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

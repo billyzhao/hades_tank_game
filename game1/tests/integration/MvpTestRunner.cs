@@ -20,7 +20,7 @@ public partial class MvpTestRunner : Node2D
         Check("dash_and_steel_collision_contract", DashAndSteelCollisionContract);
         Check("projectile_reflection", ProjectileReflection);
         Check("brick_destruction", BrickDestruction);
-        Check("siege_targets_relay", SiegeTargetsRelay);
+        Check("all_enemy_behaviors_target_player", AllEnemyBehaviorsTargetPlayer);
         Check("room_reward_and_run_failures", RoomRewardAndRunFailures);
         Check("boss_victory_phase", BossVictoryPhase);
         Check("save_round_trip", SaveRoundTrip);
@@ -82,10 +82,13 @@ public partial class MvpTestRunner : Node2D
         layer.Free();
     }
 
-    private static void SiegeTargetsRelay()
+    private static void AllEnemyBehaviorsTargetPlayer()
     {
-        TargetId selected = TargetPolicy.SelectTarget(BehaviorId.Siege, new TargetSnapshot(true, true));
-        Assert(selected == TargetId.Relay, "攻城单位必须优先攻击中继站。");
+        foreach (BehaviorId behavior in Enum.GetValues<BehaviorId>())
+        {
+            TargetId selected = TargetPolicy.SelectTarget(behavior, new TargetSnapshot(PlayerAvailable: true));
+            Assert(selected == TargetId.Player, $"{behavior} 必须只选择玩家坦克。");
+        }
     }
 
     private static void RoomRewardAndRunFailures()
@@ -111,14 +114,7 @@ public partial class MvpTestRunner : Node2D
         Assert(!rebootRun.OnTankDefeated() && rebootRun.Phase == RoomPhase.Failed,
             "重启耗尽后的再次报废必须判负。");
 
-        RunState relayState = RunState.CreateNew(8082);
-        RunController relayRun = new(relayState, new BuildController(relayState, catalog), new RewardGenerator());
-        relayRun.BeginRoom();
-        relayRun.Advance(0.6d);
-        relayState.ApplyRelayDamage(100);
-        relayRun.OnRelayDestroyed();
-        Assert(relayState.RelayIntegrity == 0 && relayRun.Phase == RoomPhase.Failed,
-            "中继站总耐久归零必须结束本局。");
+        Assert(rebootState.RebootsRemaining == 0, "重启次数不得降为负数。");
     }
 
     private static void BossVictoryPhase()
@@ -137,7 +133,16 @@ public partial class MvpTestRunner : Node2D
         SaveService service = new(path, emitWarnings: false);
         SaveData source = SaveData.CreateDefault();
         source.UnlockedIds.Add("boss_roadblock_commander");
-        source.LastRun = new LastRunSummary { Seed = 8080, RelayIntegrity = 73, ElapsedSeconds = 125d, Result = "victory" };
+        source.LastRun = new LastRunSummary
+        {
+            Seed = 8080,
+            CoreId = "starter_core",
+            ArenaIndex = 1,
+            WaveIndex = 5,
+            Level = 4,
+            ElapsedSeconds = 125d,
+            Result = "victory"
+        };
         service.SaveAtomic(source);
         SaveData loaded = service.LoadOrDefault();
 

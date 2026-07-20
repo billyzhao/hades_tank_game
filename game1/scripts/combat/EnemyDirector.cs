@@ -7,7 +7,7 @@ namespace Game1;
 
 /// <summary>
 /// 房间级敌军导演：按已验证的威胁波次逐个生成，只有当前波所有单位被消灭才会推进。
-/// 生成点会避开玩家与中继站，避免敌人贴脸或贴站出现而失去预警价值。
+/// 生成点会避开玩家，避免敌人贴脸出现而失去预警价值。
 /// </summary>
 public partial class EnemyDirector : Node
 {
@@ -110,13 +110,11 @@ public partial class EnemyDirector : Node
     private Vector2 FindSafeSpawnPoint(int offset)
     {
         Node2D player = GetTree().GetFirstNodeInGroup("player") as Node2D;
-        Node2D relay = GetTree().GetFirstNodeInGroup("relay") as Node2D;
         for (int index = 0; index < _spawnPoints.Count; index++)
         {
             Vector2 candidate = _spawnPoints[(offset + index) % _spawnPoints.Count];
             bool safeFromPlayer = player is null || candidate.DistanceTo(player.GlobalPosition) >= SafeSpawnDistance;
-            bool safeFromRelay = relay is null || candidate.DistanceTo(relay.GlobalPosition) >= SafeSpawnDistance;
-            if (safeFromPlayer && safeFromRelay)
+            if (safeFromPlayer)
             {
                 return candidate;
             }

@@ -19,7 +19,7 @@ public partial class RunResultScreen : Control
         AddChild(shade);
         VBoxContainer panel = new() { Position = new Vector2(118, 70), Size = new Vector2(245, 130) };
         shade.AddChild(panel);
-        _title = new Label { Text = "中继站守住了", HorizontalAlignment = HorizontalAlignment.Center };
+        _title = new Label { Text = "装甲突围完成", HorizontalAlignment = HorizontalAlignment.Center };
         _title.AddThemeFontSizeOverride("font_size", 20);
         panel.AddChild(_title);
         _summary = new Label { HorizontalAlignment = HorizontalAlignment.Center, AutowrapMode = TextServer.AutowrapMode.WordSmart };
@@ -27,7 +27,7 @@ public partial class RunResultScreen : Control
         Button retry = new() { Text = "重试本局", TooltipText = "从第一间战斗房重新开始" };
         retry.Pressed += () => EmitSignal(SignalName.RetryRequested);
         panel.AddChild(retry);
-        Button back = new() { Text = "返回基地" };
+        Button back = new() { Text = "返回整备" };
         back.Pressed += () => EmitSignal(SignalName.ReturnRequested);
         panel.AddChild(back);
         Visible = false;
@@ -35,9 +35,9 @@ public partial class RunResultScreen : Control
 
     public void ShowResult(RunResultSnapshot snapshot, bool victory = true)
     {
-        _title.Text = victory ? "中继站守住了" : "本次护送失败";
+        _title.Text = victory ? "装甲突围完成" : "坦克已经报废";
         string protocols = snapshot.ProtocolIds.Count == 0 ? "无" : string.Join("、", snapshot.ProtocolIds);
-        _summary.Text = $"种子：{snapshot.Seed}\n协议：{protocols}\n中继站：{snapshot.RelayIntegrity}/100\n耗时：{snapshot.Elapsed.Minutes:00}:{snapshot.Elapsed.Seconds:00}";
+        _summary.Text = $"种子：{snapshot.Seed}\n协议：{protocols}\n区域：{snapshot.ArenaIndex + 1}  等级：{snapshot.Level}\n耗时：{snapshot.Elapsed.Minutes:00}:{snapshot.Elapsed.Seconds:00}";
         Visible = true;
     }
 

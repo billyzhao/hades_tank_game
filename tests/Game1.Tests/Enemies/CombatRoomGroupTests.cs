@@ -6,18 +6,26 @@ namespace Game1.Tests.Enemies;
 public sealed class CombatRoomGroupTests
 {
     [Test]
-    public void CombatRoom_DeclaresPlayerAndRelayGroupsInNodeHeaders()
+    public void ProductionRooms_DeclarePlayerGroupWithoutRelayGroupOrNode()
     {
-        string scenePath = FindRepositoryFile("game1", "scenes", "rooms", "mvp_combat_room.tscn");
-        string scene = File.ReadAllText(scenePath);
-
-        Assert.Multiple(() =>
+        string[] scenes =
         {
-            Assert.That(scene, Does.Contain("groups=[\"player\"] instance="));
-            Assert.That(scene, Does.Contain("type=\"StaticBody2D\" parent=\".\" groups=[\"relay\"]"));
-            Assert.That(scene, Does.Not.Contain("\ngroups = [\"player\"]"));
-            Assert.That(scene, Does.Not.Contain("\ngroups = [\"relay\"]"));
-        });
+            "mvp_combat_room.tscn",
+            "industrial_flank_room.tscn",
+            "mvp_boss_room.tscn"
+        };
+
+        foreach (string filename in scenes)
+        {
+            string scenePath = FindRepositoryFile("game1", "scenes", "rooms", filename);
+            string scene = File.ReadAllText(scenePath);
+            Assert.Multiple(() =>
+            {
+                Assert.That(scene, Does.Contain("groups=[\"player\"] instance="), $"{filename} 必须注册玩家组。");
+                Assert.That(scene, Does.Not.Contain("groups=[\"relay\"]"), $"{filename} 不得保留中继组。");
+                Assert.That(scene, Does.Not.Contain("name=\"RelayStation\""), $"{filename} 不得保留中继节点。");
+            });
+        }
     }
 
     private static string FindRepositoryFile(params string[] parts)

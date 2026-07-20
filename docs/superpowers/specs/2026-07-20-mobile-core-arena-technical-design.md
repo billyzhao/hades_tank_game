@@ -413,6 +413,8 @@ public sealed class PauseCoordinator
 
 `PauseCoordinator` 由 `AppRoot` 组合并拥有，内部用集合保存原因；只有集合从空变非空或从非空变空时才改变 `SceneTree.Paused`。升级和奖励 UI 使用 `ProcessModeEnum.WhenPaused`。
 
+窗口失焦时获取 `FocusLost`，窗口重新聚焦时立即释放 `FocusLost`。因此只有失焦原因时会自动恢复；如果玩家此前通过 Esc 获取了 `Manual`，重新聚焦后仍保持暂停，直到玩家再次按 Esc。不得让失焦暂停在重新聚焦后继续残留，也不得用自动恢复释放其他暂停原因。
+
 完全暂停时：
 
 - 敌人、玩家、炮弹、拾取物、波次计时器、Boss 和普通战斗动画停止；

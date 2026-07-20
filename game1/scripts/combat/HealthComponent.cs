@@ -14,6 +14,7 @@ public partial class HealthComponent : Node, IDamageable
 
     public int Armor => _state.Armor;
     public bool IsInvulnerable => _invulnerabilityRemaining > 0d;
+    public double InvulnerabilityRemaining => _invulnerabilityRemaining;
     public override void _Ready() => _state = new HealthState(MaximumArmor, StartingShield);
 
     public override void _Process(double delta)
@@ -34,6 +35,21 @@ public partial class HealthComponent : Node, IDamageable
     public void RestoreArmor(int amount)
     {
         _state = new HealthState(System.Math.Min(MaximumArmor, _state.Armor + System.Math.Max(0, amount)), _state.Shield);
+        EmitSignal(SignalName.ValueChanged, _state.Armor, _state.Shield);
+    }
+
+    /// <summary>用跨场景 RunState 初始化当前玩家实例，避免节点和单局状态各自维护一份装甲。</summary>
+    public void InitializeArmor(int armor, int maximumArmor)
+    {
+        if (maximumArmor <= 0) throw new System.ArgumentOutOfRangeException(nameof(maximumArmor));
+        MaximumArmor = maximumArmor;
+        _state = new HealthState(System.Math.Clamp(armor, 0, maximumArmor), StartingShield);
+        EmitSignal(SignalName.ValueChanged, _state.Armor, _state.Shield);
+    }
+
+    public void SetArmor(int armor)
+    {
+        _state = new HealthState(System.Math.Clamp(armor, 0, MaximumArmor), _state.Shield);
         EmitSignal(SignalName.ValueChanged, _state.Armor, _state.Shield);
     }
 

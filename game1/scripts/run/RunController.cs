@@ -82,12 +82,6 @@ public sealed class RunController
         return false;
     }
 
-    /// <summary>中继站耐久归零时终止当前战斗；不消耗坦克专属的战场重启次数。</summary>
-    public void OnRelayDestroyed()
-    {
-        if (Phase == RoomPhase.Combat) SetPhase(RoomPhase.Failed);
-    }
-
     private void SetPhase(RoomPhase phase)
     {
         Phase = phase;

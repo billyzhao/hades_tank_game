@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Game1;
 
-/// <summary>可读的灰盒敌人：出生预警后才移动，职责由 BehaviorId 决定优先目标。</summary>
+/// <summary>可读的灰盒敌人：出生预警后才移动；Alpha 02B 起所有职责只攻击玩家。</summary>
 public partial class EnemyTank : CharacterBody2D, IDamageable
 {
     [Export] public BehaviorId Behavior { get; set; } = BehaviorId.Patrol;
@@ -28,6 +28,8 @@ public partial class EnemyTank : CharacterBody2D, IDamageable
 
     public override void _Ready()
     {
+        // 重启脉冲和房间清理只面向普通敌军；由实体自注册可覆盖场景预置与运行时生成两种来源。
+        AddToGroup("enemies");
         _visual = GetNode<Polygon2D>("Visual");
         _roleSprite = GetNode<Sprite2D>("RoleSprite");
         _attackWarning = GetNode<Line2D>("AttackWarning");
@@ -51,9 +53,8 @@ public partial class EnemyTank : CharacterBody2D, IDamageable
         }
         SetVisualVisible(true);
         Node2D player = GetTree().GetFirstNodeInGroup("player") as Node2D;
-        Node2D relay = GetTree().GetFirstNodeInGroup("relay") as Node2D;
-        TargetId target = TargetPolicy.SelectTarget(Behavior, new TargetSnapshot(player is not null, relay is not null));
-        Node2D targetNode = target == TargetId.Relay ? relay : player;
+        TargetId target = TargetPolicy.SelectTarget(Behavior, new TargetSnapshot(player is not null));
+        Node2D targetNode = target == TargetId.Player ? player : null;
         if (targetNode is null)
         {
             Velocity = Vector2.Zero;
@@ -70,8 +71,7 @@ public partial class EnemyTank : CharacterBody2D, IDamageable
             SetVisualColor(new Color(1f, 1f, 1f));
             if (_attackTelegraphRemaining <= 0f)
             {
-                if (target == TargetId.Relay && relay is IDamageable relayDamageable) relayDamageable.ApplyDamage(new DamageContext(15));
-                else if (target == TargetId.Player) player.GetNode<HealthComponent>("HealthComponent").ApplyDamage(new DamageContext(10));
+                if (target == TargetId.Player) player.GetNode<HealthComponent>("HealthComponent").ApplyDamage(new DamageContext(10));
                 _attackCooldown = 1.3f;
                 _attackWarning.Visible = false;
                 SetVisualColor(EnemyVisualPalette.GetRoleTint(Behavior));
@@ -140,6 +140,14 @@ public partial class EnemyTank : CharacterBody2D, IDamageable
             QueueFree();
         }
         return new DamageResult(applied, destroyedNow);
+    }
+
+    public void ApplyRebootKnockback(Vector2 origin, float distance)
+    {
+        if (distance <= 0f) return;
+        Vector2 direction = origin.DirectionTo(GlobalPosition);
+        if (direction.IsZeroApprox()) direction = Vector2.Right;
+        MoveAndCollide(direction * distance);
     }
 
     private async void PlayHitFlash()

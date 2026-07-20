@@ -14,7 +14,6 @@ public partial class AudioFeedbackController : Node
     private AudioStreamWav _impact = null!;
     private AudioStreamWav _destroy = null!;
     private AudioStreamWav _dash = null!;
-    private AudioStreamWav _relayHit = null!;
     private bool _muted;
     private int _variation;
 
@@ -25,7 +24,6 @@ public partial class AudioFeedbackController : Node
         _impact = CreateTone(680f, 210f, 0.07f, noise: 0.62f, seed: 22);
         _destroy = CreateTone(120f, 32f, 0.24f, noise: 0.75f, seed: 33);
         _dash = CreateTone(160f, 70f, 0.13f, noise: 0.52f, seed: 44);
-        _relayHit = CreateTone(360f, 190f, 0.16f, noise: 0.18f, seed: 55);
 
         Node room = GetParent();
         PlayerTank player = room.GetNode<PlayerTank>("PlayerTank");
@@ -33,7 +31,6 @@ public partial class AudioFeedbackController : Node
         weapon.Fired += (_, _, _) => PlayOneShot(_fire, -7f, 0.97f + (_variation++ % 3) * 0.03f);
         weapon.ProjectileImpacted += (_, destroyed, _) => PlayOneShot(destroyed ? _destroy : _impact, destroyed ? -4f : -8f);
         player.GetNode<DashComponent>("DashComponent").DashStarted += () => PlayOneShot(_dash, -8f);
-        room.GetNode<RelayStation>("RelayStation").Damaged += _ => PlayOneShot(_relayHit, -6f);
     }
 
     public override void _Input(InputEvent inputEvent)

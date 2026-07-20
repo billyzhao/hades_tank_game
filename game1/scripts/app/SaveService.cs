@@ -59,9 +59,69 @@ public sealed class SaveService
 
     private SaveData ReadValidated(string path)
     {
-        SaveData data = JsonSerializer.Deserialize<SaveData>(File.ReadAllBytes(path), _jsonOptions)
+        byte[] bytes = File.ReadAllBytes(path);
+        using JsonDocument document = JsonDocument.Parse(bytes);
+        if (!document.RootElement.TryGetProperty("schema_version", out JsonElement schemaElement))
+            throw new InvalidDataException("存档缺少 schema_version。");
+
+        int schemaVersion = schemaElement.GetInt32();
+        if (schemaVersion == 1)
+        {
+            LegacySaveData legacy = JsonSerializer.Deserialize<LegacySaveData>(bytes, _jsonOptions)
+                ?? throw new InvalidDataException("旧存档 JSON 为空。");
+            return MigrateSchemaOne(legacy);
+        }
+
+        SaveData data = JsonSerializer.Deserialize<SaveData>(bytes, _jsonOptions)
             ?? throw new InvalidDataException("存档 JSON 为空。");
         data.Validate();
         return data;
+    }
+
+    private static SaveData MigrateSchemaOne(LegacySaveData legacy)
+    {
+        SaveData migrated = SaveData.CreateDefault();
+        migrated.Settings = legacy.Settings ?? new SaveSettings();
+        migrated.UnlockedIds = legacy.UnlockedIds ?? new System.Collections.Generic.List<string>();
+        LegacyLastRunSummary summary = legacy.LastRun ?? new LegacyLastRunSummary();
+        migrated.LastRun = new LastRunSummary
+        {
+            Seed = summary.Seed,
+            CoreId = string.Empty,
+            ArenaIndex = 0,
+            WaveIndex = 0,
+            Level = 1,
+            ElapsedSeconds = summary.ElapsedSeconds,
+            Result = summary.Result ?? string.Empty
+        };
+        migrated.Validate();
+        return migrated;
+    }
+
+    private sealed class LegacySaveData
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("settings")]
+        public SaveSettings Settings { get; set; } = new();
+
+        [System.Text.Json.Serialization.JsonPropertyName("unlocked_ids")]
+        public System.Collections.Generic.List<string> UnlockedIds { get; set; } = new();
+
+        [System.Text.Json.Serialization.JsonPropertyName("last_run")]
+        public LegacyLastRunSummary LastRun { get; set; } = new();
+    }
+
+    private sealed class LegacyLastRunSummary
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("seed")]
+        public int Seed { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("relay_integrity")]
+        public int RelayIntegrity { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("elapsed_seconds")]
+        public double ElapsedSeconds { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("result")]
+        public string Result { get; set; } = string.Empty;
     }
 }
