@@ -1,5 +1,7 @@
 # Roguelite Tank MVP Implementation Plan
 
+> **历史 MVP 开发计划：已被替代。** 本文保留固定中继站纵切的实施记录，不再用于安排当前开发。当前玩法见[《移动核心竞技场肉鸽重构设计》](../specs/2026-07-20-mobile-core-arena-roguelite-redesign.md)，当前实施顺序见[《移动核心竞技场重构总实施路线图》](./2026-07-20-mobile-core-arena-roadmap.md)。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 在现有 `game1` Godot 4.7 C# 工程中，按可运行迭代完成一个包含双摇杆坦克战斗、可破坏地形、中继站双生命线、三类敌人、三选一构筑与路障指挥车 Boss 的最小可玩版本。

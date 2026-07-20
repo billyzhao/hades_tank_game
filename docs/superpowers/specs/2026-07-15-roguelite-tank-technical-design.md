@@ -1,5 +1,7 @@
 # 废土中继：Godot 技术设计
 
+> **历史 MVP 技术基线：已被替代。** 本文中的 `RelayStation`、中继耐久、房间清场和基地目标只用于解释现有旧代码。移动核心目标架构以[《移动核心竞技场技术设计》](./2026-07-20-mobile-core-arena-technical-design.md)为准，迁移顺序见[《移动核心竞技场重构总实施路线图》](../plans/2026-07-20-mobile-core-arena-roadmap.md)；迁移完成前不得把旧字段继续扩展到新系统。
+
 > 对应策划：[《废土中继：肉鸽坦克战 — 游戏策划》](./2026-07-15-roguelite-tank-design.md)
 
 > 对应开发计划：[《Roguelite Tank MVP Implementation Plan》](../plans/2026-07-15-roguelite-tank-mvp.md)

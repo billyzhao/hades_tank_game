@@ -1,5 +1,7 @@
 # Alpha 01A：上下攻防构图与单位比例
 
+> **历史迭代记录。** 本迭代的一格一车、碰撞比例和竞技场边界继续作为迁移输入；底部基地、上方来敌和独立中继站构图已由[《移动核心竞技场肉鸽重构设计》](../superpowers/specs/2026-07-20-mobile-core-arena-roguelite-redesign.md)替代。后续顺序见[《移动核心竞技场重构总实施路线图》](../superpowers/plans/2026-07-20-mobile-core-arena-roadmap.md)。
+
 状态：开发、集中自检与用户可见验收均已完成；用户已授权提交并推送。
 
 ## 目标与非目标

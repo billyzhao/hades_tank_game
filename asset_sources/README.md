@@ -9,7 +9,7 @@
 3. 把网页许可证、包内许可证和购买凭证保存到 `licenses/`；
 4. 在 `working/` 完成裁切、统一色板、命名和响度处理；
 5. 只把游戏实际使用的最终文件复制到 `game1/assets/`；
-6. AI 只补充现成素材无法覆盖的 Boss、关键特效、UI 或宣传概念，源文件保存在 `ai_generated/` 并同样登记。
+6. AI 只补充现成素材无法覆盖的核心坦克差异、敌军、Boss、关键特效、UI 或宣传概念，源文件保存在 `ai_generated/` 并同样登记。
 
 任何未来的第三方素材下载或购买，都必须先完成登记并获得用户明确确认。
 
@@ -17,6 +17,9 @@
 
 - [`THIRD_PARTY_ASSETS.md`](THIRD_PARTY_ASSETS.md) 中的第三方候选仍未下载或购买；
 - 已生成并在 [`AI_PROTOTYPE_ASSETS.md`](AI_PROTOTYPE_ASSETS.md) 登记一批内部 AI 像素原型；
+- 当前素材生产以 [`MOBILE_CORE_ASSET_PLAN.md`](MOBILE_CORE_ASSET_PLAN.md) 为权威批次方案；
+- `batch-00-style` 中包含中继站的旧风格图、旧比例稿与提示词已经失效，不再作为新素材参考；
+- `batch-01-units` 是尚未通过批次门禁的本地候选，不会直接进入游戏；
 - 这些 AI 原型只用于内部玩法与表现验收，不视为最终商用素材；
 - 未来下载或购买第三方素材时，仍必须先登记来源、授权和状态，并获得用户明确确认。
 
