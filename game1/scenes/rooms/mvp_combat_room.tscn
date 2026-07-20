@@ -14,12 +14,7 @@
 [ext_resource type="TileSet" path="res://resources/tiles/industrial_tileset.tres" id="12_tileset"]
 [ext_resource type="Script" path="res://scripts/terrain/TileTerrainAdapter.cs" id="13_terrain"]
 [ext_resource type="Script" path="res://scripts/terrain/TileLayerPainter.cs" id="14_painter"]
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_top_bottom"]
-size = Vector2(480, 12)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_left_right"]
-size = Vector2(12, 270)
+[ext_resource type="PackedScene" path="res://scenes/rooms/components/arena_bounds.tscn" id="15_bounds"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_room"]
 bg_color = Color(0.0627451, 0.0784314, 0.101961, 1)
@@ -28,7 +23,7 @@ bg_color = Color(0.0627451, 0.0784314, 0.101961, 1)
 size = Vector2(24, 100)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_brick"]
-size = Vector2(24, 64)
+size = Vector2(30, 42)
 
 [node name="MvpCombatRoom" type="Node2D"]
 
@@ -54,25 +49,20 @@ tile_set = ExtResource("12_tileset")
 
 [node name="StructurePainter" type="Node" parent="Structure"]
 script = ExtResource("14_painter")
-Cells = Array[Vector2i]([Vector2i(15, 3), Vector2i(15, 4), Vector2i(15, 5), Vector2i(15, 6), Vector2i(15, 7)])
+Cells = Array[Vector2i]([Vector2i(4, 3), Vector2i(4, 4), Vector2i(4, 5), Vector2i(15, 3), Vector2i(15, 4), Vector2i(15, 5), Vector2i(7, 7), Vector2i(12, 7)])
 
 [node name="Destructible" type="TileMapLayer" parent="."]
 tile_set = ExtResource("12_tileset")
 
 [node name="TileTerrainAdapter" type="Node" parent="."]
 script = ExtResource("13_terrain")
-InitialBrickCells = Array[Vector2i]([Vector2i(7, 4), Vector2i(7, 5), Vector2i(7, 6)])
+InitialBrickCells = Array[Vector2i]([Vector2i(8, 5), Vector2i(9, 5), Vector2i(10, 5), Vector2i(11, 5), Vector2i(8, 8), Vector2i(11, 8), Vector2i(8, 9), Vector2i(11, 9)])
 BrickHitPoints = 20
 
-[node name="BoundaryVisual" type="Line2D" parent="."]
-points = PackedVector2Array(6, 6, 474, 6, 474, 264, 6, 264, 6, 6)
-width = 3.0
-default_color = Color(0.407843, 0.529412, 0.611765, 1)
-
-[node name="Walls" type="Node2D" parent="."]
+[node name="ArenaBounds" parent="." instance=ExtResource("15_bounds")]
 
 [node name="RelayStation" type="StaticBody2D" parent="." groups=["relay"]]
-position = Vector2(80, 135)
+position = Vector2(240, 232)
 collision_layer = 16
 collision_mask = 0
 script = ExtResource("3_relay")
@@ -90,40 +80,8 @@ texture_filter = 1
 scale = Vector2(0.62, 0.62)
 z_index = 1
 
-[node name="Top" type="StaticBody2D" parent="Walls"]
-position = Vector2(240, 6)
-collision_layer = 1
-collision_mask = 0
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/Top"]
-shape = SubResource("RectangleShape2D_top_bottom")
-
-[node name="Bottom" type="StaticBody2D" parent="Walls"]
-position = Vector2(240, 264)
-collision_layer = 1
-collision_mask = 0
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/Bottom"]
-shape = SubResource("RectangleShape2D_top_bottom")
-
-[node name="Left" type="StaticBody2D" parent="Walls"]
-position = Vector2(6, 135)
-collision_layer = 1
-collision_mask = 0
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/Left"]
-shape = SubResource("RectangleShape2D_left_right")
-
-[node name="Right" type="StaticBody2D" parent="Walls"]
-position = Vector2(474, 135)
-collision_layer = 1
-collision_mask = 0
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/Right"]
-shape = SubResource("RectangleShape2D_left_right")
-
 [node name="PlayerTank" parent="." groups=["player"] instance=ExtResource("1_player_tank")]
-position = Vector2(240, 135)
+position = Vector2(240, 184)
 
 [node name="RebootController" type="Node" parent="."]
 script = ExtResource("4_reboot")

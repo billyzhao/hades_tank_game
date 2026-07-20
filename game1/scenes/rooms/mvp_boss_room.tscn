@@ -13,15 +13,18 @@
 [ext_resource type="Script" path="res://scripts/terrain/TileTerrainAdapter.cs" id="11_terrain"]
 [ext_resource type="Script" path="res://scripts/bosses/BossGunEmplacement.cs" id="12_gun"]
 [ext_resource type="Script" path="res://scripts/bosses/BossSummonController.cs" id="13_summons"]
+[ext_resource type="PackedScene" path="res://scenes/rooms/components/arena_bounds.tscn" id="14_bounds"]
 
 [sub_resource type="RectangleShape2D" id="RelayShape"]
-size = Vector2(24, 64)
+size = Vector2(30, 42)
 
 [node name="MvpBossRoom" type="Node2D"]
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(240, 135)
 enabled = true
+
+[node name="ArenaBounds" parent="." instance=ExtResource("14_bounds")]
 
 [node name="Background" type="Sprite2D" parent="."]
 texture = ExtResource("5_background")
@@ -42,18 +45,18 @@ tile_set = ExtResource("7_tileset")
 
 [node name="StructurePainter" type="Node" parent="Structure"]
 script = ExtResource("8_painter")
-Cells = [Vector2i(7, 3), Vector2i(7, 4), Vector2i(7, 5), Vector2i(12, 6), Vector2i(12, 7), Vector2i(12, 8)]
+Cells = [Vector2i(5, 3), Vector2i(5, 4), Vector2i(5, 5), Vector2i(14, 3), Vector2i(14, 4), Vector2i(14, 5), Vector2i(7, 7), Vector2i(12, 7), Vector2i(9, 8), Vector2i(10, 8)]
 
 [node name="Destructible" type="TileMapLayer" parent="."]
 tile_set = ExtResource("7_tileset")
 
 [node name="TileTerrainAdapter" type="Node" parent="."]
 script = ExtResource("11_terrain")
-InitialBrickCells = [Vector2i(11, 4), Vector2i(11, 5), Vector2i(11, 6)]
+InitialBrickCells = [Vector2i(9, 4), Vector2i(10, 4), Vector2i(9, 5), Vector2i(10, 5), Vector2i(9, 6), Vector2i(10, 6)]
 BrickHitPoints = 20
 
 [node name="RelayStation" type="StaticBody2D" parent="." groups=["relay"]]
-position = Vector2(92, 204)
+position = Vector2(240, 232)
 collision_layer = 16
 collision_mask = 0
 script = ExtResource("3_relay")
@@ -68,28 +71,28 @@ scale = Vector2(0.62, 0.62)
 z_index = 1
 
 [node name="PlayerTank" parent="." groups=["player"] instance=ExtResource("1_player")]
-position = Vector2(218, 202)
+position = Vector2(192, 216)
 
 [node name="RoadblockCommander" parent="." instance=ExtResource("2_boss")]
-position = Vector2(382, 88)
+position = Vector2(240, 78)
 
 [node name="BossEncounterController" type="Node" parent="."]
 script = ExtResource("9_encounter")
-PhaseOneBarrierCells = [Vector2i(9, 3), Vector2i(10, 7), Vector2i(14, 4), Vector2i(15, 8)]
-PhaseTwoOpeningCells = [Vector2i(11, 4), Vector2i(11, 5), Vector2i(11, 6)]
+PhaseOneBarrierCells = [Vector2i(7, 3), Vector2i(12, 3), Vector2i(6, 6), Vector2i(13, 6)]
+PhaseTwoOpeningCells = [Vector2i(9, 4), Vector2i(10, 4), Vector2i(9, 5), Vector2i(10, 5), Vector2i(9, 6), Vector2i(10, 6)]
 BarrierIntervalSeconds = 3.2
 
 [node name="BarrierDeployment" type="Node" parent="BossEncounterController"]
 script = ExtResource("10_barrier")
 
 [node name="BossGunEmplacement" type="Node2D" parent="BossEncounterController"]
-position = Vector2(430, 210)
+position = Vector2(420, 132)
 script = ExtResource("12_gun")
 
 [node name="BossSummonController" type="Node" parent="BossEncounterController"]
 script = ExtResource("13_summons")
 MaximumAlive = 2
-SpawnPoints = [Vector2(420, 60), Vector2(430, 180)]
+SpawnPoints = [Vector2(72, 42), Vector2(408, 42)]
 
 [node name="RebootController" type="Node" parent="."]
 script = ExtResource("4_reboot")

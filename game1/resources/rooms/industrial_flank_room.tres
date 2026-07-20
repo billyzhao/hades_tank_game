@@ -21,5 +21,5 @@ script = ExtResource("1_room")
 Scene = ExtResource("2_scene")
 GridSize = Vector2i(20, 12)
 CellSize = 24
-EnemySpawnPoints = [Vector2(438, 42), Vector2(438, 228), Vector2(42, 42), Vector2(42, 228)]
+EnemySpawnPoints = [Vector2(48, 96), Vector2(240, 78), Vector2(384, 54), Vector2(450, 96)]
 Waves = [SubResource("Wave1"), SubResource("Wave2"), SubResource("Wave3")]

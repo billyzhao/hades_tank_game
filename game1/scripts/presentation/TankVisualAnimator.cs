@@ -16,11 +16,13 @@ public partial class TankVisualAnimator : Node
     private float _motionClock;
     private float _dustCooldown;
     private int _dustSide = 1;
+    private Vector2 _bodyBaseScale;
 
     public override void _Ready()
     {
         _player = GetParent<PlayerTank>();
         _bodyVisual = _player.GetNode<Sprite2D>("BodyVisual");
+        _bodyBaseScale = _bodyVisual.Scale;
         _turretVisual = _player.GetNode<Node2D>("Turret/TurretVisual");
         _muzzleFlash = _player.GetNode<CanvasItem>("Turret/Muzzle/MuzzleFlash");
         _player.GetNode<WeaponController>("WeaponController").Fired += OnFired;
@@ -54,14 +56,16 @@ public partial class TankVisualAnimator : Node
         if (!moving)
         {
             _bodyVisual.Position = _bodyVisual.Position.Lerp(Vector2.Zero, Mathf.Min(1f, delta * 14f));
-            _bodyVisual.Scale = _bodyVisual.Scale.Lerp(Vector2.One * 0.75f, Mathf.Min(1f, delta * 14f));
+            _bodyVisual.Scale = _bodyVisual.Scale.Lerp(_bodyBaseScale, Mathf.Min(1f, delta * 14f));
             return;
         }
 
         _motionClock += delta * (_isDashing ? 2.2f : 1f);
         float treadPulse = Mathf.Sin(_motionClock * 18f);
         _bodyVisual.Position = new Vector2(0f, treadPulse * (_isDashing ? 0.75f : 0.40f));
-        _bodyVisual.Scale = new Vector2(0.75f + treadPulse * 0.012f, 0.75f - treadPulse * 0.008f);
+        _bodyVisual.Scale = new Vector2(
+            _bodyBaseScale.X + treadPulse * 0.010f,
+            _bodyBaseScale.Y - treadPulse * 0.006f);
 
         _dustCooldown -= delta;
         float interval = _isDashing ? 0.035f : 0.12f;

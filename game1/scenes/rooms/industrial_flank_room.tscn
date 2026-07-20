@@ -11,15 +11,18 @@
 [ext_resource type="Script" path="res://scripts/terrain/TileTerrainAdapter.cs" id="9_terrain"]
 [ext_resource type="TileSet" path="res://resources/tiles/industrial_tileset.tres" id="10_tileset"]
 [ext_resource type="Script" path="res://scripts/terrain/TileLayerPainter.cs" id="11_painter"]
+[ext_resource type="PackedScene" path="res://scenes/rooms/components/arena_bounds.tscn" id="12_bounds"]
 
 [sub_resource type="RectangleShape2D" id="RelayShape"]
-size = Vector2(24, 64)
+size = Vector2(30, 42)
 
 [node name="IndustrialFlankRoom" type="Node2D"]
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(240, 135)
 enabled = true
+
+[node name="ArenaBounds" parent="." instance=ExtResource("12_bounds")]
 
 [node name="Background" type="Sprite2D" parent="."]
 texture = ExtResource("6_background")
@@ -40,17 +43,17 @@ tile_set = ExtResource("10_tileset")
 
 [node name="StructurePainter" type="Node" parent="Structure"]
 script = ExtResource("11_painter")
-Cells = [Vector2i(4, 3), Vector2i(4, 4), Vector2i(4, 5), Vector2i(5, 5), Vector2i(6, 5), Vector2i(14, 7), Vector2i(15, 7), Vector2i(15, 8)]
+Cells = [Vector2i(3, 3), Vector2i(3, 4), Vector2i(4, 4), Vector2i(8, 2), Vector2i(8, 3), Vector2i(8, 4), Vector2i(13, 5), Vector2i(14, 5), Vector2i(15, 5), Vector2i(16, 7), Vector2i(16, 8)]
 
 [node name="Destructible" type="TileMapLayer" parent="."]
 tile_set = ExtResource("10_tileset")
 
 [node name="TileTerrainAdapter" type="Node" parent="."]
 script = ExtResource("9_terrain")
-InitialBrickCells = [Vector2i(10, 2), Vector2i(10, 3), Vector2i(10, 4), Vector2i(10, 5), Vector2i(10, 6), Vector2i(10, 7), Vector2i(10, 8)]
+InitialBrickCells = [Vector2i(6, 6), Vector2i(7, 6), Vector2i(8, 6), Vector2i(11, 3), Vector2i(11, 4), Vector2i(11, 5), Vector2i(5, 8), Vector2i(6, 8)]
 
 [node name="RelayStation" type="StaticBody2D" parent="." groups=["relay"]]
-position = Vector2(96, 204)
+position = Vector2(144, 232)
 collision_layer = 16
 collision_mask = 0
 script = ExtResource("2_relay")
@@ -65,7 +68,7 @@ scale = Vector2(0.62, 0.62)
 z_index = 1
 
 [node name="PlayerTank" parent="." groups=["player"] instance=ExtResource("1_player")]
-position = Vector2(224, 192)
+position = Vector2(192, 190)
 
 [node name="RebootController" type="Node" parent="."]
 script = ExtResource("3_reboot")

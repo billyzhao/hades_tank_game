@@ -11,7 +11,7 @@ public partial class PlayerTank : CharacterBody2D
     private WeaponController _weaponController = null!;
     private TankVisualAnimator _visualAnimator = null!;
 
-    public Vector2 AimDirection { get; private set; } = Vector2.Right;
+    public Vector2 AimDirection { get; private set; } = Vector2.Up;
 
     public override void _Ready()
     {

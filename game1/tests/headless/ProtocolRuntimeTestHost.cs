@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
@@ -76,6 +77,9 @@ public partial class ProtocolRuntimeTestHost : Node
         failures += Run("navigation_grid_removed_brick_opens_path", NavigationGridRemovedBrickOpensPath);
         failures += Run("navigation_grid_invalid_or_blocked_path_returns_empty", NavigationGridInvalidOrBlockedPathReturnsEmpty);
         failures += Run("room_definitions_load_two_valid_distinct_rooms", RoomDefinitionsLoadTwoValidDistinctRooms);
+        failures += Run("player_tank_matches_alpha_grid_metric", PlayerTankMatchesAlphaGridMetric);
+        failures += Run("combat_rooms_use_north_to_south_composition", CombatRoomsUseNorthToSouthComposition);
+        failures += Run("boss_room_uses_central_charge_axis", BossRoomUsesCentralChargeAxis);
         failures += Run("tile_terrain_destroyed_brick_updates_blocked_cells_once", TileTerrainDestroyedBrickUpdatesBlockedCellsOnce);
         failures += Run("tile_terrain_explicit_destroy_is_once_only", TileTerrainExplicitDestroyIsOnceOnly);
         failures += Run("room_navigation_factory_refreshes_after_brick_destroyed", RoomNavigationFactoryRefreshesAfterBrickDestroyed);
@@ -574,6 +578,101 @@ public partial class ProtocolRuntimeTestHost : Node
         AssertRoomHasTerrainLayers(first, "首战房");
         AssertRoomHasTerrainLayers(second, "工业侧翼房");
     }
+
+    private static void PlayerTankMatchesAlphaGridMetric()
+    {
+        PlayerTank player = GD.Load<PackedScene>("res://scenes/actors/player_tank.tscn").Instantiate<PlayerTank>();
+        try
+        {
+            Sprite2D hull = player.GetNode<Sprite2D>("BodyVisual");
+            Sprite2D turret = player.GetNode<Sprite2D>("Turret/TurretVisual");
+            RectangleShape2D collision = player.GetNode<CollisionShape2D>("BodyCollision").Shape as RectangleShape2D;
+            Assert(hull.Scale.IsEqualApprox(new Vector2(.62f, .62f)), "玩家车体必须使用 Alpha 01A 的 0.62 场景基准比例。");
+            Assert(turret.Scale.IsEqualApprox(hull.Scale), "炮塔与车体必须使用同一场景基准比例。");
+            Assert(collision is not null && collision.Size.IsEqualApprox(new Vector2(16f, 16f)), "玩家碰撞盒必须为 16×16 像素。");
+            Assert(Mathf.IsEqualApprox(player.Rotation, -Mathf.Pi / 2f), "玩家出生时车身必须朝向上方进攻轴。");
+            TankVisualAnimator animator = player.GetNode<TankVisualAnimator>("TankVisualAnimator");
+            animator._Ready();
+            animator.SetMotion(Vector2.Zero, false);
+            animator._Process(.1d);
+            Assert(hull.Scale.IsEqualApprox(new Vector2(.62f, .62f)), "静止动画不得把场景基准比例改回旧值。");
+        }
+        finally
+        {
+            player.Free();
+        }
+    }
+
+    private static void CombatRoomsUseNorthToSouthComposition()
+    {
+        RoomDefinition[] definitions =
+        {
+            GD.Load<RoomDefinition>("res://resources/rooms/mvp_combat_room.tres"),
+            GD.Load<RoomDefinition>("res://resources/rooms/industrial_flank_room.tres")
+        };
+
+        foreach (RoomDefinition definition in definitions)
+        {
+            Node2D room = definition.Scene.Instantiate<Node2D>();
+            try
+            {
+                Node2D relay = room.GetNode<Node2D>("RelayStation");
+                Node2D player = room.GetNode<Node2D>("PlayerTank");
+                Assert(relay.Position.Y >= 220f, $"{definition.Scene.ResourcePath} 的中继站必须位于底部防区。");
+                Assert(player.Position.Y < relay.Position.Y, $"{definition.Scene.ResourcePath} 的玩家必须出生在中继站前方。");
+                Assert(room.GetNodeOrNull<Node2D>("ArenaBounds") is not null, $"{definition.Scene.ResourcePath} 必须使用共用战场边界。");
+                Assert(definition.EnemySpawnPoints.All(point => point.Y <= 126f && point.Y < relay.Position.Y),
+                    $"{definition.Scene.ResourcePath} 的普通敌军只能从上半区出生。");
+
+                HashSet<Vector2I> blocked = new();
+                foreach (Vector2I cell in room.GetNode<TileLayerPainter>("Structure/StructurePainter").Cells) blocked.Add(cell);
+                foreach (Vector2I cell in room.GetNode<TileTerrainAdapter>("TileTerrainAdapter").InitialBrickCells) blocked.Add(cell);
+                NavigationGrid grid = new(definition.GridSize);
+                grid.Rebuild(blocked);
+                Vector2I target = ToCell(relay.Position, definition.CellSize);
+                foreach (Vector2 spawn in definition.EnemySpawnPoints)
+                {
+                    Assert(grid.FindPath(ToCell(spawn, definition.CellSize), target).Count > 0,
+                        $"出生点 {spawn} 必须存在通往中继站防区的导航路径。");
+                }
+            }
+            finally
+            {
+                room.Free();
+            }
+        }
+    }
+
+    private static void BossRoomUsesCentralChargeAxis()
+    {
+        Node2D room = GD.Load<PackedScene>("res://scenes/rooms/mvp_boss_room.tscn").Instantiate<Node2D>();
+        try
+        {
+            Node2D relay = room.GetNode<Node2D>("RelayStation");
+            Node2D player = room.GetNode<Node2D>("PlayerTank");
+            RoadblockCommander boss = room.GetNode<RoadblockCommander>("RoadblockCommander");
+            BossEncounterController encounter = room.GetNode<BossEncounterController>("BossEncounterController");
+            TileTerrainAdapter terrain = room.GetNode<TileTerrainAdapter>("TileTerrainAdapter");
+            HashSet<Vector2I> bricks = terrain.InitialBrickCells.ToHashSet();
+            HashSet<Vector2I> steel = room.GetNode<TileLayerPainter>("Structure/StructurePainter").Cells.ToHashSet();
+
+            Assert(relay.Position.Y >= 220f && player.Position.Y < relay.Position.Y, "Boss 房必须保持底部中继站与前置玩家出生位。");
+            Assert(Mathf.Abs(relay.Position.X - boss.Position.X) <= 1f && boss.Position.Y <= 96f,
+                "Boss 与中继站必须形成从顶部到防区的中央冲锋轴。");
+            Assert(boss.PhaseOneAnchors.All(anchor => anchor.Y < relay.Position.Y), "Boss 第一阶段锚点必须全部位于中继站上方。");
+            Assert(encounter.PhaseTwoOpeningCells.All(bricks.Contains), "二阶段开路格必须全部来自可破坏中央砖墙。");
+            Assert(steel.Contains(new Vector2I(9, 8)) && steel.Contains(new Vector2I(10, 8)),
+                "中继站前必须保留两格中央钢墙供冲锋碰撞和脆弱窗口使用。");
+            Assert(room.GetNodeOrNull<Node2D>("ArenaBounds") is not null, "Boss 房必须使用共用战场边界。");
+        }
+        finally
+        {
+            room.Free();
+        }
+    }
+
+    private static Vector2I ToCell(Vector2 world, int cellSize) =>
+        new(Mathf.FloorToInt(world.X / cellSize), Mathf.FloorToInt(world.Y / cellSize));
 
     private static void AssertRoomHasTerrainLayers(RoomDefinition definition, string roomName)
     {
