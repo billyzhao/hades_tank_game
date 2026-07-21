@@ -7,6 +7,7 @@ public enum StatId
     FireCooldown = 1,
     DashCooldown = 2,
     ArmorMax = 3,
+    MoveSpeed = 4,
     ProjectileBounces = 6,
     ProjectileSplitCount = 7,
     DashTrailDamage = 8

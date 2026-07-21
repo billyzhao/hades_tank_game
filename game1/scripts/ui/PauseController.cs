@@ -56,7 +56,9 @@ public partial class PauseController : CanvasLayer
 
     private void OnPauseChanged(bool paused)
     {
-        if (_overlay is not null) _overlay.Visible = paused;
+        // 升级暂停冻结战斗，但三选一面板必须保持可见并可输入；
+        // 手动/失焦暂停仍由通用遮罩表达。
+        if (_overlay is not null) _overlay.Visible = paused && !_coordinator.Contains(PauseReason.LevelUp);
     }
 
     public override void _ExitTree()

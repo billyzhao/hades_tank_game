@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/app/AppRoot.cs" id="1_app_root"]
 [ext_resource type="Script" path="res://scripts/ui/AcceptanceMenu.cs" id="2_acceptance"]
@@ -14,6 +14,21 @@ corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_experience_back"]
+bg_color = Color(0.02, 0.04, 0.06, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.65, 0.8, 0.8)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_experience_fill"]
+bg_color = Color(0.1, 0.82, 1, 1)
+corner_radius_top_left = 1
+corner_radius_top_right = 1
+corner_radius_bottom_right = 1
+corner_radius_bottom_left = 1
 
 [node name="AppRoot" type="Node"]
 script = ExtResource("1_app_root")
@@ -102,6 +117,46 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("2_acceptance")
+
+[node name="ExperiencePanel" type="Panel" parent="UI"]
+offset_left = 258.0
+offset_top = 6.0
+offset_right = 386.0
+offset_bottom = 52.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_hud")
+mouse_filter = 2
+
+[node name="LevelLabel" type="Label" parent="UI"]
+offset_left = 266.0
+offset_top = 11.0
+offset_right = 378.0
+offset_bottom = 23.0
+text = "等级 1"
+theme_override_colors/font_color = Color(0.55, 0.9, 1, 1)
+theme_override_constants/outline_size = 2
+theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.025, 1)
+theme_override_font_sizes/font_size = 9
+
+[node name="ExperienceLabel" type="Label" parent="UI"]
+offset_left = 266.0
+offset_top = 27.0
+offset_right = 378.0
+offset_bottom = 38.0
+text = "数据 0/20"
+theme_override_colors/font_color = Color(0.3, 0.9, 1, 1)
+theme_override_constants/outline_size = 2
+theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.025, 1)
+theme_override_font_sizes/font_size = 7
+
+[node name="ExperienceBar" type="ProgressBar" parent="UI"]
+offset_left = 270.0
+offset_top = 41.0
+offset_right = 378.0
+offset_bottom = 47.0
+max_value = 20.0
+show_percentage = false
+theme_override_styles/background = SubResource("StyleBoxFlat_experience_back")
+theme_override_styles/fill = SubResource("StyleBoxFlat_experience_fill")
 
 [node name="StatusLabel" type="Label" parent="UI"]
 offset_left = 10.0

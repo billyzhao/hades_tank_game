@@ -11,6 +11,7 @@ public sealed class BuildController
     private readonly ContentCatalog _catalog;
     private readonly StatPipeline _statPipeline = new();
     private readonly System.Collections.Generic.List<StatModifier> _modifiers = new();
+    private readonly Dictionary<StatUpgradeId, int> _statUpgradeStacks = new();
     private bool _ended;
 
     public BuildController(RunState state, ContentCatalog catalog)
@@ -29,6 +30,7 @@ public sealed class BuildController
     public event Action RoomCleared;
 
     public System.Collections.Generic.IReadOnlyList<StatModifier> ModifierSnapshot => _modifiers.ToArray();
+    public IReadOnlyDictionary<StatUpgradeId, int> StatUpgradeStacks => _statUpgradeStacks;
 
     public ContentCatalog Catalog => _catalog;
 
@@ -53,6 +55,17 @@ public sealed class BuildController
                 protocol.Id));
         }
 
+        SnapshotChanged?.Invoke();
+    }
+
+    public void ApplyStatUpgrade(StatUpgradeOffer offer)
+    {
+        EnsureActive();
+        if (offer is null) throw new ArgumentNullException(nameof(offer));
+        int count = _statUpgradeStacks.GetValueOrDefault(offer.Id);
+        if (count >= offer.StackLimit) throw new InvalidOperationException("该基础属性已达到升级上限。 ");
+        _statUpgradeStacks[offer.Id] = count + 1;
+        _modifiers.Add(offer.Modifier);
         SnapshotChanged?.Invoke();
     }
 
@@ -92,6 +105,7 @@ public sealed class BuildController
 
         _ended = true;
         _modifiers.Clear();
+        _statUpgradeStacks.Clear();
         _state.ClearBuildState();
         SnapshotChanged = null;
         ShotFired = null;

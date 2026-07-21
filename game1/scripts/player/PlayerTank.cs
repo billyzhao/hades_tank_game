@@ -10,6 +10,7 @@ public partial class PlayerTank : CharacterBody2D
     private Node2D _turret = null!;
     private WeaponController _weaponController = null!;
     private TankVisualAnimator _visualAnimator = null!;
+    private BuildController _buildController;
 
     public Vector2 AimDirection { get; private set; } = Vector2.Up;
 
@@ -35,13 +36,14 @@ public partial class PlayerTank : CharacterBody2D
             _dashComponent.TryStart(dashDirection);
         }
 
+        float movementSpeed = _buildController is null ? MoveSpeed : _buildController.EvaluateStat(StatId.MoveSpeed, MoveSpeed);
         if (_dashComponent.IsDashing)
         {
-            Velocity = _dashComponent.Direction * MoveSpeed * _dashComponent.SpeedMultiplier;
+            Velocity = _dashComponent.Direction * movementSpeed * _dashComponent.SpeedMultiplier;
         }
         else
         {
-            Velocity = TankMotion.CalculateVelocity(movementInput, MoveSpeed);
+            Velocity = TankMotion.CalculateVelocity(movementInput, movementSpeed);
         }
 
         if (!Velocity.IsZeroApprox())
@@ -58,6 +60,9 @@ public partial class PlayerTank : CharacterBody2D
         MoveAndSlide();
         _visualAnimator.SetMotion(Velocity, _dashComponent.IsDashing);
     }
+
+    public void AttachBuild(BuildController buildController) =>
+        _buildController = buildController ?? throw new System.ArgumentNullException(nameof(buildController));
 
     private void UpdateAimDirection()
     {

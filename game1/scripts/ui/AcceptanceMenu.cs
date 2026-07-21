@@ -12,6 +12,7 @@ public partial class AcceptanceMenu : Control
     [Signal] public delegate void CompleteWaveRequestedEventHandler();
     [Signal] public delegate void AdvanceWaveRequestedEventHandler();
     [Signal] public delegate void EndRunRequestedEventHandler();
+    [Signal] public delegate void ExperienceRequestedEventHandler(int amount);
     [Signal] public delegate void BossRequestedEventHandler();
     [Signal] public delegate void RestartRequestedEventHandler();
 
@@ -61,6 +62,7 @@ public partial class AcceptanceMenu : Control
         };
         _status.AddThemeFontSizeOverride("font_size", 8);
         content.AddChild(_status);
+        content.AddChild(CreateButton("授予经验 +100", () => EmitSignal(SignalName.ExperienceRequested, 100)));
         content.AddChild(CreateButton("装甲 -25", () => EmitSignal(SignalName.DamageRequested, 25)));
         content.AddChild(CreateButton("触发坦克报废", () => EmitSignal(SignalName.DefeatRequested)));
         content.AddChild(CreateButton("结束刷新（保留残敌）", () => EmitSignal(SignalName.StopWaveSpawningRequested)));

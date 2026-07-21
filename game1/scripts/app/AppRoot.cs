@@ -25,6 +25,9 @@ public partial class AppRoot : Node
     private HealthComponent _playerHealth = null!;
     private RebootController _rebootController = null!;
     private BuildController _buildController = null!;
+    private LevelUpController _levelUpController = null!;
+    private CombatDataCollector _combatDataCollector = null!;
+    private PauseCoordinator _pauseCoordinator = null!;
     private RunController _runController = null!;
     private ArenaController _arenaController = null!;
     private WaveDirector _waveDirector;
@@ -38,10 +41,14 @@ public partial class AppRoot : Node
     private Label _enemyLabel = null!;
     private Label _arenaLabel = null!;
     private Label _waveLabel = null!;
+    private Label _levelLabel = null!;
+    private Label _experienceLabel = null!;
+    private ProgressBar _experienceBar = null!;
     private Label _eventLabel = null!;
     private Label _buildLabel = null!;
     private AcceptanceMenu _acceptanceMenu = null!;
     private WaveRewardPanel _waveRewardPanel = null!;
+    private LevelUpPanel _levelUpPanel = null!;
     private BossHudController _bossHud = null!;
     private RunResultScreen _runResultScreen = null!;
     private DebugOverlay _debugOverlay = null!;
@@ -50,6 +57,7 @@ public partial class AppRoot : Node
     private ulong _runStartedAtMsec;
     private bool _resultShown;
     private bool _autoAdvanceAcceptanceWave;
+    private bool _awaitingWaveRewardAfterLevelUps;
 
     public override void _Ready()
     {
@@ -62,16 +70,23 @@ public partial class AppRoot : Node
         _buildController = new BuildController(CurrentRun, ProtocolCatalog);
         _runController = new RunController(CurrentRun, _buildController);
         _runController.PhaseChanged += OnRunPhaseChanged;
+        _levelUpController = new LevelUpController(CurrentRun, _buildController, new ControlledStatOfferGenerator(), new ExperienceCurve());
+        _levelUpController.OfferRequested += ShowLevelUpOffer;
+        _levelUpController.QueueDrained += OnLevelUpQueueDrained;
 
-        PauseCoordinator pauseCoordinator = new(GetTree());
+        _pauseCoordinator = new PauseCoordinator(GetTree());
         PauseController pauseController = new();
-        pauseController.Configure(pauseCoordinator);
+        pauseController.Configure(_pauseCoordinator);
         AddChild(pauseController);
 
         BindHudNodes();
         CreateUiControllers();
         BindAcceptanceMenu();
-        _buildController.SnapshotChanged += UpdateBuildHud;
+        _buildController.SnapshotChanged += () =>
+        {
+            ApplyBuildStatsToPlayer();
+            UpdateBuildHud();
+        };
 
         _debugOverlay = GD.Load<PackedScene>("res://scenes/ui/debug_overlay.tscn").Instantiate<DebugOverlay>();
         AddChild(_debugOverlay);
@@ -83,7 +98,6 @@ public partial class AppRoot : Node
         _arenaController.RewardRequested += ShowWaveReward;
         _arenaController.BossRequested += ShowBossPlaceholder;
         _arenaController.ArenaFailed += ShowRunFailure;
-
         Node2D arena = BlockadeCityArena.Scene.Instantiate<Node2D>();
         GetNode<Node>("ArenaHost").AddChild(arena);
         BindArena(arena);
@@ -101,6 +115,9 @@ public partial class AppRoot : Node
         _enemyLabel = GetNode<Label>("UI/Hud/EnemyLabel");
         _arenaLabel = GetNode<Label>("UI/Hud/ArenaLabel");
         _waveLabel = GetNode<Label>("UI/Hud/WaveLabel");
+        _levelLabel = GetNode<Label>("UI/LevelLabel");
+        _experienceLabel = GetNode<Label>("UI/ExperienceLabel");
+        _experienceBar = GetNode<ProgressBar>("UI/ExperienceBar");
         _eventLabel = GetNode<Label>("UI/EventLabel");
         _buildLabel = GetNode<Label>("UI/BuildLabel");
         _acceptanceMenu = GetNode<AcceptanceMenu>("UI/AcceptanceMenu");
@@ -112,6 +129,9 @@ public partial class AppRoot : Node
         _waveRewardPanel = new WaveRewardPanel();
         ui.AddChild(_waveRewardPanel);
         _waveRewardPanel.RewardConfirmed += rewardId => _arenaController.ConfirmReward(rewardId);
+        _levelUpPanel = new LevelUpPanel();
+        ui.AddChild(_levelUpPanel);
+        _levelUpPanel.UpgradeChosen += _levelUpController.Choose;
 
         _bossHud = new BossHudController { Visible = false };
         ui.AddChild(_bossHud);
@@ -134,6 +154,15 @@ public partial class AppRoot : Node
         _waveDirectorHost = arena.GetNode<Node>("WaveDirectorHost");
         _spawnEntrances = CollectEntrances(arena.GetNode<Node>("SpawnEntrances"));
         ReplaceNavigationFactory(arena, BlockadeCityArena.GridSize, BlockadeCityArena.CellSize);
+        _combatDataCollector = new CombatDataCollector();
+        arena.AddChild(_combatDataCollector);
+        _combatDataCollector.DataCollected += amount =>
+        {
+            _levelUpController.AddExperience(amount);
+            UpdateHud();
+            _eventLabel.Text = $"战斗数据 +{amount}：当前 {CurrentRun.Experience}/{new ExperienceCurve().GetRequiredExperience(CurrentRun.Level)}";
+            _acceptanceMenu.SetStatus($"已收集战斗数据 +{amount}，等级 {CurrentRun.Level}。 ");
+        };
     }
 
     private void BindPlayerAndReboot(Node2D arena)
@@ -147,6 +176,7 @@ public partial class AppRoot : Node
         };
         _playerHealth.Depleted += () => _eventLabel.Text = "坦克报废：移动核心开始裁决重启";
         _playerHealth.InitializeArmor(CurrentRun.PlayerArmor, CurrentRun.MaximumArmor);
+        player.AttachBuild(_buildController);
         player.GetNode<WeaponController>("WeaponController").AttachBuild(_buildController);
         player.GetNode<DashComponent>("DashComponent").AttachBuild(_buildController);
 
@@ -199,12 +229,14 @@ public partial class AppRoot : Node
             _eventLabel.Text = elite
                 ? "第 5 波精英槽位已入场：金色重装单位必须击毁"
                 : $"第 {definition.WaveNumber} 波增援：{BehaviorName(behavior)}";
+        _waveDirector.EnemyDefeated += (position, elite) =>
+            _combatDataCollector.Spawn(_waveDirectorHost, position, elite ? 15 : 5);
         _waveDirector.EliteStateChanged += alive =>
         {
             if (alive) _eventLabel.Text = "精英在场：清场奖励被锁定";
         };
         _waveDirector.SpawnWindowEnded += () => _arenaController.OnWaveSpawnWindowEnded();
-        _waveDirector.AllEnemiesCleared += () => _arenaController.OnAllEnemiesCleared();
+        _waveDirector.AllEnemiesCleared += OnWaveEnemiesCleared;
         _waveDirector.Configure(
             definition,
             _spawnEntrances,
@@ -230,9 +262,44 @@ public partial class AppRoot : Node
         _eventLabel.Text = $"第 {_arenaController.CurrentWave} 波清场：确认{RewardKindName(kind)}后继续";
     }
 
+    private void OnWaveEnemiesCleared()
+    {
+        _combatDataCollector.CollectAllAtWaveEnd();
+        if (_levelUpController.IsChoosing || CurrentRun.PendingLevelUps > 0)
+        {
+            _awaitingWaveRewardAfterLevelUps = true;
+            return;
+        }
+        _arenaController.OnAllEnemiesCleared();
+    }
+
+    private void ShowLevelUpOffer(int level, IReadOnlyList<StatUpgradeOffer> offers)
+    {
+        _pauseCoordinator.Acquire(PauseReason.LevelUp);
+        _levelUpPanel.ShowOffer(level, offers);
+    }
+
+    private void OnLevelUpQueueDrained()
+    {
+        if (!_levelUpPanel.Visible) return;
+        _levelUpPanel.HideOffer();
+        _pauseCoordinator.Release(PauseReason.LevelUp);
+        _playerHealth.GrantInvulnerability(0.4d);
+        if (_awaitingWaveRewardAfterLevelUps)
+        {
+            _awaitingWaveRewardAfterLevelUps = false;
+            _arenaController.OnAllEnemiesCleared();
+        }
+    }
+
     private void OnArenaStateChanged(ArenaState state)
     {
         _arenaLabel.Text = $"竞技场  {CurrentRun.ArenaIndex + 1}/5";
+        _levelLabel.Text = $"等级 {CurrentRun.Level}";
+        int requiredExperience = new ExperienceCurve().GetRequiredExperience(CurrentRun.Level);
+        _experienceLabel.Text = $"数据 {CurrentRun.Experience}/{requiredExperience}";
+        _experienceBar.MaxValue = requiredExperience;
+        _experienceBar.Value = CurrentRun.Experience;
         switch (state)
         {
             case ArenaState.Intro:
@@ -288,6 +355,12 @@ public partial class AppRoot : Node
             _runController.OnArenaFailed();
             _acceptanceMenu.SetStatus("验收命令已结束本局。");
         };
+        _acceptanceMenu.ExperienceRequested += amount =>
+        {
+            _levelUpController.AddExperience(amount);
+            UpdateHud();
+            _acceptanceMenu.SetStatus("已授予战斗数据；若达到阈值应立即进入完全暂停升级。");
+        };
         _acceptanceMenu.BossRequested += EnterBossValidationRoom;
         _acceptanceMenu.RestartRequested += ReloadRun;
     }
@@ -338,6 +411,11 @@ public partial class AppRoot : Node
         _coreLabel.Text = "核心  移动核心";
         _rebootLabel.Text = $"重启  {CurrentRun.RebootsRemaining}";
         _arenaLabel.Text = $"竞技场  {CurrentRun.ArenaIndex + 1}/5";
+        _levelLabel.Text = $"等级 {CurrentRun.Level}";
+        int requiredExperience = new ExperienceCurve().GetRequiredExperience(CurrentRun.Level);
+        _experienceLabel.Text = $"数据 {CurrentRun.Experience}/{requiredExperience}";
+        _experienceBar.MaxValue = requiredExperience;
+        _experienceBar.Value = CurrentRun.Experience;
         if (_waveDirector is null)
             _waveLabel.Text = $"波次  {_arenaController?.CurrentWave ?? 1}/5  准备中";
     }
@@ -351,6 +429,14 @@ public partial class AppRoot : Node
         }
         string names = string.Join("  |  ", CurrentRun.SelectedProtocolIds.Select(id => ProtocolCatalog.GetProtocol(id).DisplayName));
         _buildLabel.Text = $"构筑：{names}";
+    }
+
+    private void ApplyBuildStatsToPlayer()
+    {
+        if (_playerHealth is null) return;
+        int maximumArmor = Mathf.RoundToInt(_buildController.EvaluateStat(StatId.ArmorMax, 100f));
+        if (maximumArmor == _playerHealth.MaximumArmor) return;
+        _playerHealth.InitializeArmor(_playerHealth.Armor, maximumArmor);
     }
 
     private void EnterBossValidationRoom()

@@ -46,8 +46,7 @@ public sealed class PauseCoordinator
     private void ApplyTransition(bool wasPaused)
     {
         bool paused = IsPaused;
-        if (paused == wasPaused) return;
-        _sceneTree.Paused = paused;
+        if (paused != wasPaused) _sceneTree.Paused = paused;
         PauseChanged(paused);
     }
 }

@@ -35,6 +35,7 @@ public partial class WaveDirector : Node
     public event Action<double> TimeChanged;
     public event Action<int> EnemyCountChanged;
     public event Action<BehaviorId, bool> EnemySpawned;
+    public event Action<Vector2, bool> EnemyDefeated;
     public event Action<bool> EliteStateChanged;
     public event Action SpawnWindowEnded;
     public event Action AllEnemiesCleared;
@@ -205,6 +206,7 @@ public partial class WaveDirector : Node
     private void OnEnemyDestroyed(EnemyTank enemy, bool wasElite)
     {
         if (!_aliveEnemies.Remove(enemy)) return;
+        EnemyDefeated?.Invoke(enemy.GlobalPosition, wasElite);
         AliveEnemyCount = _aliveEnemies.Count;
         if (wasElite)
         {

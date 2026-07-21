@@ -7,6 +7,7 @@ namespace Game1;
 public sealed class RunState
 {
     private readonly System.Collections.Generic.List<string> _selectedProtocolIds = new();
+    private readonly Queue<int> _pendingLevelNumbers = new();
 
     public required int Seed { get; init; }
 
@@ -19,6 +20,13 @@ public sealed class RunState
     public int ArenaIndex { get; private set; }
 
     public int WaveIndex { get; private set; }
+
+    /// <summary>战斗内等级从 1 开始；升级卡由队列逐项消费，不能跳级合并。</summary>
+    public int Level { get; private set; } = 1;
+
+    public int Experience { get; private set; }
+
+    public int PendingLevelUps => _pendingLevelNumbers.Count;
 
     /// <summary>旧房间代码的迁移别名；Alpha 02C 主流程只使用 ArenaIndex。</summary>
     [Obsolete("使用 ArenaIndex；RoomIndex 只保留到旧测试与非活动房间迁移完成。")]
@@ -67,6 +75,33 @@ public sealed class RunState
         if (ArenaIndex >= 4) throw new InvalidOperationException("第五竞技场之后不能继续推进。");
         ArenaIndex++;
         WaveIndex = 0;
+    }
+
+    /// <summary>加入正整数战斗数据，按曲线连续结算等级并保留每一项升级的 FIFO 顺序。</summary>
+    public void AddExperience(int amount, ExperienceCurve curve)
+    {
+        if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount));
+        if (curve is null) throw new ArgumentNullException(nameof(curve));
+
+        Experience += amount;
+        while (Experience >= curve.GetRequiredExperience(Level))
+        {
+            Experience -= curve.GetRequiredExperience(Level);
+            Level++;
+            _pendingLevelNumbers.Enqueue(Level);
+        }
+    }
+
+    public bool TryConsumePendingLevel(out int newLevel)
+    {
+        if (_pendingLevelNumbers.Count == 0)
+        {
+            newLevel = 0;
+            return false;
+        }
+
+        newLevel = _pendingLevelNumbers.Dequeue();
+        return true;
     }
 
     /// <summary>把当前玩家实例的装甲同步为跨场景真值；所有入口都统一钳制到有效范围。</summary>
