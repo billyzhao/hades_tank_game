@@ -6,6 +6,7 @@ namespace Game1;
 public partial class AcceptanceMenu : Control
 {
     [Signal] public delegate void DamageRequestedEventHandler(int amount);
+    [Signal] public delegate void ArmorPercentRequestedEventHandler(int percent);
     [Signal] public delegate void DefeatRequestedEventHandler();
     [Signal] public delegate void StopWaveSpawningRequestedEventHandler();
     [Signal] public delegate void ClearWaveEnemiesRequestedEventHandler();
@@ -64,6 +65,7 @@ public partial class AcceptanceMenu : Control
         content.AddChild(_status);
         content.AddChild(CreateButton("授予经验 +100", () => EmitSignal(SignalName.ExperienceRequested, 100)));
         content.AddChild(CreateButton("装甲 -25", () => EmitSignal(SignalName.DamageRequested, 25)));
+        content.AddChild(CreateButton("装甲设为 29%（维护保障）", () => EmitSignal(SignalName.ArmorPercentRequested, 29)));
         content.AddChild(CreateButton("触发坦克报废", () => EmitSignal(SignalName.DefeatRequested)));
         content.AddChild(CreateButton("结束刷新（保留残敌）", () => EmitSignal(SignalName.StopWaveSpawningRequested)));
         content.AddChild(CreateButton("敌军全灭（当前波）", () => EmitSignal(SignalName.ClearWaveEnemiesRequested)));

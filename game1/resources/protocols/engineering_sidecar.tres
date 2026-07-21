@@ -1,0 +1,18 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+[ext_resource type="Script" path="res://scripts/content/ProtocolDefinition.cs" id="1"]
+[ext_resource type="Script" path="res://scripts/content/ProtocolEffectDefinition.cs" id="2"]
+[sub_resource type="Resource" id="E"]
+script = ExtResource("2")
+EffectId = "engineering_sidecar_effect"
+Stat = 0
+FlatAdd = 1.0
+[resource]
+script = ExtResource("1")
+Id = "engineering_sidecar"
+DisplayName = "侧挂校射"
+Description = "火控校准提高主炮伤害。"
+Department = 3
+Rarity = 1
+BaseWeight = 1.0
+StackLimit = 1
+Effects = [SubResource("E")]

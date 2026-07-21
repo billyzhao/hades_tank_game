@@ -10,6 +10,7 @@ public partial class WaveRewardPanel : PanelContainer
 {
     private Label _title = null!;
     private Label _description = null!;
+    private HBoxContainer _cards = null!;
     private Button _confirmButton = null!;
     private int _waveNumber;
     private RewardKind _kind;
@@ -36,8 +37,10 @@ public partial class WaveRewardPanel : PanelContainer
         };
         _description.AddThemeFontSizeOverride("font_size", 8);
         content.AddChild(_description);
+        _cards = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
+        content.AddChild(_cards);
         _confirmButton = new Button { Text = "确认并进入下一波", FocusMode = FocusModeEnum.All };
-        _confirmButton.Pressed += Confirm;
+        _confirmButton.Pressed += () => Confirm($"arena_wave_{_waveNumber}_{_kind}");
         content.AddChild(_confirmButton);
     }
 
@@ -46,6 +49,7 @@ public partial class WaveRewardPanel : PanelContainer
         if (waveNumber is < 1 or > 5) throw new ArgumentOutOfRangeException(nameof(waveNumber));
         _waveNumber = waveNumber;
         _kind = kind;
+        ClearCards();
         _title.Text = $"第 {waveNumber} 波清场";
         _description.Text = kind switch
         {
@@ -55,14 +59,51 @@ public partial class WaveRewardPanel : PanelContainer
             _ => "确认后继续正式竞技场流程。"
         };
         _confirmButton.Text = waveNumber == 5 ? "确认并准备 Boss" : "确认并进入下一波";
+        _confirmButton.Visible = true;
         Visible = true;
         _confirmButton.GrabFocus();
     }
 
-    private void Confirm()
+    /// <summary>显示真实三选一卡片；每张卡只回传选择 Id，构筑应用由上层 RewardController 统一负责。</summary>
+    public void ShowOffer(RewardOffer offer)
+    {
+        ArgumentNullException.ThrowIfNull(offer);
+        ClearCards();
+        _title.Text = offer.Kind switch
+        {
+            RewardKind.NormalProtocol => "选择军械协议",
+            RewardKind.RareProtocol => "选择稀有协议",
+            RewardKind.Maintenance => "选择维护方案",
+            _ => "选择战术奖励"
+        };
+        _description.Text = "三选一；确认后才进入下一波。";
+        _confirmButton.Visible = false;
+        foreach (RewardChoice choice in offer.Choices)
+        {
+            Button card = new()
+            {
+                Text = choice.DisplayName,
+                TooltipText = choice.Description,
+                CustomMinimumSize = new Vector2(66f, 40f),
+                FocusMode = FocusModeEnum.All
+            };
+            card.AddThemeFontSizeOverride("font_size", 7);
+            card.Pressed += () => Confirm(choice.Id);
+            _cards.AddChild(card);
+        }
+        Visible = true;
+        (_cards.GetChildOrNull<Button>(0))?.GrabFocus();
+    }
+
+    private void Confirm(string rewardId)
     {
         if (!Visible) return;
         Visible = false;
-        RewardConfirmed?.Invoke($"arena_wave_{_waveNumber}_{_kind}");
+        RewardConfirmed?.Invoke(rewardId);
+    }
+
+    private void ClearCards()
+    {
+        foreach (Node child in _cards.GetChildren()) child.QueueFree();
     }
 }

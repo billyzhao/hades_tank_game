@@ -1,0 +1,18 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+[ext_resource type="Script" path="res://scripts/content/ProtocolDefinition.cs" id="1"]
+[ext_resource type="Script" path="res://scripts/content/ProtocolEffectDefinition.cs" id="2"]
+[sub_resource type="Resource" id="E"]
+script = ExtResource("2")
+EffectId = "logistics_emergency_effect"
+Stat = 3
+FlatAdd = 20.0
+[resource]
+script = ExtResource("1")
+Id = "logistics_emergency"
+DisplayName = "紧急装甲包"
+Description = "大幅提高最大装甲。"
+Department = 2
+Rarity = 2
+BaseWeight = 0.6
+StackLimit = 1
+Effects = [SubResource("E")]

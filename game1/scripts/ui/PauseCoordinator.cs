@@ -9,6 +9,7 @@ public enum PauseReason
     Manual,
     FocusLost,
     LevelUp,
+    CoreSelection,
     InterWaveReward
 }
 

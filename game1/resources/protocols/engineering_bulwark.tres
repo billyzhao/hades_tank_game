@@ -1,0 +1,18 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+[ext_resource type="Script" path="res://scripts/content/ProtocolDefinition.cs" id="1"]
+[ext_resource type="Script" path="res://scripts/content/ProtocolEffectDefinition.cs" id="2"]
+[sub_resource type="Resource" id="E"]
+script = ExtResource("2")
+EffectId = "engineering_bulwark_effect"
+Stat = 3
+FlatAdd = 15.0
+[resource]
+script = ExtResource("1")
+Id = "engineering_bulwark"
+DisplayName = "堡垒框架"
+Description = "提高最大装甲并稳定机体。"
+Department = 3
+Rarity = 2
+BaseWeight = 0.6
+StackLimit = 1
+Effects = [SubResource("E")]

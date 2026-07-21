@@ -1,0 +1,18 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+[ext_resource type="Script" path="res://scripts/content/ProtocolDefinition.cs" id="1"]
+[ext_resource type="Script" path="res://scripts/content/ProtocolEffectDefinition.cs" id="2"]
+[sub_resource type="Resource" id="E"]
+script = ExtResource("2")
+EffectId = "logistics_coolant_effect"
+Stat = 1
+AdditivePercent = -0.1
+[resource]
+script = ExtResource("1")
+Id = "logistics_coolant"
+DisplayName = "冷却液补给"
+Description = "主炮装填更快。"
+Department = 2
+Rarity = 1
+BaseWeight = 1.0
+StackLimit = 1
+Effects = [SubResource("E")]

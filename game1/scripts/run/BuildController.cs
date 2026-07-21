@@ -42,9 +42,17 @@ public sealed class BuildController
     {
         EnsureActive();
         ProtocolDefinition protocol = _catalog.GetProtocol(protocolId);
-        ValidateSelection(protocol);
+        ProtocolRank currentRank = _state.GetProtocolRank(protocol.Id);
+        if (currentRank == ProtocolRank.None)
+        {
+            ValidateSelection(protocol);
+        }
 
-        _state.RecordSelectedProtocol(protocol.Id);
+        ProtocolRank nextRank = _state.UpgradeProtocol(protocol.Id);
+        if (nextRank == ProtocolRank.MkI)
+        {
+            _state.RecordSelectedProtocol(protocol.Id);
+        }
         foreach (ProtocolEffectDefinition effect in protocol.Effects)
         {
             _modifiers.Add(new StatModifier(
@@ -52,7 +60,7 @@ public sealed class BuildController
                 effect.FlatAdd,
                 effect.AdditivePercent,
                 effect.MultiplicativePercent,
-                protocol.Id));
+                $"{protocol.Id}_{nextRank}"));
         }
 
         SnapshotChanged?.Invoke();
@@ -68,6 +76,17 @@ public sealed class BuildController
         _modifiers.Add(offer.Modifier);
         SnapshotChanged?.Invoke();
     }
+
+    /// <summary>通过同一属性管线应用开局核心，避免玩家节点自行硬编码三套基础数值。</summary>
+    public void ApplyCore(CoreDefinition core)
+    {
+        EnsureActive();
+        ArgumentNullException.ThrowIfNull(core);
+        _state.SelectCore(core.Id);
+        _modifiers.AddRange(core.InitialModifiers);
+        SnapshotChanged?.Invoke();
+    }
+
 
     public float EvaluateStat(StatId stat, float baseValue)
     {

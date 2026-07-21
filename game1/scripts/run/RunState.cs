@@ -7,6 +7,7 @@ namespace Game1;
 public sealed class RunState
 {
     private readonly System.Collections.Generic.List<string> _selectedProtocolIds = new();
+    private readonly Dictionary<string, ProtocolRank> _protocolRanks = new(StringComparer.Ordinal);
     private readonly Queue<int> _pendingLevelNumbers = new();
 
     public required int Seed { get; init; }
@@ -27,6 +28,14 @@ public sealed class RunState
     public int Experience { get; private set; }
 
     public int PendingLevelUps => _pendingLevelNumbers.Count;
+
+    /// <summary>本局选定的唯一移动核心；未选定前为 null。</summary>
+    public CoreId? SelectedCore { get; private set; }
+
+    public IReadOnlyList<OwnedProtocol> OwnedProtocols => _protocolRanks
+        .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+        .Select(pair => new OwnedProtocol(pair.Key, pair.Value))
+        .ToArray();
 
     /// <summary>旧房间代码的迁移别名；Alpha 02C 主流程只使用 ArenaIndex。</summary>
     [Obsolete("使用 ArenaIndex；RoomIndex 只保留到旧测试与非活动房间迁移完成。")]
@@ -75,6 +84,30 @@ public sealed class RunState
         if (ArenaIndex >= 4) throw new InvalidOperationException("第五竞技场之后不能继续推进。");
         ArenaIndex++;
         WaveIndex = 0;
+    }
+
+    public void SelectCore(CoreId core)
+    {
+        if (SelectedCore is not null)
+            throw new InvalidOperationException("本局移动核心已选定，不能重复更换。");
+        SelectedCore = core;
+    }
+
+    public ProtocolRank GetProtocolRank(string protocolId)
+    {
+        if (string.IsNullOrWhiteSpace(protocolId)) throw new ArgumentException("协议 Id 不得为空。", nameof(protocolId));
+        return _protocolRanks.GetValueOrDefault(protocolId, ProtocolRank.None);
+    }
+
+    public ProtocolRank UpgradeProtocol(string protocolId)
+    {
+        ProtocolRank current = GetProtocolRank(protocolId);
+        if (current == ProtocolRank.MkIII)
+            throw new InvalidOperationException($"协议 '{protocolId}' 已达到 Mk.III，不能继续升级。");
+
+        ProtocolRank next = current + 1;
+        _protocolRanks[protocolId] = next;
+        return next;
     }
 
     /// <summary>加入正整数战斗数据，按曲线连续结算等级并保留每一项升级的 FIFO 顺序。</summary>
@@ -161,6 +194,8 @@ public sealed class RunState
     internal void ClearBuildState()
     {
         _selectedProtocolIds.Clear();
+        _protocolRanks.Clear();
+        SelectedCore = null;
         CurrentOffer = null;
     }
 }

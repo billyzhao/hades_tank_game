@@ -36,6 +36,13 @@ public sealed class RewardGenerator
         Dictionary<string, int> selectedCounts = selectedInStableOrder
             .GroupBy(id => id, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
+        IReadOnlyDictionary<string, ProtocolRank> protocolRanks = input.ProtocolRanks ?? selectedCounts
+            .ToDictionary(pair => pair.Key, _ => ProtocolRank.MkI, StringComparer.Ordinal);
+        foreach ((string protocolId, ProtocolRank rank) in protocolRanks)
+        {
+            _ = catalog.GetProtocol(protocolId);
+            if (!Enum.IsDefined(rank)) throw new ArgumentException("协议阶级输入无效。", nameof(input));
+        }
         HashSet<string> selectedIds = new(selectedCounts.Keys, StringComparer.Ordinal);
         HashSet<string> selectedTags = selectedIds
             .SelectMany(selectedId => catalog.GetProtocol(selectedId).Tags)
@@ -43,7 +50,8 @@ public sealed class RewardGenerator
 
         List<ProtocolDefinition> eligible = catalog.Protocols
             .OrderBy(protocol => protocol.Id, StringComparer.Ordinal)
-            .Where(protocol => IsEligible(protocol, selectedIds, selectedTags, selectedCounts, catalog))
+            .Where(protocol => IsRewardKindEligible(protocol, input.RewardKind))
+            .Where(protocol => IsEligible(protocol, selectedIds, selectedTags, selectedCounts, protocolRanks, input.ProtocolRanks is null, catalog))
             .ToList();
         List<ProtocolDefinition> universal = eligible
             .Where(protocol =>
@@ -61,13 +69,13 @@ public sealed class RewardGenerator
         DeterministicRandom random = new(CreateSeed(input, selectedInStableOrder));
         List<ProtocolDefinition> offer = new(3)
         {
-            TakeWeighted(universal, random)
+            TakeWeighted(universal, random, input.SelectedCore)
         };
         eligible.RemoveAll(protocol => string.Equals(protocol.Id, offer[0].Id, StringComparison.Ordinal));
 
         while (offer.Count < 3 && eligible.Count > 0)
         {
-            offer.Add(TakeWeighted(eligible, random));
+            offer.Add(TakeWeighted(eligible, random, input.SelectedCore));
         }
 
         if (offer.Count != 3)
@@ -83,9 +91,16 @@ public sealed class RewardGenerator
         IReadOnlySet<string> selectedIds,
         IReadOnlySet<string> selectedTags,
         IReadOnlyDictionary<string, int> selectedCounts,
+        IReadOnlyDictionary<string, ProtocolRank> protocolRanks,
+        bool useLegacyStackLimit,
         ContentCatalog catalog)
     {
-        if (selectedCounts.TryGetValue(candidate.Id, out int count) && count >= candidate.StackLimit)
+        if (protocolRanks.TryGetValue(candidate.Id, out ProtocolRank rank) && rank == ProtocolRank.MkIII)
+        {
+            return false;
+        }
+
+        if (useLegacyStackLimit && selectedCounts.TryGetValue(candidate.Id, out int count) && count >= candidate.StackLimit)
         {
             return false;
         }
@@ -122,14 +137,22 @@ public sealed class RewardGenerator
         return true;
     }
 
-    private static ProtocolDefinition TakeWeighted(IList<ProtocolDefinition> candidates, DeterministicRandom random)
+    private static bool IsRewardKindEligible(ProtocolDefinition protocol, RewardKind? kind) => kind switch
     {
-        double totalWeight = candidates.Sum(candidate => (double)candidate.BaseWeight);
+        null => true,
+        RewardKind.NormalProtocol => protocol.Rarity == 1,
+        RewardKind.RareProtocol => protocol.Rarity > 1,
+        _ => false
+    };
+
+    private static ProtocolDefinition TakeWeighted(IList<ProtocolDefinition> candidates, DeterministicRandom random, CoreId? selectedCore)
+    {
+        double totalWeight = candidates.Sum(candidate => GetWeight(candidate, selectedCore));
         double roll = random.NextUnitInterval() * totalWeight;
         double cumulativeWeight = 0d;
         for (int index = 0; index < candidates.Count; index++)
         {
-            cumulativeWeight += candidates[index].BaseWeight;
+            cumulativeWeight += GetWeight(candidates[index], selectedCore);
             if (roll < cumulativeWeight || index == candidates.Count - 1)
             {
                 ProtocolDefinition selected = candidates[index];
@@ -139,6 +162,20 @@ public sealed class RewardGenerator
         }
 
         throw new InvalidOperationException("加权候选池不能为空。");
+    }
+
+    /// <summary>核心只提高相关部门的出现倾向，所有未冲突部门始终保留候选资格。</summary>
+    private static double GetWeight(ProtocolDefinition candidate, CoreId? selectedCore)
+    {
+        double baseWeight = candidate.BaseWeight;
+        bool preferred = selectedCore switch
+        {
+            CoreId.BreakthroughCannon => candidate.Department == ProtocolDepartment.Arsenal,
+            CoreId.OverdriveAutocannon => candidate.Department == ProtocolDepartment.Arsenal,
+            CoreId.ElectricRider => candidate.Department is ProtocolDepartment.Recon or ProtocolDepartment.Engineering,
+            _ => false
+        };
+        return preferred ? baseWeight * 1.6d : baseWeight;
     }
 
     private static ulong CreateSeed(RewardGenerationInput input, IEnumerable<string> selectedInStableOrder)

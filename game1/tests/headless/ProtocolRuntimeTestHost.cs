@@ -54,6 +54,7 @@ public partial class ProtocolRuntimeTestHost : Node
         failures += Run("reward_generate_excludes_unsatisfied_required_and_conflicting_tags", RewardGenerateExcludesBlockedTags);
         failures += Run("reward_generate_uses_base_weight_for_deterministic_selection", RewardGenerateUsesBaseWeight);
         failures += Run("reward_generate_forces_first_offer_card_to_be_fully_universal", RewardGenerateForcesFullyUniversalFirstCard);
+        failures += Run("reward_generate_keeps_mk1_eligible_and_filters_only_mk3", RewardGenerateKeepsMk1EligibleAndFiltersOnlyMk3);
         failures += Run("build_selected_protocol_applies_only_to_current_run", BuildSelectedProtocolAppliesOnlyToCurrentRun);
         failures += Run("build_end_run_clears_selected_protocol_effects", BuildEndRunClearsSelectedProtocolEffects);
         failures += Run("build_rejects_duplicate_selection_at_stack_limit", BuildRejectsDuplicateSelectionAtStackLimit);
@@ -302,6 +303,28 @@ public partial class ProtocolRuntimeTestHost : Node
         Assert(forcedUniversal.ConflictTags.Count == 0, "universal candidate must not conflict with a tag");
     }
 
+    private static void RewardGenerateKeepsMk1EligibleAndFiltersOnlyMk3()
+    {
+        ContentCatalog catalog = CreateCatalog();
+        catalog.GetProtocol("recon_trail").BaseWeight = 1_000_000_000f;
+        RewardGenerationInput input = new(
+            927,
+            0,
+            new[] { "arsenal_damage", "recon_trail" },
+            catalog.Version,
+            new Dictionary<string, ProtocolRank>
+            {
+                ["arsenal_damage"] = ProtocolRank.MkIII,
+                ["recon_trail"] = ProtocolRank.MkI
+            },
+            RewardKind.NormalProtocol);
+
+        ProtocolOffer offer = new RewardGenerator().Generate(input, catalog);
+
+        Assert(!offer.ProtocolIds.Contains("arsenal_damage"), "Mk.III 协议必须退出后续候选池。");
+        Assert(offer.ProtocolIds.Contains("recon_trail"), "Mk.I 协议仍可作为升级候选。\n");
+    }
+
     private static void BuildSelectedProtocolAppliesOnlyToCurrentRun()
     {
         RunState state = RunState.CreateNew(seed: 11);
@@ -324,10 +347,14 @@ public partial class ProtocolRuntimeTestHost : Node
 
     private static void BuildRejectsDuplicateSelectionAtStackLimit()
     {
-        BuildController build = new(RunState.CreateNew(seed: 13), CreateCatalog());
+        RunState state = RunState.CreateNew(seed: 13);
+        BuildController build = new(state, CreateCatalog());
+        build.SelectProtocol("arsenal_ricochet");
+        build.SelectProtocol("arsenal_ricochet");
         build.SelectProtocol("arsenal_ricochet");
 
-        AssertThrows<InvalidOperationException>(() => build.SelectProtocol("arsenal_ricochet"), "达到叠层上限后必须拒绝重复选择。");
+        Assert(state.GetProtocolRank("arsenal_ricochet") == ProtocolRank.MkIII, "协议必须依次升级到 Mk.III。");
+        AssertThrows<InvalidOperationException>(() => build.SelectProtocol("arsenal_ricochet"), "达到 Mk.III 后必须拒绝重复选择。");
     }
 
     private static void RunStartsInArena()

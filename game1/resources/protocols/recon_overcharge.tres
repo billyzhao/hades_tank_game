@@ -1,0 +1,18 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+[ext_resource type="Script" path="res://scripts/content/ProtocolDefinition.cs" id="1"]
+[ext_resource type="Script" path="res://scripts/content/ProtocolEffectDefinition.cs" id="2"]
+[sub_resource type="Resource" id="E"]
+script = ExtResource("2")
+EffectId = "recon_overcharge_effect"
+Stat = 2
+AdditivePercent = -0.3
+[resource]
+script = ExtResource("1")
+Id = "recon_overcharge"
+DisplayName = "过载电驱"
+Description = "大幅缩短冲刺冷却。"
+Department = 1
+Rarity = 2
+BaseWeight = 0.6
+StackLimit = 1
+Effects = [SubResource("E")]

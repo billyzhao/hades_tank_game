@@ -15,6 +15,7 @@ public partial class AppRoot : Node
         GD.Load<ArenaDefinition>("res://resources/arenas/blockade_city_arena.tres");
     private static readonly ContentCatalog ProtocolCatalog =
         GD.Load<ContentCatalog>("res://resources/content_catalog.tres");
+    private static readonly CoreCatalog MobileCoreCatalog = CoreCatalog.CreateDefault();
     private static readonly BossDefinition RoadblockCommanderDefinition =
         GD.Load<BossDefinition>("res://resources/bosses/roadblock_commander.tres");
     private static readonly PackedScene BossValidationRoomScene =
@@ -26,6 +27,7 @@ public partial class AppRoot : Node
     private RebootController _rebootController = null!;
     private BuildController _buildController = null!;
     private LevelUpController _levelUpController = null!;
+    private RewardController _rewardController = null!;
     private CombatDataCollector _combatDataCollector = null!;
     private PauseCoordinator _pauseCoordinator = null!;
     private RunController _runController = null!;
@@ -48,6 +50,7 @@ public partial class AppRoot : Node
     private Label _buildLabel = null!;
     private AcceptanceMenu _acceptanceMenu = null!;
     private WaveRewardPanel _waveRewardPanel = null!;
+    private CoreSelectionPanel _coreSelectionPanel = null!;
     private LevelUpPanel _levelUpPanel = null!;
     private BossHudController _bossHud = null!;
     private RunResultScreen _runResultScreen = null!;
@@ -73,6 +76,12 @@ public partial class AppRoot : Node
         _levelUpController = new LevelUpController(CurrentRun, _buildController, new ControlledStatOfferGenerator(), new ExperienceCurve());
         _levelUpController.OfferRequested += ShowLevelUpOffer;
         _levelUpController.QueueDrained += OnLevelUpQueueDrained;
+        _rewardController = new RewardController(
+            CurrentRun,
+            _buildController,
+            ProtocolCatalog,
+            new RewardGenerator(),
+            new MaintenanceRewardGenerator());
 
         _pauseCoordinator = new PauseCoordinator(GetTree());
         PauseController pauseController = new();
@@ -102,7 +111,7 @@ public partial class AppRoot : Node
         GetNode<Node>("ArenaHost").AddChild(arena);
         BindArena(arena);
         _arenaController.BeginArena(BlockadeCityArena);
-        BeginArenaAfterIntro();
+        ShowCoreSelection();
         UpdateHud();
         UpdateBuildHud();
     }
@@ -128,7 +137,10 @@ public partial class AppRoot : Node
         CanvasLayer ui = GetNode<CanvasLayer>("UI");
         _waveRewardPanel = new WaveRewardPanel();
         ui.AddChild(_waveRewardPanel);
-        _waveRewardPanel.RewardConfirmed += rewardId => _arenaController.ConfirmReward(rewardId);
+        _waveRewardPanel.RewardConfirmed += OnWaveRewardChosen;
+        _coreSelectionPanel = new CoreSelectionPanel();
+        ui.AddChild(_coreSelectionPanel);
+        _coreSelectionPanel.CoreChosen += ChooseCore;
         _levelUpPanel = new LevelUpPanel();
         ui.AddChild(_levelUpPanel);
         _levelUpPanel.UpgradeChosen += _levelUpController.Choose;
@@ -146,6 +158,23 @@ public partial class AppRoot : Node
         await ToSignal(GetTree().CreateTimer(0.6d), SceneTreeTimer.SignalName.Timeout);
         if (IsInsideTree() && _arenaController.State == ArenaState.Intro)
             _arenaController.OnIntroFinished();
+    }
+
+    private void ShowCoreSelection()
+    {
+        _pauseCoordinator.Acquire(PauseReason.CoreSelection);
+        _coreSelectionPanel.ShowChoices(MobileCoreCatalog);
+        _eventLabel.Text = "开局整备：选择移动核心后进入第一波";
+        _acceptanceMenu.SetStatus("请选择一个移动核心；核心只改变初始操作节奏，不锁定协议路线。");
+    }
+
+    private void ChooseCore(CoreId coreId)
+    {
+        _buildController.ApplyCore(MobileCoreCatalog.Get(coreId));
+        _pauseCoordinator.Release(PauseReason.CoreSelection);
+        UpdateHud();
+        UpdateBuildHud();
+        BeginArenaAfterIntro();
     }
 
     private void BindArena(Node2D arena)
@@ -258,8 +287,28 @@ public partial class AppRoot : Node
             return;
         }
 
-        _waveRewardPanel.ShowReward(_arenaController.CurrentWave, kind);
-        _eventLabel.Text = $"第 {_arenaController.CurrentWave} 波清场：确认{RewardKindName(kind)}后继续";
+        RewardOffer offer = _rewardController.Generate(kind);
+        _waveRewardPanel.ShowOffer(offer);
+        _eventLabel.Text = $"第 {_arenaController.CurrentWave} 波清场：选择{RewardKindName(kind)}后继续";
+    }
+
+    private void OnWaveRewardChosen(string choiceId)
+    {
+        if (_rewardController.CurrentOffer is null)
+        {
+            _arenaController.ConfirmReward(choiceId);
+            return;
+        }
+
+        RewardChoice chosen = _rewardController.Choose(choiceId);
+        if (chosen.Id == "maintenance_repair_25")
+        {
+            _playerHealth.SetArmor(CurrentRun.PlayerArmor);
+            UpdateHud();
+        }
+        _eventLabel.Text = $"已选择：{chosen.DisplayName}";
+        _acceptanceMenu.SetStatus($"奖励已应用：{chosen.DisplayName}；已进入下一波。 ");
+        _arenaController.ConfirmReward(chosen.Id);
     }
 
     private void OnWaveEnemiesCleared()
@@ -330,6 +379,12 @@ public partial class AppRoot : Node
         {
             _playerHealth.ApplyDamage(new DamageContext(amount));
             _acceptanceMenu.SetStatus($"已请求装甲伤害 {amount}，当前 {CurrentRun.PlayerArmor}/{CurrentRun.MaximumArmor}");
+        };
+        _acceptanceMenu.ArmorPercentRequested += percent =>
+        {
+            int armor = (int)Math.Floor(_playerHealth.MaximumArmor * Math.Clamp(percent, 0, 100) / 100d);
+            _playerHealth.SetArmor(armor);
+            _acceptanceMenu.SetStatus($"装甲已设为 {percent}%：下一次维护奖励必须包含应急装甲修复。 ");
         };
         _acceptanceMenu.DefeatRequested += () =>
         {
@@ -408,7 +463,9 @@ public partial class AppRoot : Node
     {
         if (_playerHealth is null) return;
         _armorLabel.Text = $"装甲  {_playerHealth.Armor}/{_playerHealth.MaximumArmor}";
-        _coreLabel.Text = "核心  移动核心";
+        _coreLabel.Text = CurrentRun.SelectedCore is CoreId selectedCore
+            ? $"核心  {MobileCoreCatalog.Get(selectedCore).DisplayName}"
+            : "核心  待选择";
         _rebootLabel.Text = $"重启  {CurrentRun.RebootsRemaining}";
         _arenaLabel.Text = $"竞技场  {CurrentRun.ArenaIndex + 1}/5";
         _levelLabel.Text = $"等级 {CurrentRun.Level}";
@@ -422,13 +479,18 @@ public partial class AppRoot : Node
 
     private void UpdateBuildHud()
     {
-        if (CurrentRun.SelectedProtocolIds.Count == 0)
+        if (CurrentRun.SelectedCore is null && CurrentRun.SelectedProtocolIds.Count == 0)
         {
-            _buildLabel.Text = "构筑：Alpha 02E 接入协议构筑；当前验证五波节奏";
+            _buildLabel.Text = "构筑：请先选择移动核心";
             return;
         }
-        string names = string.Join("  |  ", CurrentRun.SelectedProtocolIds.Select(id => ProtocolCatalog.GetProtocol(id).DisplayName));
-        _buildLabel.Text = $"构筑：{names}";
+        string core = CurrentRun.SelectedCore is CoreId selectedCore
+            ? MobileCoreCatalog.Get(selectedCore).DisplayName
+            : "未选择核心";
+        string protocols = CurrentRun.SelectedProtocolIds.Count == 0
+            ? "未获得协议"
+            : string.Join("  |  ", CurrentRun.SelectedProtocolIds.Select(id => ProtocolCatalog.GetProtocol(id).DisplayName));
+        _buildLabel.Text = $"构筑：{core}  |  {protocols}";
     }
 
     private void ApplyBuildStatsToPlayer()
