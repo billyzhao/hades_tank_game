@@ -16,7 +16,21 @@ public sealed class RunState
 
     public int RebootsRemaining { get; set; }
 
-    public int RoomIndex { get; set; }
+    public int ArenaIndex { get; private set; }
+
+    public int WaveIndex { get; private set; }
+
+    /// <summary>旧房间代码的迁移别名；Alpha 02C 主流程只使用 ArenaIndex。</summary>
+    [Obsolete("使用 ArenaIndex；RoomIndex 只保留到旧测试与非活动房间迁移完成。")]
+    public int RoomIndex
+    {
+        get => ArenaIndex;
+        set
+        {
+            if (value is < 0 or > 4) throw new ArgumentOutOfRangeException(nameof(value));
+            ArenaIndex = value;
+        }
+    }
 
     /// <summary>当前局已确认的协议，调用方只能读取，不能绕过 BuildController 直接写入。</summary>
     public System.Collections.Generic.IReadOnlyList<string> SelectedProtocolIds => _selectedProtocolIds.AsReadOnly();
@@ -37,8 +51,22 @@ public sealed class RunState
             PlayerArmor = maximumArmor,
             MaximumArmor = maximumArmor,
             RebootsRemaining = reboots,
-            RoomIndex = 0
+            ArenaIndex = 0,
+            WaveIndex = 0
         };
+    }
+
+    public void SetWaveIndex(int waveIndex)
+    {
+        if (waveIndex is < 0 or > 4) throw new ArgumentOutOfRangeException(nameof(waveIndex));
+        WaveIndex = waveIndex;
+    }
+
+    public void AdvanceArena()
+    {
+        if (ArenaIndex >= 4) throw new InvalidOperationException("第五竞技场之后不能继续推进。");
+        ArenaIndex++;
+        WaveIndex = 0;
     }
 
     /// <summary>把当前玩家实例的装甲同步为跨场景真值；所有入口都统一钳制到有效范围。</summary>

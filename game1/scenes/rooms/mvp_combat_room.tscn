@@ -1,10 +1,8 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player_tank.tscn" id="1_player_tank"]
 [ext_resource type="Script" path="res://scripts/combat/DestructibleTerrain.cs" id="2_brick"]
 [ext_resource type="Script" path="res://scripts/combat/RebootController.cs" id="4_reboot"]
-[ext_resource type="Script" path="res://scripts/combat/EnemyDirector.cs" id="5_director"]
-[ext_resource type="Script" path="res://scripts/combat/RoomController.cs" id="6_room"]
 [ext_resource type="Texture2D" path="res://assets/art/tiles/desert_industrial_arena.png" id="7_arena"]
 [ext_resource type="Script" path="res://scripts/presentation/CameraShakeController.cs" id="9_camera_shake"]
 [ext_resource type="Script" path="res://scripts/presentation/VisualFeedbackController.cs" id="10_visual_feedback"]
@@ -44,17 +42,35 @@ tile_set = ExtResource("12_tileset")
 
 [node name="StructurePainter" type="Node" parent="Structure"]
 script = ExtResource("14_painter")
-Cells = Array[Vector2i]([Vector2i(4, 3), Vector2i(4, 4), Vector2i(4, 5), Vector2i(15, 3), Vector2i(15, 4), Vector2i(15, 5), Vector2i(7, 7), Vector2i(12, 7)])
+Cells = Array[Vector2i]([Vector2i(5, 4), Vector2i(14, 4), Vector2i(7, 8), Vector2i(12, 8)])
 
 [node name="Destructible" type="TileMapLayer" parent="."]
 tile_set = ExtResource("12_tileset")
 
 [node name="TileTerrainAdapter" type="Node" parent="."]
 script = ExtResource("13_terrain")
-InitialBrickCells = Array[Vector2i]([Vector2i(8, 5), Vector2i(9, 5), Vector2i(10, 5), Vector2i(11, 5), Vector2i(8, 8), Vector2i(11, 8), Vector2i(8, 9), Vector2i(11, 9)])
+InitialBrickCells = Array[Vector2i]([Vector2i(5, 5), Vector2i(6, 5), Vector2i(14, 5), Vector2i(13, 5), Vector2i(8, 8), Vector2i(8, 9), Vector2i(11, 8), Vector2i(11, 9)])
 BrickHitPoints = 20
 
 [node name="ArenaBounds" parent="." instance=ExtResource("15_bounds")]
+
+[node name="SpawnEntrances" type="Node2D" parent="."]
+
+[node name="North" type="Marker2D" parent="SpawnEntrances"]
+position = Vector2(240, 72)
+rotation = 3.14159
+
+[node name="East" type="Marker2D" parent="SpawnEntrances"]
+position = Vector2(408, 135)
+rotation = -1.5708
+
+[node name="South" type="Marker2D" parent="SpawnEntrances"]
+position = Vector2(240, 198)
+rotation = 0.0
+
+[node name="West" type="Marker2D" parent="SpawnEntrances"]
+position = Vector2(72, 135)
+rotation = 1.5708
 
 [node name="PlayerTank" parent="." groups=["player"] instance=ExtResource("1_player_tank")]
 position = Vector2(240, 184)
@@ -62,11 +78,7 @@ position = Vector2(240, 184)
 [node name="RebootController" type="Node" parent="."]
 script = ExtResource("4_reboot")
 
-[node name="EnemyDirector" type="Node" parent="."]
-script = ExtResource("5_director")
-
-[node name="RoomController" type="Node" parent="."]
-script = ExtResource("6_room")
+[node name="WaveDirectorHost" type="Node" parent="."]
 
 [node name="CameraShakeController" type="Node" parent="."]
 script = ExtResource("9_camera_shake")

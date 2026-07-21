@@ -9,7 +9,7 @@ public partial class DebugOverlay : CanvasLayer
     private Label _label = null!;
     private RunState _runState = null!;
     private SaveData _saveData = null!;
-    private Func<RoomPhase> _phaseProvider = null!;
+    private Func<RunPhase> _phaseProvider = null!;
 
     public override void _Ready()
     {
@@ -34,7 +34,7 @@ public partial class DebugOverlay : CanvasLayer
         panel.AddChild(_label);
     }
 
-    public void Bind(RunState runState, SaveData saveData, Func<RoomPhase> phaseProvider)
+    public void Bind(RunState runState, SaveData saveData, Func<RunPhase> phaseProvider)
     {
         _runState = runState ?? throw new ArgumentNullException(nameof(runState));
         _saveData = saveData ?? throw new ArgumentNullException(nameof(saveData));
@@ -59,6 +59,6 @@ public partial class DebugOverlay : CanvasLayer
         string lastRun = string.IsNullOrWhiteSpace(_saveData.LastRun.Result)
             ? "无"
             : $"{_saveData.LastRun.Result} / {_saveData.LastRun.Seed}";
-        _label.Text = $"DEBUG  F8 关闭\nFPS  {Engine.GetFramesPerSecond()}\n敌军  {GetTree().GetNodesInGroup("enemies").Count}\n敌弹  {GetTree().GetNodesInGroup("enemy_projectiles").Count}\nSeed  {_runState.Seed}\n房间  {_runState.RoomIndex} / {_phaseProvider()}\n上局  {lastRun}";
+        _label.Text = $"DEBUG  F8 关闭\nFPS  {Engine.GetFramesPerSecond()}\n敌军  {GetTree().GetNodesInGroup("enemies").Count}\n敌弹  {GetTree().GetNodesInGroup("enemy_projectiles").Count}\nSeed  {_runState.Seed}\n竞技场  {_runState.ArenaIndex + 1} / 波次 {_runState.WaveIndex + 1} / {_phaseProvider()}\n上局  {lastRun}";
     }
 }

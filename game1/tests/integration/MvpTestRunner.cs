@@ -97,21 +97,14 @@ public partial class MvpTestRunner : Node2D
         catalog.Validate();
         RunState state = RunState.CreateNew(8080);
         BuildController build = new(state, catalog);
-        RunController run = new(state, build, new RewardGenerator());
-
-        run.BeginRoom();
-        run.Advance(0.6d);
-        run.OnCombatCleared();
-        Assert(run.Phase == RoomPhase.Reward && run.CurrentOffer.ProtocolIds.Count == 3,
-            "清场后必须进入三选一奖励阶段。");
+        RunController run = new(state, build);
+        Assert(run.Phase == RunPhase.Arena, "移动核心重构后单局必须从竞技场阶段开始。");
 
         RunState rebootState = RunState.CreateNew(8081, reboots: 1);
-        RunController rebootRun = new(rebootState, new BuildController(rebootState, catalog), new RewardGenerator());
-        rebootRun.BeginRoom();
-        rebootRun.Advance(0.6d);
+        RunController rebootRun = new(rebootState, new BuildController(rebootState, catalog));
         Assert(rebootRun.OnTankDefeated() && rebootState.RebootsRemaining == 0,
             "首次报废必须消耗一次重启并继续战斗。");
-        Assert(!rebootRun.OnTankDefeated() && rebootRun.Phase == RoomPhase.Failed,
+        Assert(!rebootRun.OnTankDefeated() && rebootRun.Phase == RunPhase.Failed,
             "重启耗尽后的再次报废必须判负。");
 
         Assert(rebootState.RebootsRemaining == 0, "重启次数不得降为负数。");

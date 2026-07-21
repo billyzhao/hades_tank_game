@@ -1,0 +1,70 @@
+[gd_resource type="Resource" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/ArenaDefinition.cs" id="1_arena"]
+[ext_resource type="PackedScene" path="res://scenes/rooms/mvp_combat_room.tscn" id="2_scene"]
+[ext_resource type="Script" path="res://scripts/content/WaveDefinition.cs" id="3_wave"]
+
+[sub_resource type="Resource" id="Wave1"]
+script = ExtResource("3_wave")
+WaveNumber = 1
+SpawnDurationSeconds = 45.0
+SpawnIntervalSeconds = 4.4
+MaximumAliveEnemies = 4
+MinimumPlayerDistance = 72.0
+RewardKind = 1
+IncludesElite = false
+Behaviors = [0, 1]
+
+[sub_resource type="Resource" id="Wave2"]
+script = ExtResource("3_wave")
+WaveNumber = 2
+SpawnDurationSeconds = 50.0
+SpawnIntervalSeconds = 4.2
+MaximumAliveEnemies = 5
+MinimumPlayerDistance = 72.0
+RewardKind = 2
+IncludesElite = false
+Behaviors = [0, 1, 2]
+
+[sub_resource type="Resource" id="Wave3"]
+script = ExtResource("3_wave")
+WaveNumber = 3
+SpawnDurationSeconds = 55.0
+SpawnIntervalSeconds = 4.0
+MaximumAliveEnemies = 5
+MinimumPlayerDistance = 72.0
+RewardKind = 1
+IncludesElite = false
+Behaviors = [1, 0, 1, 2]
+
+[sub_resource type="Resource" id="Wave4"]
+script = ExtResource("3_wave")
+WaveNumber = 4
+SpawnDurationSeconds = 60.0
+SpawnIntervalSeconds = 3.8
+MaximumAliveEnemies = 6
+MinimumPlayerDistance = 72.0
+RewardKind = 2
+IncludesElite = false
+Behaviors = [1, 2, 0, 1]
+
+[sub_resource type="Resource" id="Wave5"]
+script = ExtResource("3_wave")
+WaveNumber = 5
+SpawnDurationSeconds = 70.0
+SpawnIntervalSeconds = 3.5
+MaximumAliveEnemies = 6
+MinimumPlayerDistance = 72.0
+RewardKind = 3
+IncludesElite = true
+Behaviors = [2, 1, 0, 1]
+
+[resource]
+script = ExtResource("1_arena")
+Id = "arena_blockade_city"
+DisplayName = "封锁城区"
+ArenaIndex = 0
+Scene = ExtResource("2_scene")
+GridSize = Vector2i(20, 12)
+CellSize = 24
+Waves = [SubResource("Wave1"), SubResource("Wave2"), SubResource("Wave3"), SubResource("Wave4"), SubResource("Wave5")]

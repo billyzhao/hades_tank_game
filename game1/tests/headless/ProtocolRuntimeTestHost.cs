@@ -57,11 +57,9 @@ public partial class ProtocolRuntimeTestHost : Node
         failures += Run("build_selected_protocol_applies_only_to_current_run", BuildSelectedProtocolAppliesOnlyToCurrentRun);
         failures += Run("build_end_run_clears_selected_protocol_effects", BuildEndRunClearsSelectedProtocolEffects);
         failures += Run("build_rejects_duplicate_selection_at_stack_limit", BuildRejectsDuplicateSelectionAtStackLimit);
-        failures += Run("run_loading_intro_combat_uses_point_six_seconds", RunLoadingIntroCombatUsesPointSixSeconds);
-        failures += Run("run_rejects_clear_before_combat", RunRejectsClearBeforeCombat);
-        failures += Run("run_defeat_outside_combat_does_not_fail", RunDefeatOutsideCombatDoesNotFail);
-        failures += Run("run_defeat_in_combat_without_reboot_fails", RunDefeatInCombatWithoutRebootFails);
-        failures += Run("run_choice_advances_one_room_only_once", RunChoiceAdvancesOneRoomOnlyOnce);
+        failures += Run("run_starts_in_arena", RunStartsInArena);
+        failures += Run("run_defeat_consumes_reboot_then_fails", RunDefeatConsumesRebootThenFails);
+        failures += Run("run_arena_completion_advances_index", RunArenaCompletionAdvancesIndex);
 
         GD.Print($"[ProtocolRuntimeTestHost] suite=reward_catalog failures={failures}");
         GC.Collect();
@@ -332,56 +330,27 @@ public partial class ProtocolRuntimeTestHost : Node
         AssertThrows<InvalidOperationException>(() => build.SelectProtocol("arsenal_ricochet"), "达到叠层上限后必须拒绝重复选择。");
     }
 
-    private static void RunLoadingIntroCombatUsesPointSixSeconds()
+    private static void RunStartsInArena()
     {
         RunController run = CreateRunController();
-        Assert(run.Phase == RoomPhase.Loading, "新房间必须从 Loading 开始。");
-        run.BeginRoom();
-        run.Advance(.599d);
-        Assert(run.Phase == RoomPhase.Intro, "Intro 未满 0.6 秒不得进入 Combat。");
-        run.Advance(.001d);
-        Assert(run.Phase == RoomPhase.Combat, "Intro 满 0.6 秒必须进入 Combat。");
+        Assert(run.Phase == RunPhase.Arena, "新单局必须直接处于 Arena 顶层阶段。");
     }
 
-    private static void RunRejectsClearBeforeCombat()
+    private static void RunDefeatConsumesRebootThenFails()
     {
-        RunController run = CreateRunController();
-        AssertThrows<InvalidOperationException>(run.OnCombatCleared, "非 Combat 阶段不得清场。");
+        RunState state = RunState.CreateNew(seed: 42, reboots: 1);
+        RunController run = CreateRunController(state);
+        Assert(run.OnTankDefeated() && state.RebootsRemaining == 0, "首次报废必须消耗唯一重启并保持竞技场阶段。");
+        Assert(!run.OnTankDefeated() && run.Phase == RunPhase.Failed, "重启耗尽后的再次报废必须判定本局失败。");
     }
 
-    private static void RunDefeatOutsideCombatDoesNotFail()
-    {
-        RunController run = CreateRunController(reboots: 0);
-        run.BeginRoom();
-        run.OnTankDefeated();
-
-        Assert(run.Phase == RoomPhase.Intro, "非 Combat 阶段的坦克失败不得进入 Failed。");
-    }
-
-    private static void RunDefeatInCombatWithoutRebootFails()
-    {
-        RunController run = CreateRunController(reboots: 0);
-        run.BeginRoom();
-        run.Advance(.6d);
-        run.OnTankDefeated();
-
-        Assert(run.Phase == RoomPhase.Failed, "Combat 阶段且无重启次数时必须进入 Failed。");
-    }
-
-    private static void RunChoiceAdvancesOneRoomOnlyOnce()
+    private static void RunArenaCompletionAdvancesIndex()
     {
         RunState state = RunState.CreateNew(seed: 42);
         RunController run = CreateRunController(state);
-        run.BeginRoom();
-        run.Advance(.6d);
-        run.OnCombatCleared();
-
-        string selectedId = run.CurrentOffer.ProtocolIds[0];
-        run.ChooseProtocol(selectedId);
-        run.ChooseProtocol(selectedId);
-
-        Assert(run.Phase == RoomPhase.Exiting, "选择协议后必须进入 Exiting。");
-        Assert(state.RoomIndex == 1, "重复选择不得额外推进房间。");
+        run.OnArenaCompleted();
+        Assert(state.ArenaIndex == 1 && state.WaveIndex == 0 && run.Phase == RunPhase.Arena,
+            "完成非终局竞技场后必须推进竞技场索引、重置波次且保持 Arena 阶段。");
     }
 
     private static void NavigationGridRemovedBrickOpensPath()
@@ -771,7 +740,7 @@ public partial class ProtocolRuntimeTestHost : Node
     private static RunController CreateRunController(RunState state)
     {
         ContentCatalog catalog = CreateCatalog();
-        return new RunController(state, new BuildController(state, catalog), new RewardGenerator());
+        return new RunController(state, new BuildController(state, catalog));
     }
 
     private static ProtocolDefinition CreateProtocol(string id, ProtocolDepartment department, StatId stat)

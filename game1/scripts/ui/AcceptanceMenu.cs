@@ -7,6 +7,11 @@ public partial class AcceptanceMenu : Control
 {
     [Signal] public delegate void DamageRequestedEventHandler(int amount);
     [Signal] public delegate void DefeatRequestedEventHandler();
+    [Signal] public delegate void StopWaveSpawningRequestedEventHandler();
+    [Signal] public delegate void ClearWaveEnemiesRequestedEventHandler();
+    [Signal] public delegate void CompleteWaveRequestedEventHandler();
+    [Signal] public delegate void AdvanceWaveRequestedEventHandler();
+    [Signal] public delegate void EndRunRequestedEventHandler();
     [Signal] public delegate void BossRequestedEventHandler();
     [Signal] public delegate void RestartRequestedEventHandler();
 
@@ -23,12 +28,13 @@ public partial class AcceptanceMenu : Control
         Button entry = new()
         {
             Name = "EntryButton",
-            Text = "生存验收",
-            Position = new Vector2(366, 8),
-            Size = new Vector2(102, 24),
+            Text = "竞技场验收",
+            Position = new Vector2(390, 6),
+            Size = new Vector2(78, 20),
             MouseFilter = MouseFilterEnum.Stop,
             FocusMode = FocusModeEnum.All
         };
+        entry.AddThemeFontSizeOverride("font_size", 7);
         entry.Pressed += TogglePanel;
         AddChild(entry);
 
@@ -36,7 +42,7 @@ public partial class AcceptanceMenu : Control
         {
             Name = "Panel",
             Position = new Vector2(300, 38),
-            Size = new Vector2(168, 190),
+            Size = new Vector2(180, 300),
             MouseFilter = MouseFilterEnum.Stop,
             Visible = false
         };
@@ -44,7 +50,7 @@ public partial class AcceptanceMenu : Control
 
         VBoxContainer content = new();
         _panel.AddChild(content);
-        Label title = new() { Text = "移动核心生存验收", HorizontalAlignment = HorizontalAlignment.Center };
+        Label title = new() { Text = "移动核心竞技场验收", HorizontalAlignment = HorizontalAlignment.Center };
         title.AddThemeFontSizeOverride("font_size", 10);
         content.AddChild(title);
         _status = new()
@@ -57,11 +63,16 @@ public partial class AcceptanceMenu : Control
         content.AddChild(_status);
         content.AddChild(CreateButton("装甲 -25", () => EmitSignal(SignalName.DamageRequested, 25)));
         content.AddChild(CreateButton("触发坦克报废", () => EmitSignal(SignalName.DefeatRequested)));
+        content.AddChild(CreateButton("结束刷新（保留残敌）", () => EmitSignal(SignalName.StopWaveSpawningRequested)));
+        content.AddChild(CreateButton("敌军全灭（当前波）", () => EmitSignal(SignalName.ClearWaveEnemiesRequested)));
+        content.AddChild(CreateButton("结束本轮并结算", () => EmitSignal(SignalName.CompleteWaveRequested)));
+        content.AddChild(CreateButton("确认并到下一波", () => EmitSignal(SignalName.AdvanceWaveRequested)));
+        content.AddChild(CreateButton("结束本局（验收）", () => EmitSignal(SignalName.EndRunRequested)));
         content.AddChild(CreateButton("进入 Boss 验收", () => EmitSignal(SignalName.BossRequested)));
         content.AddChild(CreateButton("重新开始本局", () => EmitSignal(SignalName.RestartRequested)));
         content.AddChild(new Label
         {
-            Text = "第一次报废消耗重启；保护结束后再次报废验证失败。",
+            Text = "前三项用于验证波次门禁；“到下一波”会自动完成本轮并确认奖励。",
             AutowrapMode = TextServer.AutowrapMode.WordSmart
         });
     }

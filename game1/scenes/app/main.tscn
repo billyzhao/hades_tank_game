@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://scripts/ui/AcceptanceMenu.cs" id="2_acceptance"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud"]
-bg_color = Color(0.10, 0.085, 0.055, 0.92)
+bg_color = Color(0.10, 0.085, 0.055, 0.78)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -18,90 +18,80 @@ corner_radius_bottom_left = 2
 [node name="AppRoot" type="Node"]
 script = ExtResource("1_app_root")
 
-[node name="RoomHost" type="Node" parent="."]
+[node name="ArenaHost" type="Node" parent="."]
 
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="HudPanel" type="Panel" parent="UI"]
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 300.0
-offset_bottom = 68.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 174.0
+offset_bottom = 50.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hud")
 mouse_filter = 2
 
 [node name="Hud" type="GridContainer" parent="UI"]
-offset_left = 12.0
-offset_top = 24.0
-offset_right = 296.0
-offset_bottom = 66.0
+offset_left = 10.0
+offset_top = 20.0
+offset_right = 170.0
+offset_bottom = 46.0
 columns = 3
-theme_override_constants/h_separation = 10
+theme_override_constants/h_separation = 3
 theme_override_constants/v_separation = 0
 
 [node name="HudTitle" type="Label" parent="UI"]
-offset_left = 13.0
-offset_top = 10.0
-offset_right = 200.0
-offset_bottom = 23.0
+offset_left = 10.0
+offset_top = 9.0
+offset_right = 170.0
+offset_bottom = 18.0
 text = "MOBILE CORE // 生存状态"
 theme_override_colors/font_color = Color(0.95, 0.68, 0.24, 1)
 theme_override_constants/outline_size = 2
 theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.025, 1)
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 6
 
 [node name="ArmorLabel" type="Label" parent="UI/Hud"]
 text = "装甲"
 theme_override_colors/font_color = Color(0.45, 0.8, 1, 1)
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 6
 
 [node name="CoreLabel" type="Label" parent="UI/Hud"]
 text = "核心"
 theme_override_colors/font_color = Color(0.4, 1, 0.55, 1)
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 6
 
 [node name="RebootLabel" type="Label" parent="UI/Hud"]
 text = "重启"
 theme_override_colors/font_color = Color(1, 0.8, 0.3, 1)
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 6
 
 [node name="EnemyLabel" type="Label" parent="UI/Hud"]
 text = "敌军  0"
 theme_override_colors/font_color = Color(1, 0.48, 0.32, 1)
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 6
 
-[node name="RoomLabel" type="Label" parent="UI/Hud"]
-text = "房间  战斗"
+[node name="ArenaLabel" type="Label" parent="UI/Hud"]
+text = "竞技场  1/5"
 theme_override_colors/font_color = Color(0.8, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 6
 
 [node name="WaveLabel" type="Label" parent="UI/Hud"]
-text = "波次 0/3"
+text = "波次 1/5  准备中"
 theme_override_colors/font_color = Color(0.95, 0.75, 0.35, 1)
-theme_override_font_sizes/font_size = 8
-
-[node name="RoleLegendLabel" type="Label" parent="UI"]
-offset_left = 12.0
-offset_top = 194.0
-offset_right = 470.0
-offset_bottom = 211.0
-text = "敌军辨识：黄巡逻 | 橙突击 | 紫重炮 | 所有敌军只锁定玩家"
-theme_override_colors/font_color = Color(0.82, 0.84, 0.9, 1)
-theme_override_constants/outline_size = 2
-theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.025, 1)
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 6
 
 [node name="BuildLabel" type="Label" parent="UI"]
-offset_left = 12.0
-offset_top = 72.0
-offset_right = 468.0
-offset_bottom = 102.0
-text = "构筑：暂无协议"
-autowrap_mode = 2
+visible = false
+offset_left = 10.0
+offset_top = 53.0
+offset_right = 300.0
+offset_bottom = 64.0
+text = "构筑：验证五波节奏"
+autowrap_mode = 0
 theme_override_colors/font_color = Color(0.62, 0.88, 1, 1)
 theme_override_constants/outline_size = 2
 theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.025, 1)
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 6
 
 [node name="AcceptanceMenu" type="Control" parent="UI"]
 layout_mode = 3
@@ -114,22 +104,22 @@ mouse_filter = 2
 script = ExtResource("2_acceptance")
 
 [node name="StatusLabel" type="Label" parent="UI"]
-offset_left = 12.0
-offset_top = 250.0
+offset_left = 10.0
+offset_top = 258.0
 offset_right = 470.0
 offset_bottom = 267.0
-text = "WASD/方向键 移动 | 左键 射击 | 空格 冲刺 | 右上角 生存验收"
+text = "WASD/方向键 移动 | 左键 射击 | 空格 冲刺 | 右上角 竞技场验收"
 theme_override_constants/outline_size = 2
 theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.025, 1)
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 6
 
 [node name="EventLabel" type="Label" parent="UI"]
-offset_left = 12.0
-offset_top = 216.0
+offset_left = 10.0
+offset_top = 244.0
 offset_right = 470.0
-offset_bottom = 241.0
+offset_bottom = 256.0
 text = "验收提示会显示在这里"
 theme_override_colors/font_color = Color(1, 0.9, 0.35, 1)
 theme_override_constants/outline_size = 2
 theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.025, 1)
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 7
