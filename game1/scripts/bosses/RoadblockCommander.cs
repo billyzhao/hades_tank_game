@@ -3,7 +3,7 @@ using Godot;
 namespace Game1;
 
 /// <summary>路障指挥车的受击实体；07A 仅负责生命和阶段，攻击机制留给 07B 组合。</summary>
-public partial class RoadblockCommander : CharacterBody2D, IDamageable
+public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
 {
     private static readonly PackedScene ProjectileScene = GD.Load<PackedScene>("res://scenes/combat/projectile.tscn");
     [Export] public BossDefinition Definition { get; set; }
@@ -31,6 +31,7 @@ public partial class RoadblockCommander : CharacterBody2D, IDamageable
 
     public int CurrentHealth => _currentHealth;
     public int MaximumHealth => Definition is null ? 0 : Definition.MaximumHealth;
+    public Team DamageTeam => Team.Enemy;
 
     public override void _Ready()
     {

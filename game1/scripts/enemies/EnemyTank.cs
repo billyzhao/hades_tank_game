@@ -4,13 +4,21 @@ using System.Collections.Generic;
 namespace Game1;
 
 /// <summary>可读的灰盒敌人：出生预警后才移动；Alpha 02B 起所有职责只攻击玩家。</summary>
-public partial class EnemyTank : CharacterBody2D, IDamageable
+public partial class EnemyTank : CharacterBody2D, ITeamDamageable
 {
+    private static readonly PackedScene ProjectileScene = GD.Load<PackedScene>("res://scenes/combat/projectile.tscn");
+    private static readonly Texture2D PatrolTexture = GD.Load<Texture2D>("res://assets/sprites/enemies/patrol_tank.png");
+    private static readonly Texture2D AssaultTexture = GD.Load<Texture2D>("res://assets/sprites/enemies/assault_vehicle.png");
+    private static readonly Texture2D SiegeTexture = GD.Load<Texture2D>("res://assets/sprites/enemies/siege_tank.png");
+    private static readonly Texture2D EliteTexture = GD.Load<Texture2D>("res://assets/sprites/enemies/elite_tank.png");
     [Export] public BehaviorId Behavior { get; set; } = BehaviorId.Patrol;
     [Export] public float MoveSpeed { get; set; } = 42f;
     [Export] public float TelegraphSeconds { get; set; } = 0.35f;
     [Export] public int Armor { get; set; } = 20;
+    /// <summary>精英只改变表现与既有导演数值，不改变普通敌军的行为职责。</summary>
+    public bool IsEliteVisual { get; set; }
     [Signal] public delegate void DestroyedEventHandler();
+    [Signal] public delegate void ProjectileFiredEventHandler();
     private float _telegraphRemaining;
     private float _attackTelegraphRemaining;
     private float _attackCooldown;
@@ -23,6 +31,7 @@ public partial class EnemyTank : CharacterBody2D, IDamageable
     private IReadOnlyList<Vector2> _path = System.Array.Empty<Vector2>();
     private int _pathIndex;
     private float _repathRemaining;
+    public Team DamageTeam => Team.Enemy;
 
     public void SetPathProvider(IEnemyPathProvider pathProvider) => _pathProvider = pathProvider;
 
@@ -32,6 +41,7 @@ public partial class EnemyTank : CharacterBody2D, IDamageable
         AddToGroup("enemies");
         _visual = GetNode<Polygon2D>("Visual");
         _roleSprite = GetNode<Sprite2D>("RoleSprite");
+        _roleSprite.Texture = SelectRuntimeTexture();
         _attackWarning = GetNode<Line2D>("AttackWarning");
         _telegraphRemaining = Behavior switch { BehaviorId.Assault => 0.2f, BehaviorId.Siege => 0.75f, _ => TelegraphSeconds };
         SetVisualColor(EnemyVisualPalette.GetRoleTint(Behavior));
@@ -71,7 +81,7 @@ public partial class EnemyTank : CharacterBody2D, IDamageable
             SetVisualColor(new Color(1f, 1f, 1f));
             if (_attackTelegraphRemaining <= 0f)
             {
-                if (target == TargetId.Player) player.GetNode<HealthComponent>("HealthComponent").ApplyDamage(new DamageContext(10));
+                FireAt(targetNode);
                 _attackCooldown = 1.3f;
                 _attackWarning.Visible = false;
                 SetVisualColor(EnemyVisualPalette.GetRoleTint(Behavior));
@@ -108,12 +118,35 @@ public partial class EnemyTank : CharacterBody2D, IDamageable
         ApplyMovementPose((float)delta, !GetRealVelocity().IsZeroApprox());
     }
 
+    private void FireAt(Node2D targetNode)
+    {
+        Vector2 direction = GlobalPosition.DirectionTo(targetNode.GlobalPosition);
+        if (direction.IsZeroApprox()) return;
+
+        Projectile projectile = ProjectileScene.Instantiate<Projectile>();
+        GetTree().CurrentScene.AddChild(projectile);
+        projectile.GlobalPosition = GlobalPosition + direction * 12f;
+        projectile.Initialize(new ProjectileSpec(10, 190f, 1.7f, 0), Team.Enemy, direction);
+        EmitSignal(SignalName.ProjectileFired);
+    }
+
     private void ApplyMovementPose(float delta, bool moving)
     {
         if (moving) _motionClock += delta;
         EnemyMotionPose pose = EnemyMotionVisual.Calculate(_motionClock, moving ? MoveSpeed : 0f, _baseVisualScale);
         _roleSprite.Position = new Vector2(0f, pose.LateralOffset);
         _roleSprite.Scale = pose.Scale;
+    }
+
+    private Texture2D SelectRuntimeTexture()
+    {
+        if (IsEliteVisual) return EliteTexture;
+        return Behavior switch
+        {
+            BehaviorId.Assault => AssaultTexture,
+            BehaviorId.Siege => SiegeTexture,
+            _ => PatrolTexture
+        };
     }
 
     private void SetVisualColor(Color color)

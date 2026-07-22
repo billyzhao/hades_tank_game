@@ -2,7 +2,7 @@ using Godot;
 
 namespace Game1;
 
-public partial class PlayerTank : CharacterBody2D
+public partial class PlayerTank : CharacterBody2D, ITeamDamageable
 {
     [Export] public float MoveSpeed { get; set; } = 120f;
 
@@ -13,6 +13,7 @@ public partial class PlayerTank : CharacterBody2D
     private BuildController _buildController;
 
     public Vector2 AimDirection { get; private set; } = Vector2.Up;
+    public Team DamageTeam => Team.Player;
 
     public override void _Ready()
     {
@@ -63,6 +64,10 @@ public partial class PlayerTank : CharacterBody2D
 
     public void AttachBuild(BuildController buildController) =>
         _buildController = buildController ?? throw new System.ArgumentNullException(nameof(buildController));
+
+    /// <summary>玩家碰撞体是敌方弹丸的命中实体；伤害统一交由生命组件结算。</summary>
+    public DamageResult ApplyDamage(DamageContext context) =>
+        GetNode<HealthComponent>("HealthComponent").ApplyDamage(context);
 
     private void UpdateAimDirection()
     {

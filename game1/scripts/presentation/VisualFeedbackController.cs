@@ -5,6 +5,9 @@ namespace Game1;
 /// <summary>把命中事实转换为短寿命的火花或爆炸，不参与任何伤害结算。</summary>
 public partial class VisualFeedbackController : Node2D
 {
+    private static readonly Texture2D SteelImpactTexture = GD.Load<Texture2D>("res://assets/sprites/effects/steel_impact.png");
+    private static readonly Texture2D EnemyBurstTexture = GD.Load<Texture2D>("res://assets/sprites/effects/enemy_burst.png");
+
     public override void _Ready()
     {
         Node room = GetParent();
@@ -23,21 +26,16 @@ public partial class VisualFeedbackController : Node2D
 
     private void SpawnImpact(Vector2 position, bool destroyedTarget, bool reflected)
     {
-        Polygon2D flash = new()
+        Sprite2D flash = new()
         {
             GlobalPosition = position,
-            Polygon = new Vector2[]
-            {
-                new(-4f, 0f), new(0f, -4f), new(4f, 0f), new(0f, 4f)
-            },
-            Color = destroyedTarget
-                ? new Color(1f, 0.30f, 0.08f)
-                : reflected ? new Color(0.55f, 0.90f, 1f) : new Color(1f, 0.82f, 0.24f),
+            Texture = destroyedTarget ? EnemyBurstTexture : SteelImpactTexture,
+            Modulate = reflected ? new Color(0.72f, 0.95f, 1f) : Colors.White,
             ZIndex = 20
         };
         AddChild(flash);
 
-        float scale = destroyedTarget ? 2.5f : 1.4f;
+        float scale = destroyedTarget ? 1.15f : 0.72f;
         Tween tween = CreateTween();
         tween.SetParallel();
         tween.TweenProperty(flash, "scale", Vector2.One * scale, destroyedTarget ? 0.18 : 0.10);

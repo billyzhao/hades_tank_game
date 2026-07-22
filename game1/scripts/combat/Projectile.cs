@@ -5,6 +5,8 @@ namespace Game1;
 public partial class Projectile : Node2D
 {
     private static readonly PackedScene ProjectileScene = GD.Load<PackedScene>("res://scenes/combat/projectile.tscn");
+    private static readonly Texture2D PlayerShellTexture = GD.Load<Texture2D>("res://assets/sprites/effects/player_shell.png");
+    private static readonly Texture2D EnemyShellTexture = GD.Load<Texture2D>("res://assets/sprites/effects/enemy_shell.png");
     [Signal] public delegate void ImpactedEventHandler(Vector2 position, bool destroyedTarget, bool reflected);
     [Export] public uint CollisionMask { get; set; } = 27;
     private ProjectileSpec _spec;
@@ -23,8 +25,11 @@ public partial class Projectile : Node2D
         _bounces = spec.Bounces;
         _splits = spec.SplitCount;
         _team = team;
+        CollisionMask = ProjectileTargeting.CollisionMaskFor(team);
+        GetNode<Sprite2D>("Visual").Texture = team == Team.Player ? PlayerShellTexture : EnemyShellTexture;
         if (team == Team.Enemy) AddToGroup("enemy_projectiles");
-        Modulate = team == Team.Player ? new Color(1f, 0.82f, 0.2f) : new Color(1f, 0.3f, 0.25f);
+        // 炮弹颜色由独立像素贴图承担，避免二次染色破坏玩家黄弹与敌军红弹的识别。
+        Modulate = Colors.White;
     }
 
     public override void _PhysicsProcess(double delta)
@@ -36,12 +41,25 @@ public partial class Projectile : Node2D
         for (int impact = 0; impact < 4 && remaining > 0f; impact++)
         {
             Vector2 target = GlobalPosition + _direction * remaining;
-            PhysicsRayQueryParameters2D query = PhysicsRayQueryParameters2D.Create(GlobalPosition, target, CollisionMask);
+            using PhysicsRayQueryParameters2D query = PhysicsRayQueryParameters2D.Create(GlobalPosition, target, CollisionMask);
             Godot.Collections.Dictionary hit = GetWorld2D().DirectSpaceState.IntersectRay(query);
             if (hit.Count == 0) { GlobalPosition = target; return; }
             Vector2 point = hit["position"].AsVector2();
             Vector2 normal = hit["normal"].AsVector2();
             // 命中可受伤实体时先结算伤害；砖墙不会进入反弹分支。
+            if (hit["collider"].AsGodotObject() is ITeamDamageable teamDamageable)
+            {
+                if (!ProjectileTargeting.CanDamage(_team, teamDamageable.DamageTeam))
+                {
+                    GlobalPosition = point + _direction * 0.05f;
+                    continue;
+                }
+                DamageResult result = teamDamageable.ApplyDamage(new DamageContext(_spec.Damage));
+                SpawnSplitShells(point);
+                EmitSignal(SignalName.Impacted, point, result.DepletedNow, false);
+                QueueFree();
+                return;
+            }
             if (hit["collider"].AsGodotObject() is IDamageable damageable)
             {
                 DamageResult result = damageable.ApplyDamage(new DamageContext(_spec.Damage));

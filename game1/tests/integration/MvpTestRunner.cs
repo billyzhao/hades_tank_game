@@ -19,6 +19,7 @@ public partial class MvpTestRunner : Node2D
     {
         Check("dash_and_steel_collision_contract", DashAndSteelCollisionContract);
         Check("projectile_reflection", ProjectileReflection);
+        Check("projectile_team_targeting_contract", ProjectileTeamTargetingContract);
         Check("brick_destruction", BrickDestruction);
         Check("all_enemy_behaviors_target_player", AllEnemyBehaviorsTargetPlayer);
         Check("room_reward_and_run_failures", RoomRewardAndRunFailures);
@@ -66,6 +67,22 @@ public partial class MvpTestRunner : Node2D
     {
         Vector2 reflected = ProjectileMath.Reflect(Vector2.Right, Vector2.Left);
         Assert(reflected.IsEqualApprox(Vector2.Left), "正面命中钢墙后炮弹方向必须反转。");
+    }
+
+    private static void ProjectileTeamTargetingContract()
+    {
+        Assert(ProjectileTargeting.CollisionMaskFor(Team.Player) == 11u,
+            "玩家炮弹只能查询世界层与敌军层，不能查询玩家层。");
+        Assert(ProjectileTargeting.CollisionMaskFor(Team.Enemy) == 7u,
+            "敌方炮弹只能查询世界层与玩家层，不能查询敌军层。");
+        Assert(ProjectileTargeting.CanDamage(Team.Player, Team.Enemy),
+            "玩家炮弹必须能伤害敌军。");
+        Assert(!ProjectileTargeting.CanDamage(Team.Player, Team.Player),
+            "玩家炮弹绝不能伤害自身阵营。");
+        Assert(ProjectileTargeting.CanDamage(Team.Enemy, Team.Player),
+            "敌方炮弹必须能伤害玩家。");
+        Assert(!ProjectileTargeting.CanDamage(Team.Enemy, Team.Enemy),
+            "敌方炮弹绝不能误伤敌军。");
     }
 
     private static void BrickDestruction()

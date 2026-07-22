@@ -154,9 +154,9 @@ public partial class WaveDirector : Node
         {
             _eliteSpawned = true;
             EliteAlive = true;
+            enemy.IsEliteVisual = true;
             enemy.Armor = Math.Max(enemy.Armor * 3, 60);
             enemy.Scale = Vector2.One * 1.25f;
-            enemy.Modulate = new Color(1f, 0.82f, 0.28f);
             enemy.AddToGroup("elite_placeholder");
             EliteStateChanged?.Invoke(true);
         }
