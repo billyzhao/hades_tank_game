@@ -50,7 +50,11 @@ public sealed class RewardController
         RewardChoice choice = CurrentOffer.Choices.FirstOrDefault(item => string.Equals(item.Id, choiceId, StringComparison.Ordinal))
             ?? throw new ArgumentException("所选奖励不属于当前候选。", nameof(choiceId));
 
-        if (CurrentOffer.Kind is RewardKind.NormalProtocol or RewardKind.RareProtocol)
+        if (choice.IsAuxiliary)
+        {
+            _build.AddOrUpgradeAuxiliary(choice.Id);
+        }
+        else if (CurrentOffer.Kind is RewardKind.NormalProtocol or RewardKind.RareProtocol)
         {
             _build.SelectProtocol(choice.Id);
         }
@@ -75,12 +79,43 @@ public sealed class RewardController
             ranks,
             kind,
             _state.SelectedCore), _catalog);
-        RewardChoice[] choices = protocolOffer.ProtocolIds.Select(id =>
+        List<RewardChoice> choices = protocolOffer.ProtocolIds.Select(id =>
         {
             ProtocolDefinition definition = _catalog.GetProtocol(id);
             ProtocolRank next = _state.GetProtocolRank(id) + 1;
             return new RewardChoice(id, $"{definition.DisplayName} {next}", definition.Description, definition.Tags.ToArray());
-        }).ToArray();
+        }).ToList();
+
+        // 辅助由与协议共用的三选一正式奖励面板获得；满槽时只允许现有辅助的升级卡进入候选。
+        if (kind == RewardKind.NormalProtocol)
+        {
+            AuxiliaryDefinition? auxiliary = SelectEligibleAuxiliary();
+            if (auxiliary is not null)
+            {
+                int nextRank = _state.GetAuxiliaryRank(auxiliary.Id) + 1;
+                choices[choices.Count - 1] = new RewardChoice(
+                    auxiliary.Id,
+                    $"{auxiliary.DisplayName} Mk.{nextRank}",
+                    auxiliary.Description,
+                    Array.Empty<string>(),
+                    isAuxiliary: true);
+            }
+        }
         return new RewardOffer(kind, choices);
+    }
+
+    private AuxiliaryDefinition? SelectEligibleAuxiliary()
+    {
+        IEnumerable<AuxiliaryDefinition> eligible = _catalog.Auxiliaries
+            .Where(auxiliary =>
+            {
+                int rank = _state.GetAuxiliaryRank(auxiliary.Id);
+                return rank > 0 ? rank < auxiliary.MaximumRank : _state.AuxiliarySlots.Count < 2;
+            })
+            .OrderBy(auxiliary => auxiliary.Id, StringComparer.Ordinal);
+        AuxiliaryDefinition[] all = eligible.ToArray();
+        if (all.Length == 0) return null;
+        int index = Math.Abs(_state.Seed ^ (_state.ArenaIndex * 37) ^ (_state.WaveIndex * 11)) % all.Length;
+        return all[index];
     }
 }

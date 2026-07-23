@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 
 namespace Game1;
@@ -9,13 +10,13 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
     private static readonly PackedScene ProjectileScene = GD.Load<PackedScene>("res://scenes/combat/projectile.tscn");
     private static readonly Texture2D PatrolTexture = GD.Load<Texture2D>("res://assets/sprites/enemies/patrol_tank.png");
     private static readonly Texture2D AssaultTexture = GD.Load<Texture2D>("res://assets/sprites/enemies/assault_vehicle.png");
-    private static readonly Texture2D SiegeTexture = GD.Load<Texture2D>("res://assets/sprites/enemies/siege_tank.png");
+    private static readonly Texture2D MortarTexture = GD.Load<Texture2D>("res://assets/sprites/enemies/siege_tank.png");
     private static readonly Texture2D EliteTexture = GD.Load<Texture2D>("res://assets/sprites/enemies/elite_tank.png");
     [Export] public BehaviorId Behavior { get; set; } = BehaviorId.Patrol;
     [Export] public float MoveSpeed { get; set; } = 42f;
     [Export] public float TelegraphSeconds { get; set; } = 0.35f;
     [Export] public int Armor { get; set; } = 20;
-    /// <summary>精英只改变表现与既有导演数值，不改变普通敌军的行为职责。</summary>
+    /// <summary>精英仅附加“过载加速—冷却减速”一条规则，不用生命膨胀堆难度。</summary>
     public bool IsEliteVisual { get; set; }
     [Signal] public delegate void DestroyedEventHandler();
     [Signal] public delegate void ProjectileFiredEventHandler();
@@ -31,6 +32,7 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
     private IReadOnlyList<Vector2> _path = System.Array.Empty<Vector2>();
     private int _pathIndex;
     private float _repathRemaining;
+    private float _eliteCycle;
     public Team DamageTeam => Team.Enemy;
 
     public void SetPathProvider(IEnemyPathProvider pathProvider) => _pathProvider = pathProvider;
@@ -43,12 +45,14 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
         _roleSprite = GetNode<Sprite2D>("RoleSprite");
         _roleSprite.Texture = SelectRuntimeTexture();
         _attackWarning = GetNode<Line2D>("AttackWarning");
-        _telegraphRemaining = Behavior switch { BehaviorId.Assault => 0.2f, BehaviorId.Siege => 0.75f, _ => TelegraphSeconds };
+        _telegraphRemaining = Behavior switch { BehaviorId.Scout => 0.12f, BehaviorId.Assault => 0.2f, BehaviorId.Mortar => 0.75f, _ => TelegraphSeconds };
         SetVisualColor(EnemyVisualPalette.GetRoleTint(Behavior));
         _attackWarning.DefaultColor = EnemyVisualPalette.GetRoleTint(Behavior);
         _attackWarning.Visible = false;
-        _baseVisualScale = Behavior == BehaviorId.Siege ? 0.62f : 0.50f;
+        _baseVisualScale = Behavior == BehaviorId.Mortar ? 0.62f : Behavior == BehaviorId.Scout ? 0.38f : 0.50f;
+        MoveSpeed = Behavior switch { BehaviorId.Scout => Math.Max(MoveSpeed, 68f), BehaviorId.Assault => Math.Max(MoveSpeed, 54f), BehaviorId.Mortar => Math.Min(MoveSpeed, 36f), _ => MoveSpeed };
         _roleSprite.Scale = Vector2.One * _baseVisualScale;
+        if (IsEliteVisual) _eliteCycle = 1.25f;
     }
 
     public override void _PhysicsProcess(double delta)
@@ -88,11 +92,12 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
             }
             return;
         }
-        if (_attackCooldown <= 0f && GlobalPosition.DistanceTo(targetNode.GlobalPosition) < 95f)
+        float attackRange = Behavior == BehaviorId.Mortar ? 145f : Behavior == BehaviorId.Scout ? 72f : 95f;
+        if (_attackCooldown <= 0f && GlobalPosition.DistanceTo(targetNode.GlobalPosition) < attackRange)
         {
             Velocity = Vector2.Zero;
             ApplyMovementPose((float)delta, false);
-            _attackTelegraphRemaining = Behavior switch { BehaviorId.Assault => 0.2f, BehaviorId.Siege => 0.75f, _ => 0.35f };
+            _attackTelegraphRemaining = Behavior switch { BehaviorId.Scout => 0.16f, BehaviorId.Assault => 0.2f, BehaviorId.Mortar => 0.75f, _ => 0.35f };
             _attackWarning.Visible = true;
             return;
         }
@@ -112,7 +117,7 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
         }
         while (_pathProvider is not null && _pathIndex < _path.Count - 1 && GlobalPosition.DistanceTo(_path[_pathIndex]) < 10f) _pathIndex++;
         Vector2 nextPoint = _pathProvider is null ? targetNode.GlobalPosition : _path[_pathIndex];
-        Velocity = GlobalPosition.DirectionTo(nextPoint) * MoveSpeed;
+        Velocity = GlobalPosition.DirectionTo(nextPoint) * GetEffectiveMoveSpeed((float)delta);
         if (!Velocity.IsZeroApprox()) Rotation = Velocity.Angle();
         MoveAndSlide();
         ApplyMovementPose((float)delta, !GetRealVelocity().IsZeroApprox());
@@ -126,7 +131,9 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
         Projectile projectile = ProjectileScene.Instantiate<Projectile>();
         GetTree().CurrentScene.AddChild(projectile);
         projectile.GlobalPosition = GlobalPosition + direction * 12f;
-        projectile.Initialize(new ProjectileSpec(10, 190f, 1.7f, 0), Team.Enemy, direction);
+        int damage = Behavior switch { BehaviorId.Scout => 5, BehaviorId.Mortar => 14, _ => 10 };
+        float speed = Behavior == BehaviorId.Mortar ? 135f : 190f;
+        projectile.Initialize(new ProjectileSpec(damage, speed, 1.7f, 0), Team.Enemy, direction);
         EmitSignal(SignalName.ProjectileFired);
     }
 
@@ -144,9 +151,20 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
         return Behavior switch
         {
             BehaviorId.Assault => AssaultTexture,
-            BehaviorId.Siege => SiegeTexture,
+            BehaviorId.Mortar => MortarTexture,
             _ => PatrolTexture
         };
+    }
+
+    private float GetEffectiveMoveSpeed(float delta)
+    {
+        if (!IsEliteVisual) return MoveSpeed;
+        _eliteCycle -= delta;
+        if (_eliteCycle <= 0f) _eliteCycle = 2.0f;
+        // 周期前 1.25 秒冲刺追击，后 0.75 秒明显冷却，为玩家提供可读反击窗口。
+        bool overdrive = _eliteCycle > 0.75f;
+        _roleSprite.Modulate = overdrive ? new Color(1f, 0.72f, 0.18f) : new Color(0.55f, 0.55f, 0.55f);
+        return MoveSpeed * (overdrive ? 1.55f : 0.55f);
     }
 
     private void SetVisualColor(Color color)

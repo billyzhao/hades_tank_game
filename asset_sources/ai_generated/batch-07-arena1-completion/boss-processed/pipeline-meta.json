@@ -1,0 +1,175 @@
+{
+  "target": "asset",
+  "mode": "pack",
+  "prompt": "",
+  "role": "",
+  "input": "D:\\my program\\codex\\godot\\asset_sources\\ai_generated\\batch-07-arena1-completion\\boss-runtime-parts-v1-raw.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 200,
+  "rows": 2,
+  "cols": 2,
+  "cell_size": 128,
+  "fit_scale": 0.82,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": false,
+  "component_mode": "largest",
+  "component_padding": 4,
+  "min_component_area": 24,
+  "edge_touch_margin": 2,
+  "frame_labels": [
+    "boss_part-1",
+    "boss_part-2",
+    "boss_part-3",
+    "boss_part-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 185935,
+      "selected_component_bbox": [
+        125,
+        154,
+        594,
+        597
+      ],
+      "crop_bbox": [
+        121,
+        150,
+        598,
+        601
+      ],
+      "edge_touch": false,
+      "output_size": [
+        104,
+        99
+      ],
+      "paste_position": [
+        12,
+        14
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        627,
+        0,
+        1254,
+        627
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 64189,
+      "selected_component_bbox": [
+        77,
+        242,
+        517,
+        481
+      ],
+      "crop_bbox": [
+        73,
+        238,
+        521,
+        485
+      ],
+      "edge_touch": false,
+      "output_size": [
+        104,
+        57
+      ],
+      "paste_position": [
+        12,
+        35
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        627,
+        627,
+        1254
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 53894,
+      "selected_component_bbox": [
+        221,
+        170,
+        495,
+        393
+      ],
+      "crop_bbox": [
+        217,
+        166,
+        499,
+        397
+      ],
+      "edge_touch": false,
+      "output_size": [
+        104,
+        85
+      ],
+      "paste_position": [
+        12,
+        21
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        627,
+        627,
+        1254,
+        1254
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 33943,
+      "selected_component_bbox": [
+        162,
+        139,
+        349,
+        392
+      ],
+      "crop_bbox": [
+        158,
+        135,
+        353,
+        396
+      ],
+      "edge_touch": false,
+      "output_size": [
+        78,
+        104
+      ],
+      "paste_position": [
+        25,
+        12
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

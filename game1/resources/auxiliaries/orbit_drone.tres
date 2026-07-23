@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/AuxiliaryDefinition.cs" id="1"]
+
+[resource]
+script = ExtResource("1")
+Id = "aux_orbit_drone"
+DisplayName = "环绕无人机"
+Description = "环绕车体的无人机自动点射最近目标。"
+TargetMode = 0
+BaseCooldown = 1.05
+MaximumRank = 3
+BaseDamage = 10
+Range = 142.0

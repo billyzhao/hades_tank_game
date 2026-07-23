@@ -1,7 +1,9 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/app/AppRoot.cs" id="1_app_root"]
 [ext_resource type="Script" path="res://scripts/ui/AcceptanceMenu.cs" id="2_acceptance"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/hud_status_frame.png" id="3_hud_frame"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/experience_frame.png" id="4_experience_frame"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud"]
 bg_color = Color(0.10, 0.085, 0.055, 0.78)
@@ -44,6 +46,19 @@ offset_right = 174.0
 offset_bottom = 50.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hud")
 mouse_filter = 2
+
+[node name="Frame" type="TextureRect" parent="UI/HudPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("3_hud_frame")
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 0
 
 [node name="Hud" type="GridContainer" parent="UI"]
 offset_left = 10.0
@@ -126,6 +141,19 @@ offset_bottom = 52.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hud")
 mouse_filter = 2
 
+[node name="Frame" type="TextureRect" parent="UI/ExperiencePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("3_hud_frame")
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 0
+
 [node name="LevelLabel" type="Label" parent="UI"]
 offset_left = 266.0
 offset_top = 11.0
@@ -147,6 +175,17 @@ theme_override_colors/font_color = Color(0.3, 0.9, 1, 1)
 theme_override_constants/outline_size = 2
 theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.025, 1)
 theme_override_font_sizes/font_size = 7
+
+[node name="ExperienceFrame" type="TextureRect" parent="UI"]
+offset_left = 266.0
+offset_top = 38.0
+offset_right = 382.0
+offset_bottom = 50.0
+mouse_filter = 2
+texture = ExtResource("4_experience_frame")
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 0
 
 [node name="ExperienceBar" type="ProgressBar" parent="UI"]
 offset_left = 270.0
@@ -178,3 +217,14 @@ theme_override_colors/font_color = Color(1, 0.9, 0.35, 1)
 theme_override_constants/outline_size = 2
 theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.025, 1)
 theme_override_font_sizes/font_size = 7
+
+[node name="AuxiliaryLabel" type="Label" parent="UI"]
+offset_left = 10.0
+offset_top = 232.0
+offset_right = 470.0
+offset_bottom = 242.0
+text = "辅助槽  [空]  [空]"
+theme_override_colors/font_color = Color(0.65, 0.9, 0.65, 1)
+theme_override_constants/outline_size = 2
+theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.025, 1)
+theme_override_font_sizes/font_size = 6

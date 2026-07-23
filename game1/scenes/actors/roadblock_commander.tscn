@@ -1,6 +1,9 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/bosses/RoadblockCommander.cs" id="1_boss"]
+[ext_resource type="Texture2D" path="res://assets/sprites/bosses/roadblock_commander_hull.png" id="2_hull"]
+[ext_resource type="Texture2D" path="res://assets/sprites/bosses/roadblock_commander_turret.png" id="3_turret"]
+[ext_resource type="Texture2D" path="res://assets/sprites/bosses/roadblock_commander_weakpoint.png" id="4_weakpoint"]
 
 [sub_resource type="RectangleShape2D" id="BossShape"]
 size = Vector2(38, 28)
@@ -13,14 +16,24 @@ PhaseOneAnchors = [Vector2(240, 78), Vector2(168, 92), Vector2(312, 92), Vector2
 PhaseOneMoveSpeed = 30.0
 FanCooldownSeconds = 2.6
 
-[node name="Visual" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-19, -12, 11, -12, 19, -4, 19, 4, 11, 12, -19, 12, -23, 0)
-color = Color(0.94, 0.53, 0.12, 1)
+[node name="Visual" type="Sprite2D" parent="."]
+texture = ExtResource("2_hull")
+rotation = 1.5708
+texture_filter = 1
 
-[node name="Turret" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-4, -5, 22, -5, 22, 5, -4, 5)
-color = Color(0.18, 0.22, 0.26, 1)
+[node name="Turret" type="Sprite2D" parent="."]
+texture = ExtResource("3_turret")
+rotation = 1.5708
+texture_filter = 1
 z_index = 1
+
+[node name="Weakpoint" type="Sprite2D" parent="."]
+visible = false
+position = Vector2(-14, 0)
+texture = ExtResource("4_weakpoint")
+rotation = 1.5708
+texture_filter = 1
+z_index = 2
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 shape = SubResource("BossShape")

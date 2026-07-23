@@ -19,11 +19,11 @@ public sealed class ThreatWavePlanTests
     }
 
     [Test]
-    public void CreateMvp_NeverPlacesMoreThanOneSiegeInASingleWave()
+    public void CreateMvp_NeverPlacesMoreThanOneMortarInASingleWave()
     {
         foreach (IReadOnlyList<BehaviorId> wave in ThreatWavePlan.CreateMvp())
         {
-            Assert.That(wave.Count(behavior => behavior == BehaviorId.Siege), Is.LessThanOrEqualTo(1));
+            Assert.That(wave.Count(behavior => behavior == BehaviorId.Mortar), Is.LessThanOrEqualTo(1));
         }
     }
 }

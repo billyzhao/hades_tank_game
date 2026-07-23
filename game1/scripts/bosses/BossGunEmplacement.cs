@@ -6,15 +6,21 @@ namespace Game1;
 public partial class BossGunEmplacement : Node2D
 {
     private static readonly PackedScene ProjectileScene = GD.Load<PackedScene>("res://scenes/combat/projectile.tscn");
+    private static readonly Texture2D BodyTexture = GD.Load<Texture2D>("res://assets/sprites/bosses/roadblock_gun_emplacement.png");
     [Export] public float TelegraphSeconds { get; set; } = .8f;
     private Line2D _warning = null!;
-    private Polygon2D _body = null!;
+    private Sprite2D _body = null!;
     private bool _active;
     private bool _firing;
 
     public override void _Ready()
     {
-        _body = new Polygon2D { Polygon = new Vector2[] { new(-7, -7), new(7, -7), new(7, 7), new(-7, 7) }, Color = new Color(.75f, .25f, .12f), ZIndex = 2 };
+        _body = new Sprite2D
+        {
+            Texture = BodyTexture,
+            TextureFilter = CanvasItem.TextureFilterEnum.Nearest,
+            ZIndex = 2
+        };
         AddChild(_body);
         _warning = new Line2D { Width = 2f, DefaultColor = new Color(1f, .2f, .08f, .75f), Visible = false, ZIndex = 4 };
         AddChild(_warning);

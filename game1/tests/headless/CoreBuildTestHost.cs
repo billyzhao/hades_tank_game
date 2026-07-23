@@ -54,11 +54,32 @@ public partial class CoreBuildTestHost : Node
             StackLimit = 1,
             Effects = new Godot.Collections.Array<ProtocolEffectDefinition> { effect }
         };
-        return new ContentCatalog
+        ContentCatalog catalog = new()
         {
             Version = "core-test-v1",
             Protocols = new Godot.Collections.Array<ProtocolDefinition> { protocol }
         };
+        AddRequiredAuxiliaries(catalog);
+        return catalog;
+    }
+
+    /// <summary>测试目录也必须满足首区四辅助内容合同，避免绕过生产校验。</summary>
+    private static void AddRequiredAuxiliaries(ContentCatalog catalog)
+    {
+        for (int index = 0; index < 4; index++)
+        {
+            catalog.Auxiliaries.Add(new AuxiliaryDefinition
+            {
+                Id = $"core_test_auxiliary_{index}",
+                DisplayName = $"测试辅助 {index}",
+                Description = "仅用于构筑管线测试目录校验。",
+                TargetMode = AuxiliaryTargetMode.Nearest,
+                BaseCooldown = 1f,
+                MaximumRank = 3,
+                BaseDamage = 1,
+                Range = 100f
+            });
+        }
     }
 
     private static void Assert(bool condition, string message)

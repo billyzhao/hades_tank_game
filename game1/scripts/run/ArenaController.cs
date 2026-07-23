@@ -109,6 +109,20 @@ public sealed class ArenaController
         ArenaFailed?.Invoke();
     }
 
+    /// <summary>Boss 实例已进入当前竞技场；只有五波奖励完成后才能切入战斗。</summary>
+    public void OnBossStarted()
+    {
+        RequireState(ArenaState.BossIntro, "只有 BossIntro 可以开始 Boss 战斗。 ");
+        SetState(ArenaState.BossCombat);
+    }
+
+    /// <summary>Boss 击败是竞技场完成事实，由 RunController 决定后续竞技场或完整单局结算。</summary>
+    public void OnBossDefeated()
+    {
+        RequireState(ArenaState.BossCombat, "只有 BossCombat 可以完成竞技场。 ");
+        SetState(ArenaState.Completed);
+    }
+
     private void StartCurrentWave()
     {
         SetState(ArenaState.WaveCombat);

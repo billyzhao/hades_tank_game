@@ -18,8 +18,6 @@ public partial class AppRoot : Node
     private static readonly CoreCatalog MobileCoreCatalog = CoreCatalog.CreateDefault();
     private static readonly BossDefinition RoadblockCommanderDefinition =
         GD.Load<BossDefinition>("res://resources/bosses/roadblock_commander.tres");
-    private static readonly PackedScene BossValidationRoomScene =
-        GD.Load<PackedScene>("res://scenes/rooms/mvp_boss_room.tscn");
 
     public RunState CurrentRun { get; private set; } = null!;
 
@@ -48,11 +46,13 @@ public partial class AppRoot : Node
     private ProgressBar _experienceBar = null!;
     private Label _eventLabel = null!;
     private Label _buildLabel = null!;
+    private Label _auxiliaryLabel = null!;
     private AcceptanceMenu _acceptanceMenu = null!;
     private WaveRewardPanel _waveRewardPanel = null!;
     private CoreSelectionPanel _coreSelectionPanel = null!;
     private LevelUpPanel _levelUpPanel = null!;
     private BossHudController _bossHud = null!;
+    private RoadblockCommander _activeBoss;
     private RunResultScreen _runResultScreen = null!;
     private DebugOverlay _debugOverlay = null!;
     private readonly SaveService _saveService = new();
@@ -105,7 +105,8 @@ public partial class AppRoot : Node
         _arenaController.StateChanged += OnArenaStateChanged;
         _arenaController.WaveRequested += StartWave;
         _arenaController.RewardRequested += ShowWaveReward;
-        _arenaController.BossRequested += ShowBossPlaceholder;
+        _arenaController.BossRequested += BeginBossEncounter;
+        _runController.ArenaRequested += ShowNextArenaPlaceholder;
         _arenaController.ArenaFailed += ShowRunFailure;
         Node2D arena = BlockadeCityArena.Scene.Instantiate<Node2D>();
         GetNode<Node>("ArenaHost").AddChild(arena);
@@ -129,6 +130,7 @@ public partial class AppRoot : Node
         _experienceBar = GetNode<ProgressBar>("UI/ExperienceBar");
         _eventLabel = GetNode<Label>("UI/EventLabel");
         _buildLabel = GetNode<Label>("UI/BuildLabel");
+        _auxiliaryLabel = GetNode<Label>("UI/AuxiliaryLabel");
         _acceptanceMenu = GetNode<AcceptanceMenu>("UI/AcceptanceMenu");
     }
 
@@ -207,6 +209,9 @@ public partial class AppRoot : Node
         _playerHealth.InitializeArmor(CurrentRun.PlayerArmor, CurrentRun.MaximumArmor);
         player.AttachBuild(_buildController);
         player.GetNode<WeaponController>("WeaponController").AttachBuild(_buildController);
+        AuxiliaryHost auxiliaryHost = player.GetNode<AuxiliaryHost>("AuxiliaryHost");
+        auxiliaryHost.Activate(player);
+        auxiliaryHost.AttachBuild(_buildController, ProtocolCatalog);
         player.GetNode<DashComponent>("DashComponent").AttachBuild(_buildController);
 
         _rebootController = arena.GetNode<RebootController>("RebootController");
@@ -368,9 +373,9 @@ public partial class AppRoot : Node
         UpdateHud();
     }
 
-    private void ShowBossPlaceholder()
+    private void BeginBossEncounter()
     {
-        _acceptanceMenu.SetStatus("第 5 波与稀有奖励已完成；当前停在 BossIntro，占位 Boss 将在 Alpha 02H 接入。");
+        EnterBossValidationRoom();
     }
 
     private void BindAcceptanceMenu()
@@ -416,7 +421,37 @@ public partial class AppRoot : Node
             UpdateHud();
             _acceptanceMenu.SetStatus("已授予战斗数据；若达到阈值应立即进入完全暂停升级。");
         };
-        _acceptanceMenu.BossRequested += EnterBossValidationRoom;
+        _acceptanceMenu.AuxiliaryRequested += auxiliaryId =>
+        {
+            try
+            {
+                int rank = _buildController.AddOrUpgradeAuxiliary(auxiliaryId);
+                UpdateHud();
+                _acceptanceMenu.SetStatus($"已授予辅助：{ProtocolCatalog.GetAuxiliary(auxiliaryId).DisplayName} Mk.{rank}，请观察其自动攻击。 ");
+            }
+            catch (InvalidOperationException exception)
+            {
+                _acceptanceMenu.SetStatus($"辅助请求未应用：{exception.Message}");
+            }
+        };
+        _acceptanceMenu.BossRequested += () =>
+        {
+            if (_arenaController.State == ArenaState.BossIntro) BeginBossEncounter();
+            else _acceptanceMenu.SetStatus("请先完成第 5 波与稀有奖励；Boss 只能从 BossIntro 正式入场。 ");
+        };
+        _acceptanceMenu.BossPhaseTwoRequested += () =>
+        {
+            if (_activeBoss is null || !IsInstanceValid(_activeBoss))
+            {
+                _acceptanceMenu.SetStatus("当前没有正在战斗的 Boss；请先完成第五波并进入 Boss 验收。");
+                return;
+            }
+
+            int phaseTwoHealth = _activeBoss.MaximumHealth / 2;
+            int requiredDamage = Mathf.Max(0, _activeBoss.CurrentHealth - phaseTwoHealth);
+            if (requiredDamage > 0) _activeBoss.ApplyDamage(new DamageContext(requiredDamage));
+            _acceptanceMenu.SetStatus("已通过正式伤害路径推进到第二阶段；请观察冲锋终点和散热弱点窗口。");
+        };
         _acceptanceMenu.RestartRequested += ReloadRun;
     }
 
@@ -473,6 +508,9 @@ public partial class AppRoot : Node
         _experienceLabel.Text = $"数据 {CurrentRun.Experience}/{requiredExperience}";
         _experienceBar.MaxValue = requiredExperience;
         _experienceBar.Value = CurrentRun.Experience;
+        _auxiliaryLabel.Text = CurrentRun.AuxiliarySlots.Count == 0
+            ? "辅助槽  [空]  [空]"
+            : $"辅助槽  {string.Join("  |  ", CurrentRun.AuxiliarySlots.Select(slot => $"{ProtocolCatalog.GetAuxiliary(slot.AuxiliaryId).DisplayName} Mk.{slot.Rank}"))}";
         if (_waveDirector is null)
             _waveLabel.Text = $"波次  {_arenaController?.CurrentWave ?? 1}/5  准备中";
     }
@@ -504,21 +542,35 @@ public partial class AppRoot : Node
     private void EnterBossValidationRoom()
     {
         _bossHud.Unbind();
-        DisposeNavigationFactory();
         _waveRewardPanel.Hide();
-        ClearArenaHost();
-        Node2D room = BossValidationRoomScene.Instantiate<Node2D>();
-        GetNode<Node>("ArenaHost").AddChild(room);
-        BindPlayerAndReboot(room);
-
-        RoadblockCommander boss = room.GetNode<RoadblockCommander>("RoadblockCommander");
+        foreach (Node projectile in GetTree().GetNodesInGroup("enemy_projectiles")) projectile.QueueFree();
+        Node2D room = GetNode<Node>("ArenaHost").GetChild(0) as Node2D
+            ?? throw new InvalidOperationException("Boss 必须在当前竞技场实例中登场。 ");
+        RoadblockCommander boss = RoadblockCommanderDefinition.Scene.Instantiate<RoadblockCommander>();
+        _activeBoss = boss;
+        boss.Name = "RoadblockCommander";
+        boss.GlobalPosition = new Vector2(240f, 66f);
+        room.AddChild(boss);
         boss.Initialize(RoadblockCommanderDefinition);
-        ReplaceNavigationFactory(room, RoadblockCommanderDefinition.GridSize, RoadblockCommanderDefinition.CellSize);
-        room.GetNode<BossEncounterController>("BossEncounterController")
-            .Initialize(boss, room, _navigationFactory, RoadblockCommanderDefinition.CellSize);
+        BossEncounterController encounter = new() { Name = "BossEncounterController" };
+        encounter.PhaseOneBarrierCells = new Godot.Collections.Array<Vector2I>
+            { new(7, 3), new(12, 3), new(6, 6), new(13, 6) };
+        encounter.PhaseTwoOpeningCells = new Godot.Collections.Array<Vector2I>
+            { new(8, 8), new(8, 9), new(11, 8), new(11, 9) };
+        encounter.AddChild(new BarrierDeployment { Name = "BarrierDeployment" });
+        encounter.AddChild(new BossGunEmplacement { Name = "BossGunEmplacement", Position = new Vector2(420f, 132f) });
+        encounter.AddChild(new BossSummonController
+        {
+            Name = "BossSummonController",
+            MaximumAlive = 2,
+            SpawnPoints = new Godot.Collections.Array<Vector2> { new(72f, 42f), new(408f, 42f) }
+        });
+        room.AddChild(encounter);
+        encounter.Initialize(boss, room, _navigationFactory, RoadblockCommanderDefinition.CellSize);
         _bossHud.Bind(boss, RoadblockCommanderDefinition);
         boss.Defeated += ShowBossResult;
-        _eventLabel.Text = "独立 Boss 验收：路障指挥车只锁定玩家坦克";
+        if (_arenaController.State == ArenaState.BossIntro) _arenaController.OnBossStarted();
+        _eventLabel.Text = "路障指挥车入场：只锁定玩家坦克；拆障、躲避冲撞并攻击弱点窗口";
         _waveLabel.Text = "阶段  1/2";
         UpdateHud();
     }
@@ -526,14 +578,25 @@ public partial class AppRoot : Node
     private void ShowBossResult()
     {
         if (_resultShown) return;
-        _resultShown = true;
+        _activeBoss = null;
+        _arenaController.OnBossDefeated();
         ClearCombatActors();
         CurrentRun.RestoreArmorForNextArena();
         _playerHealth.SetArmor(CurrentRun.PlayerArmor);
-        RunResultSnapshot snapshot = CreateResultSnapshot();
-        SaveLastRun(snapshot, "victory");
-        _runResultScreen.ShowResult(snapshot, true);
-        _eventLabel.Text = "路障指挥车已击败：装甲已全修";
+        _runController.OnArenaCompleted();
+        _eventLabel.Text = "封锁城区突破：装甲已全修，重启次数保持不变；正在进入下一竞技场占位。";
+        _acceptanceMenu.SetStatus("Boss 已击败：已完成首区、全修装甲并进入竞技场 2 占位。 ");
+    }
+
+    private void ShowNextArenaPlaceholder(int arenaIndex)
+    {
+        _bossHud.Unbind();
+        ClearCombatActors();
+        DisposeNavigationFactory();
+        ClearArenaHost();
+        _waveLabel.Text = $"竞技场 {arenaIndex + 1}/5  内容开发中";
+        _arenaLabel.Text = $"竞技场 {arenaIndex + 1}/5";
+        _eventLabel.Text = "首区闭环完成：下一竞技场将在 Alpha 03 接入。可重新开始本局继续验收。";
     }
 
     private void ShowRunFailure()
@@ -578,9 +641,10 @@ public partial class AppRoot : Node
 
     private static string BehaviorName(BehaviorId behavior) => behavior switch
     {
+        BehaviorId.Scout => "侦察无人机（高速骚扰）",
         BehaviorId.Patrol => "巡逻坦克（追击玩家）",
         BehaviorId.Assault => "突击车（快速压迫玩家）",
-        BehaviorId.Siege => "重炮车（远程锁定玩家）",
+        BehaviorId.Mortar => "迫击炮车（远程预警）",
         _ => "未知单位"
     };
 

@@ -18,20 +18,24 @@ public partial class AcceptanceMenuTestHost : Node
             int completeCount = 0;
             int advanceCount = 0;
             int endRunCount = 0;
+            int bossPhaseTwoCount = 0;
             menu.ClearWaveEnemiesRequested += () => clearCount++;
             menu.CompleteWaveRequested += () => completeCount++;
             menu.AdvanceWaveRequested += () => advanceCount++;
             menu.EndRunRequested += () => endRunCount++;
+            menu.BossPhaseTwoRequested += () => bossPhaseTwoCount++;
 
             Press(menu, "敌军全灭（当前波）");
             Press(menu, "结束本轮并结算");
             Press(menu, "确认并到下一波");
             Press(menu, "结束本局（验收）");
+            Press(menu, "Boss 推进到第二阶段");
 
             Assert(clearCount == 1, "敌军全灭按钮必须只发出一次清场请求。");
             Assert(completeCount == 1, "结束本轮按钮必须只发出一次结算请求。");
             Assert(advanceCount == 1, "到下一波按钮必须只发出一次推进请求。");
             Assert(endRunCount == 1, "结束本局按钮必须只发出一次结束请求。");
+            Assert(bossPhaseTwoCount == 1, "Boss 二阶段按钮必须只发出一次正式伤害推进请求。");
             GD.Print("[PASS] acceptance_menu_commands");
             GetTree().Quit(0);
         }

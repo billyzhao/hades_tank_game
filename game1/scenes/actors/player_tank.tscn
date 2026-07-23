@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/PlayerTank.cs" id="1_player_tank"]
 [ext_resource type="Script" path="res://scripts/player/DashComponent.cs" id="2_dash_component"]
@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" path="res://assets/art/actors/hero_hull.png" id="5_hero_hull"]
 [ext_resource type="Script" path="res://scripts/presentation/TankVisualAnimator.cs" id="6_visual_animator"]
 [ext_resource type="Texture2D" path="res://assets/art/actors/hero_turret.png" id="7_hero_turret"]
+[ext_resource type="Script" path="res://scripts/combat/AuxiliaryHost.cs" id="8_auxiliary_host"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(16, 16)
@@ -47,6 +48,9 @@ script = ExtResource("2_dash_component")
 
 [node name="WeaponController" type="Node" parent="."]
 script = ExtResource("3_weapon_controller")
+
+[node name="AuxiliaryHost" type="Node" parent="."]
+script = ExtResource("8_auxiliary_host")
 
 [node name="HealthComponent" type="Node" parent="."]
 script = ExtResource("4_health")

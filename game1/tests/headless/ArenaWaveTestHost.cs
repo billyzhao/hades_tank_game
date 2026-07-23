@@ -19,7 +19,9 @@ public partial class ArenaWaveTestHost : Node
 
             await AssertDirectorSkipsUnreachableEntrance();
             await AssertDirectorSkipsTerrainBlockedEntrance();
+            await AssertAcceptanceClearCancelsPendingSpawnAfterStop();
             await AssertSpawnWindowDoesNotDeleteEliteOrRemainingEnemies();
+            AssertBossCompletionTransition();
             GD.Print("[PASS] alpha_02c_arena_wave");
             GetTree().Quit(0);
         }
@@ -119,7 +121,7 @@ public partial class ArenaWaveTestHost : Node
             IncludesElite = true
         };
         shortEliteWave.Behaviors.Add(BehaviorId.Patrol);
-        shortEliteWave.Behaviors.Add(BehaviorId.Siege);
+        shortEliteWave.Behaviors.Add(BehaviorId.Mortar);
 
         WaveDirector director = new();
         arena.AddChild(director);
@@ -137,7 +139,7 @@ public partial class ArenaWaveTestHost : Node
         director.Configure(shortEliteWave, entrances, 20260721, 0, 4, new DirectPathProvider());
         director.StartWave();
 
-        await ToSignal(GetTree().CreateTimer(0.15d), SceneTreeTimer.SignalName.Timeout);
+        await ToSignal(GetTree().CreateTimer(0.45d), SceneTreeTimer.SignalName.Timeout);
 
         Assert(spawnWindowEnded == 1, "刷新时长结束后必须只发出一次 SpawnWindowEnded。");
         Assert(!director.IsSpawning, "刷新窗口结束后必须停止生成。");
@@ -149,7 +151,11 @@ public partial class ArenaWaveTestHost : Node
         director.ClearAliveEnemiesForAcceptance();
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
 
-        Assert(director.AliveEnemyCount == 0 && !director.EliteAlive, "击毁残敌后存活数和精英标记必须归零。");
+        string remainingEnemies = string.Join(", ",
+            arena.GetChildren().OfType<EnemyTank>()
+                .Select(enemy => $"{enemy.Name}(armor={enemy.Armor},queued={enemy.IsQueuedForDeletion()})"));
+        Assert(director.AliveEnemyCount == 0 && !director.EliteAlive,
+            $"击毁残敌后存活数和精英标记必须归零；alive={director.AliveEnemyCount}, elite={director.EliteAlive}, nodes=[{remainingEnemies}]。");
         Assert(allEnemiesCleared == 1, "刷新结束且残敌清空时只能发出一次 AllEnemiesCleared。");
         Assert(!arena.GetChildren().OfType<EnemyTank>().Any(), "验收清场只应销毁本导演仍追踪的残敌。");
 
@@ -157,10 +163,77 @@ public partial class ArenaWaveTestHost : Node
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
     }
 
+    private async System.Threading.Tasks.Task AssertAcceptanceClearCancelsPendingSpawnAfterStop()
+    {
+        Node2D arena = new() { Name = "AcceptancePendingSpawnArena" };
+        AddChild(arena);
+        Node2D player = new() { Name = "Player", Position = new Vector2(240f, 135f) };
+        player.AddToGroup("player");
+        arena.AddChild(player);
+
+        WaveDefinition wave = new()
+        {
+            WaveNumber = 1,
+            SpawnDurationSeconds = 1d,
+            SpawnIntervalSeconds = 1f,
+            MaximumAliveEnemies = 1,
+            MinimumPlayerDistance = 72f,
+            RewardKind = RewardKind.NormalProtocol,
+            IncludesElite = false
+        };
+        wave.Behaviors.Add(BehaviorId.Patrol);
+
+        WaveDirector director = new();
+        arena.AddChild(director);
+        int allEnemiesCleared = 0;
+        director.AllEnemiesCleared += () => allEnemiesCleared++;
+        director.Configure(wave,
+            [new SpawnEntrance("north", new Vector2(240f, 36f), Vector2.Down, 0.35f)],
+            20260723, 0, 0, new DirectPathProvider());
+        director.StartWave();
+
+        await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+        await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+        Assert(arena.GetChildren().OfType<SpawnWarning>().Any(),
+            "回归前置条件失败：必须先进入敌军出生预警，再执行停止与清场。");
+        director.StopSpawning();
+        director.ClearAliveEnemiesForAcceptance();
+        await ToSignal(GetTree().CreateTimer(0.45d), SceneTreeTimer.SignalName.Timeout);
+
+        Assert(director.AliveEnemyCount == 0,
+            "验收命令停止刷新并清场后，预警中的待出生敌军不得再次落地。");
+        Assert(!arena.GetChildren().OfType<EnemyTank>().Any(),
+            "验收清场必须同时取消尚未实例化的出生任务。");
+        Assert(allEnemiesCleared == 1,
+            "验收清空存活敌军与待出生队列后必须只发出一次 AllEnemiesCleared。");
+
+        arena.QueueFree();
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+    }
+
+    private static void AssertBossCompletionTransition()
+    {
+        RunState state = RunState.CreateNew(20260723);
+        ArenaController controller = new(state);
+        controller.BeginArena(WaveSchedule.CreateApproved(), 0);
+        controller.OnIntroFinished();
+        for (int wave = 0; wave < 5; wave++)
+        {
+            controller.OnWaveSpawnWindowEnded();
+            controller.OnAllEnemiesCleared();
+            controller.ConfirmReward($"test_reward_{wave}");
+        }
+        Assert(controller.State == ArenaState.BossIntro, "第 5 波奖励后必须进入 BossIntro。 ");
+        controller.OnBossStarted();
+        controller.OnBossDefeated();
+        Assert(controller.State == ArenaState.Completed, "Boss 击败后必须成为竞技场完成事实。 ");
+    }
+
     private static void Assert(bool condition, string message)
     {
         if (!condition) throw new InvalidOperationException(message);
     }
+
 
     private sealed class DirectPathProvider : IEnemyPathProvider
     {

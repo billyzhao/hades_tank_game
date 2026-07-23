@@ -65,6 +65,20 @@ public partial class RewardControllerTestHost : Node
                 Effects = new Godot.Collections.Array<ProtocolEffectDefinition> { effect }
             });
         }
+        for (int index = 0; index < 4; index++)
+        {
+            catalog.Auxiliaries.Add(new AuxiliaryDefinition
+            {
+                Id = $"reward_controller_auxiliary_{index}",
+                DisplayName = $"奖励测试辅助 {index}",
+                Description = "仅用于奖励控制器测试目录校验。",
+                TargetMode = AuxiliaryTargetMode.Nearest,
+                BaseCooldown = 1f,
+                MaximumRank = 3,
+                BaseDamage = 1,
+                Range = 100f
+            });
+        }
         return catalog;
     }
 

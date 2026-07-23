@@ -15,7 +15,9 @@ public partial class AcceptanceMenu : Control
     [Signal] public delegate void EndRunRequestedEventHandler();
     [Signal] public delegate void ExperienceRequestedEventHandler(int amount);
     [Signal] public delegate void BossRequestedEventHandler();
+    [Signal] public delegate void BossPhaseTwoRequestedEventHandler();
     [Signal] public delegate void RestartRequestedEventHandler();
+    [Signal] public delegate void AuxiliaryRequestedEventHandler(string auxiliaryId);
 
     private PanelContainer _panel = null!;
     private Label _status = null!;
@@ -44,14 +46,16 @@ public partial class AcceptanceMenu : Control
         {
             Name = "Panel",
             Position = new Vector2(300, 38),
-            Size = new Vector2(180, 300),
+            Size = new Vector2(180, 220),
             MouseFilter = MouseFilterEnum.Stop,
             Visible = false
         };
         AddChild(_panel);
 
-        VBoxContainer content = new();
-        _panel.AddChild(content);
+        ScrollContainer scroll = new() { HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+        _panel.AddChild(scroll);
+        VBoxContainer content = new() { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        scroll.AddChild(content);
         Label title = new() { Text = "移动核心竞技场验收", HorizontalAlignment = HorizontalAlignment.Center };
         title.AddThemeFontSizeOverride("font_size", 10);
         content.AddChild(title);
@@ -64,6 +68,10 @@ public partial class AcceptanceMenu : Control
         _status.AddThemeFontSizeOverride("font_size", 8);
         content.AddChild(_status);
         content.AddChild(CreateButton("授予经验 +100", () => EmitSignal(SignalName.ExperienceRequested, 100)));
+        content.AddChild(CreateButton("授予辅助：侧挂速射炮", () => EmitSignal(SignalName.AuxiliaryRequested, "aux_side_cannon")));
+        content.AddChild(CreateButton("授予辅助：环绕无人机", () => EmitSignal(SignalName.AuxiliaryRequested, "aux_orbit_drone")));
+        content.AddChild(CreateButton("授予辅助：履带布雷器", () => EmitSignal(SignalName.AuxiliaryRequested, "aux_mine_layer")));
+        content.AddChild(CreateButton("授予辅助：区域压制器", () => EmitSignal(SignalName.AuxiliaryRequested, "aux_suppression_field")));
         content.AddChild(CreateButton("装甲 -25", () => EmitSignal(SignalName.DamageRequested, 25)));
         content.AddChild(CreateButton("装甲设为 29%（维护保障）", () => EmitSignal(SignalName.ArmorPercentRequested, 29)));
         content.AddChild(CreateButton("触发坦克报废", () => EmitSignal(SignalName.DefeatRequested)));
@@ -73,6 +81,7 @@ public partial class AcceptanceMenu : Control
         content.AddChild(CreateButton("确认并到下一波", () => EmitSignal(SignalName.AdvanceWaveRequested)));
         content.AddChild(CreateButton("结束本局（验收）", () => EmitSignal(SignalName.EndRunRequested)));
         content.AddChild(CreateButton("进入 Boss 验收", () => EmitSignal(SignalName.BossRequested)));
+        content.AddChild(CreateButton("Boss 推进到第二阶段", () => EmitSignal(SignalName.BossPhaseTwoRequested)));
         content.AddChild(CreateButton("重新开始本局", () => EmitSignal(SignalName.RestartRequested)));
         content.AddChild(new Label
         {
@@ -89,7 +98,7 @@ public partial class AcceptanceMenu : Control
     private void TogglePanel()
     {
         _panel.Visible = !_panel.Visible;
-        if (_panel.Visible) _panel.GetChild<VBoxContainer>(0).GetChild<Button>(2).GrabFocus();
+        if (_panel.Visible) _panel.GetChild<ScrollContainer>(0).GetChild<VBoxContainer>(0).GetChild<Button>(2).GrabFocus();
     }
 
     private static Button CreateButton(string text, System.Action pressed)

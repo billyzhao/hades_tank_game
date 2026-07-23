@@ -1,0 +1,175 @@
+{
+  "target": "asset",
+  "mode": "pack",
+  "prompt": "",
+  "role": "",
+  "input": "D:\\my program\\codex\\godot\\asset_sources\\ai_generated\\batch-07-arena1-completion\\terrain-runtime-modules-v1-raw.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 200,
+  "rows": 2,
+  "cols": 2,
+  "cell_size": 128,
+  "fit_scale": 0.86,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": false,
+  "component_mode": "largest",
+  "component_padding": 4,
+  "min_component_area": 24,
+  "edge_touch_margin": 2,
+  "frame_labels": [
+    "terrain_module-1",
+    "terrain_module-2",
+    "terrain_module-3",
+    "terrain_module-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 84237,
+      "selected_component_bbox": [
+        168,
+        147,
+        452,
+        446
+      ],
+      "crop_bbox": [
+        164,
+        143,
+        456,
+        450
+      ],
+      "edge_touch": false,
+      "output_size": [
+        104,
+        110
+      ],
+      "paste_position": [
+        12,
+        9
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        627,
+        0,
+        1254,
+        627
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 69737,
+      "selected_component_bbox": [
+        147,
+        141,
+        445,
+        449
+      ],
+      "crop_bbox": [
+        143,
+        137,
+        449,
+        453
+      ],
+      "edge_touch": false,
+      "output_size": [
+        106,
+        110
+      ],
+      "paste_position": [
+        11,
+        9
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        627,
+        627,
+        1254
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 97746,
+      "selected_component_bbox": [
+        65,
+        169,
+        553,
+        405
+      ],
+      "crop_bbox": [
+        61,
+        165,
+        557,
+        409
+      ],
+      "edge_touch": false,
+      "output_size": [
+        110,
+        54
+      ],
+      "paste_position": [
+        9,
+        37
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        627,
+        627,
+        1254,
+        1254
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 71694,
+      "selected_component_bbox": [
+        140,
+        163,
+        450,
+        433
+      ],
+      "crop_bbox": [
+        136,
+        159,
+        454,
+        437
+      ],
+      "edge_touch": false,
+      "output_size": [
+        110,
+        96
+      ],
+      "paste_position": [
+        9,
+        16
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

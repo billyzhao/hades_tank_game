@@ -13,6 +13,8 @@ public partial class ContentCatalog : Resource
 
     [Export] public Godot.Collections.Array<ProtocolDefinition> Protocols { get; set; } = new();
 
+    [Export] public Godot.Collections.Array<AuxiliaryDefinition> Auxiliaries { get; set; } = new();
+
     public void Validate()
     {
         if (string.IsNullOrWhiteSpace(Version) || !string.Equals(Version, Version.Trim(), StringComparison.Ordinal))
@@ -40,6 +42,7 @@ public partial class ContentCatalog : Resource
         }
 
         ValidatePrerequisiteGraph(protocolsById);
+        ValidateAuxiliaries();
     }
 
     public ProtocolDefinition GetProtocol(string protocolId)
@@ -58,6 +61,31 @@ public partial class ContentCatalog : Resource
         }
 
         throw new ArgumentException($"ContentCatalog 中不存在协议 '{protocolId}'。", nameof(protocolId));
+    }
+
+    public AuxiliaryDefinition GetAuxiliary(string auxiliaryId)
+    {
+        if (string.IsNullOrWhiteSpace(auxiliaryId)) throw new ArgumentException("辅助 Id 不得为空。", nameof(auxiliaryId));
+        foreach (AuxiliaryDefinition auxiliary in Auxiliaries)
+        {
+            if (auxiliary is not null && string.Equals(auxiliary.Id, auxiliaryId, StringComparison.Ordinal)) return auxiliary;
+        }
+        throw new ArgumentException($"ContentCatalog 中不存在辅助 '{auxiliaryId}'。", nameof(auxiliaryId));
+    }
+
+    private void ValidateAuxiliaries()
+    {
+        if (Auxiliaries is null || Auxiliaries.Count != 4)
+            throw new ArgumentException("首区内容目录必须恰好包含四种辅助系统。", nameof(Auxiliaries));
+        HashSet<string> ids = new(StringComparer.Ordinal);
+        foreach (AuxiliaryDefinition auxiliary in Auxiliaries)
+        {
+            if (auxiliary is null || string.IsNullOrWhiteSpace(auxiliary.Id) || !ids.Add(auxiliary.Id) ||
+                string.IsNullOrWhiteSpace(auxiliary.DisplayName) || string.IsNullOrWhiteSpace(auxiliary.Description) ||
+                !Enum.IsDefined(auxiliary.TargetMode) || !float.IsFinite(auxiliary.BaseCooldown) || auxiliary.BaseCooldown <= 0f ||
+                auxiliary.MaximumRank <= 0 || auxiliary.BaseDamage <= 0 || !float.IsFinite(auxiliary.Range) || auxiliary.Range <= 0f)
+                throw new ArgumentException("辅助系统目录包含无效或重复的配置。");
+        }
     }
 
     private static void ValidateProtocol(

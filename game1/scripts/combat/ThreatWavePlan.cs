@@ -11,8 +11,8 @@ public static class ThreatWavePlan
     public static IReadOnlyList<IReadOnlyList<BehaviorId>> CreateMvp() =>
     [
         [BehaviorId.Patrol, BehaviorId.Patrol, BehaviorId.Assault],
-        [BehaviorId.Siege, BehaviorId.Patrol, BehaviorId.Assault],
-        [BehaviorId.Siege, BehaviorId.Assault, BehaviorId.Patrol, BehaviorId.Patrol, BehaviorId.Patrol]
+        [BehaviorId.Mortar, BehaviorId.Patrol, BehaviorId.Assault],
+        [BehaviorId.Mortar, BehaviorId.Assault, BehaviorId.Patrol, BehaviorId.Patrol, BehaviorId.Patrol]
     ];
 
     public static int GetThreatCost(IEnumerable<BehaviorId> behaviors)
@@ -22,9 +22,10 @@ public static class ThreatWavePlan
         {
             total += behavior switch
             {
+                BehaviorId.Scout => 1,
                 BehaviorId.Patrol => 1,
                 BehaviorId.Assault => 2,
-                BehaviorId.Siege => 3,
+                BehaviorId.Mortar => 3,
                 _ => 0
             };
         }

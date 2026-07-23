@@ -14,8 +14,8 @@ public partial class CoreSelectionPanel : PanelContainer
     public override void _Ready()
     {
         Name = "CoreSelectionPanel";
-        Position = new Vector2(72f, 76f);
-        Size = new Vector2(336f, 110f);
+        Position = new Vector2(72f, 64f);
+        Size = new Vector2(336f, 142f);
         ProcessMode = ProcessModeEnum.WhenPaused;
         MouseFilter = MouseFilterEnum.Stop;
         Visible = false;
@@ -51,10 +51,11 @@ public partial class CoreSelectionPanel : PanelContainer
             {
                 Text = definition.DisplayName,
                 TooltipText = definition.Description,
-                CustomMinimumSize = new Vector2(102f, 56f),
+                CustomMinimumSize = new Vector2(96f, 90f),
                 FocusMode = FocusModeEnum.All
             };
             card.AddThemeFontSizeOverride("font_size", 7);
+            IndustrialUiSkin.ApplyRewardCard(card);
             card.Pressed += () => Choose(definition.Id);
             _cards.AddChild(card);
         }

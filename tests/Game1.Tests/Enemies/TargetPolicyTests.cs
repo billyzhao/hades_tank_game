@@ -6,7 +6,7 @@ public sealed class TargetPolicyTests
 {
     [TestCase(BehaviorId.Patrol)]
     [TestCase(BehaviorId.Assault)]
-    [TestCase(BehaviorId.Siege)]
+    [TestCase(BehaviorId.Mortar)]
     public void SelectTarget_AllCurrentRolesTargetPlayer(BehaviorId behavior)
     {
         TargetId target = TargetPolicy.SelectTarget(behavior, new TargetSnapshot(PlayerAvailable: true));
@@ -16,7 +16,7 @@ public sealed class TargetPolicyTests
     [Test]
     public void SelectTarget_ReturnsNoneWhenPlayerIsUnavailable()
     {
-        TargetId target = TargetPolicy.SelectTarget(BehaviorId.Siege, new TargetSnapshot(PlayerAvailable: false));
+        TargetId target = TargetPolicy.SelectTarget(BehaviorId.Mortar, new TargetSnapshot(PlayerAvailable: false));
         Assert.That(target, Is.EqualTo(TargetId.None));
     }
 }

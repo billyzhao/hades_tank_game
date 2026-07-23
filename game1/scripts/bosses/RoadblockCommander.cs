@@ -17,7 +17,8 @@ public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
     [Signal] public delegate void DefeatedEventHandler();
 
     private BossPhaseController _phaseController = null!;
-    private Polygon2D _visual = null!;
+    private Sprite2D _visual = null!;
+    private Sprite2D _weakpoint = null!;
     private int _currentHealth;
     private bool _initialized;
     private int _anchorIndex;
@@ -35,7 +36,8 @@ public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
 
     public override void _Ready()
     {
-        _visual = GetNode<Polygon2D>("Visual");
+        _visual = GetNode<Sprite2D>("Visual");
+        _weakpoint = GetNode<Sprite2D>("Weakpoint");
         _chargeWarning = new Line2D { Name = "ChargeWarning", Width = 3f, DefaultColor = new Color(1f, .12f, .06f, .8f), ZIndex = 5, Visible = false };
         AddChild(_chargeWarning);
         if (Definition is not null) Initialize(Definition);
@@ -95,8 +97,13 @@ public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
         if (_vulnerableTimer > 0f)
         {
             _vulnerableTimer = Mathf.Max(0f, _vulnerableTimer - delta);
-            _visual.Color = new Color(1f, .9f, .25f);
-            if (_vulnerableTimer <= 0f) _visual.Color = new Color(.92f, .2f, .12f);
+            _visual.Modulate = new Color(1f, .9f, .45f);
+            _weakpoint.Visible = true;
+            if (_vulnerableTimer <= 0f)
+            {
+                _visual.Modulate = new Color(1f, .55f, .45f);
+                _weakpoint.Visible = false;
+            }
             return;
         }
         if (_chargeTelegraph)
@@ -106,13 +113,29 @@ public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
             return;
         }
         if (!_charging) return;
-        KinematicCollision2D collision = MoveAndCollide(GlobalPosition.DirectionTo(_chargeTarget) * 175f * delta);
+        Vector2 offset = _chargeTarget - GlobalPosition;
+        float chargeStep = 175f * delta;
+        if (offset.Length() <= chargeStep + 0.5f)
+        {
+            if (!offset.IsZeroApprox()) MoveAndCollide(offset);
+            EnterVulnerableWindow();
+            return;
+        }
+
+        KinematicCollision2D collision = MoveAndCollide(offset.Normalized() * chargeStep);
         if (collision is not null)
         {
-            _charging = false;
-            _vulnerableTimer = VulnerableSeconds;
-            Velocity = Vector2.Zero;
+            EnterVulnerableWindow();
         }
+    }
+
+    /// <summary>冲锋撞墙或到达预警终点都必须释放锁定并暴露弱点，避免开阔地永久无敌。</summary>
+    private void EnterVulnerableWindow()
+    {
+        _charging = false;
+        _vulnerableTimer = VulnerableSeconds;
+        _weakpoint.Visible = true;
+        Velocity = Vector2.Zero;
     }
 
     private void UpdatePhaseOneMovement(float delta)
@@ -152,10 +175,11 @@ public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
     {
         EmitSignal(SignalName.PhaseChanged, (int)phase);
         if (!IsInsideTree()) return;
-        _visual.Color = Colors.White;
+        _visual.Modulate = Colors.White;
+        _weakpoint.Visible = false;
         await ToSignal(GetTree().CreateTimer(0.25), SceneTreeTimer.SignalName.Timeout);
         if (IsInsideTree() && _phaseController.CurrentPhase == BossPhase.PhaseTwo)
-            _visual.Color = new Color(0.92f, 0.2f, 0.12f);
+            _visual.Modulate = new Color(1f, .55f, .45f);
     }
 
     private void OnDefeated()

@@ -8,6 +8,7 @@ public sealed class RunState
 {
     private readonly System.Collections.Generic.List<string> _selectedProtocolIds = new();
     private readonly Dictionary<string, ProtocolRank> _protocolRanks = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, int> _auxiliaryRanks = new(StringComparer.Ordinal);
     private readonly Queue<int> _pendingLevelNumbers = new();
 
     public required int Seed { get; init; }
@@ -35,6 +36,12 @@ public sealed class RunState
     public IReadOnlyList<OwnedProtocol> OwnedProtocols => _protocolRanks
         .OrderBy(pair => pair.Key, StringComparer.Ordinal)
         .Select(pair => new OwnedProtocol(pair.Key, pair.Value))
+        .ToArray();
+
+    /// <summary>最多两个不同辅助；重复获得只提升已有辅助等级。</summary>
+    public IReadOnlyList<AuxiliarySlotState> AuxiliarySlots => _auxiliaryRanks
+        .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+        .Select(pair => new AuxiliarySlotState(pair.Key, pair.Value))
         .ToArray();
 
     /// <summary>旧房间代码的迁移别名；Alpha 02C 主流程只使用 ArenaIndex。</summary>
@@ -109,6 +116,25 @@ public sealed class RunState
         _protocolRanks[protocolId] = next;
         return next;
     }
+
+    internal int UpgradeAuxiliary(string auxiliaryId, int maximumRank)
+    {
+        if (string.IsNullOrWhiteSpace(auxiliaryId)) throw new ArgumentException("辅助 Id 不得为空。", nameof(auxiliaryId));
+        if (maximumRank <= 0) throw new ArgumentOutOfRangeException(nameof(maximumRank));
+        int current = _auxiliaryRanks.GetValueOrDefault(auxiliaryId);
+        if (current == 0 && _auxiliaryRanks.Count >= 2)
+            throw new InvalidOperationException("两个辅助槽已满，只能升级现有辅助。");
+        if (current >= maximumRank)
+            throw new InvalidOperationException($"辅助 '{auxiliaryId}' 已达到最高等级。");
+        int next = current + 1;
+        _auxiliaryRanks[auxiliaryId] = next;
+        return next;
+    }
+
+    public int GetAuxiliaryRank(string auxiliaryId) =>
+        string.IsNullOrWhiteSpace(auxiliaryId)
+            ? throw new ArgumentException("辅助 Id 不得为空。", nameof(auxiliaryId))
+            : _auxiliaryRanks.GetValueOrDefault(auxiliaryId);
 
     /// <summary>加入正整数战斗数据，按曲线连续结算等级并保留每一项升级的 FIFO 顺序。</summary>
     public void AddExperience(int amount, ExperienceCurve curve)
@@ -195,6 +221,7 @@ public sealed class RunState
     {
         _selectedProtocolIds.Clear();
         _protocolRanks.Clear();
+        _auxiliaryRanks.Clear();
         SelectedCore = null;
         CurrentOffer = null;
     }

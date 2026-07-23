@@ -24,7 +24,7 @@ MaximumAliveEnemies = 5
 MinimumPlayerDistance = 72.0
 RewardKind = 2
 IncludesElite = false
-Behaviors = [0, 1, 2]
+Behaviors = [0, 1, 2, 3]
 
 [sub_resource type="Resource" id="Wave3"]
 script = ExtResource("3_wave")
@@ -35,7 +35,7 @@ MaximumAliveEnemies = 5
 MinimumPlayerDistance = 72.0
 RewardKind = 1
 IncludesElite = false
-Behaviors = [1, 0, 1, 2]
+Behaviors = [1, 0, 2, 3]
 
 [sub_resource type="Resource" id="Wave4"]
 script = ExtResource("3_wave")
@@ -46,7 +46,7 @@ MaximumAliveEnemies = 6
 MinimumPlayerDistance = 72.0
 RewardKind = 2
 IncludesElite = false
-Behaviors = [1, 2, 0, 1]
+Behaviors = [0, 1, 2, 3]
 
 [sub_resource type="Resource" id="Wave5"]
 script = ExtResource("3_wave")
@@ -57,7 +57,7 @@ MaximumAliveEnemies = 6
 MinimumPlayerDistance = 72.0
 RewardKind = 3
 IncludesElite = true
-Behaviors = [2, 1, 0, 1]
+Behaviors = [3, 2, 1, 0]
 
 [resource]
 script = ExtResource("1_arena")

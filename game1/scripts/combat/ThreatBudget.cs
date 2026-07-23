@@ -11,11 +11,11 @@ public sealed class ThreatBudget
 
     public bool TrySpend(BehaviorId behavior)
     {
-        int cost = behavior switch { BehaviorId.Patrol => 1, BehaviorId.Assault => 2, BehaviorId.Siege => 3, _ => 0 };
-        if (behavior == BehaviorId.Siege && _siegeSpawned) return false;
+        int cost = behavior switch { BehaviorId.Scout => 1, BehaviorId.Patrol => 1, BehaviorId.Assault => 2, BehaviorId.Mortar => 3, _ => 0 };
+        if (behavior == BehaviorId.Mortar && _siegeSpawned) return false;
         if (_spent + cost > _total) return false;
         _spent += cost;
-        _siegeSpawned |= behavior == BehaviorId.Siege;
+        _siegeSpawned |= behavior == BehaviorId.Mortar;
         return true;
     }
 }

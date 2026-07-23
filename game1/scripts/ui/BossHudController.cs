@@ -5,6 +5,7 @@ namespace Game1;
 /// <summary>独立 Boss 血条。显示层只订阅 Boss 信号，不拥有或修改战斗状态。</summary>
 public partial class BossHudController : Control
 {
+    private static readonly Texture2D FrameTexture = GD.Load<Texture2D>("res://assets/sprites/ui/boss_status_frame.png");
     private RoadblockCommander _boss;
     private Label _nameLabel = null!;
     private Label _phaseLabel = null!;
@@ -16,9 +17,21 @@ public partial class BossHudController : Control
         Size = new Vector2(180, 42);
         MouseFilter = MouseFilterEnum.Ignore;
 
-        _nameLabel = new Label { Name = "NameLabel", Position = Vector2.Zero, Size = new Vector2(180, 16) };
-        _phaseLabel = new Label { Name = "PhaseLabel", Position = new Vector2(0, 14), Size = new Vector2(90, 16) };
-        _healthBar = new ProgressBar { Name = "HealthBar", Position = new Vector2(72, 16), Size = new Vector2(108, 16), ShowPercentage = false };
+        TextureRect frame = new()
+        {
+            Name = "Frame",
+            Position = Vector2.Zero,
+            Size = Size,
+            Texture = FrameTexture,
+            TextureFilter = TextureFilterEnum.Nearest,
+            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+            StretchMode = TextureRect.StretchModeEnum.Scale,
+            MouseFilter = MouseFilterEnum.Ignore
+        };
+        AddChild(frame);
+        _nameLabel = new Label { Name = "NameLabel", Position = new Vector2(8, 3), Size = new Vector2(164, 14) };
+        _phaseLabel = new Label { Name = "PhaseLabel", Position = new Vector2(8, 16), Size = new Vector2(66, 16) };
+        _healthBar = new ProgressBar { Name = "HealthBar", Position = new Vector2(72, 18), Size = new Vector2(98, 12), ShowPercentage = false };
         AddChild(_nameLabel);
         AddChild(_phaseLabel);
         AddChild(_healthBar);

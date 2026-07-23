@@ -11,6 +11,7 @@ namespace Game1.Tests.Headless;
 /// </summary>
 public partial class ProtocolRuntimeTestHost : Node
 {
+    private static readonly List<ContentCatalog> CreatedCatalogs = new();
     public override void _Ready()
     {
         string[] arguments = OS.GetCmdlineUserArgs();
@@ -63,6 +64,7 @@ public partial class ProtocolRuntimeTestHost : Node
         failures += Run("run_arena_completion_advances_index", RunArenaCompletionAdvancesIndex);
 
         GD.Print($"[ProtocolRuntimeTestHost] suite=reward_catalog failures={failures}");
+        DisposeCreatedCatalogs();
         GC.Collect();
         GC.WaitForPendingFinalizers();
         GC.Collect();
@@ -742,7 +744,7 @@ public partial class ProtocolRuntimeTestHost : Node
 
     private static ContentCatalog CreateCatalog()
     {
-        return new ContentCatalog
+        ContentCatalog catalog = new()
         {
             Version = "headless-v1",
             Protocols = new Godot.Collections.Array<ProtocolDefinition>
@@ -755,8 +757,33 @@ public partial class ProtocolRuntimeTestHost : Node
                 CreateProtocol("recon_trail", ProtocolDepartment.Recon, StatId.DashCooldown),
                 CreateProtocol("recon_cooldown", ProtocolDepartment.Recon, StatId.DashCooldown),
                 CreateProtocol("logistics_armor", ProtocolDepartment.Logistics, StatId.ArmorMax)
+            },
+            Auxiliaries = new Godot.Collections.Array<AuxiliaryDefinition>
+            {
+                CreateAuxiliary("aux_side_cannon", AuxiliaryTargetMode.Nearest),
+                CreateAuxiliary("aux_orbit_drone", AuxiliaryTargetMode.Nearest),
+                CreateAuxiliary("aux_mine_layer", AuxiliaryTargetMode.MovementDistance),
+                CreateAuxiliary("aux_suppression_field", AuxiliaryTargetMode.AreaDensity)
             }
         };
+        CreatedCatalogs.Add(catalog);
+        return catalog;
+    }
+
+    private static void DisposeCreatedCatalogs()
+    {
+        for (int index = CreatedCatalogs.Count - 1; index >= 0; index--)
+        {
+            ContentCatalog catalog = CreatedCatalogs[index];
+            foreach (ProtocolDefinition protocol in catalog.Protocols)
+            {
+                foreach (ProtocolEffectDefinition effect in protocol.Effects) effect?.Dispose();
+                protocol.Dispose();
+            }
+            foreach (AuxiliaryDefinition auxiliary in catalog.Auxiliaries) auxiliary?.Dispose();
+            catalog.Dispose();
+        }
+        CreatedCatalogs.Clear();
     }
 
     private static RunController CreateRunController(int reboots = 1)
@@ -793,6 +820,18 @@ public partial class ProtocolRuntimeTestHost : Node
             }
         };
     }
+
+    private static AuxiliaryDefinition CreateAuxiliary(string id, AuxiliaryTargetMode targetMode) => new()
+    {
+        Id = id,
+        DisplayName = id,
+        Description = id,
+        TargetMode = targetMode,
+        BaseCooldown = 1f,
+        MaximumRank = 3,
+        BaseDamage = 5,
+        Range = 80f
+    };
 
     private static void Assert(bool condition, string message)
     {

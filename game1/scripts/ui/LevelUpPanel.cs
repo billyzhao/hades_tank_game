@@ -12,8 +12,8 @@ public partial class LevelUpPanel : PanelContainer
     public override void _Ready()
     {
         Name = "LevelUpPanel";
-        Position = new Vector2(56f, 74f);
-        Size = new Vector2(368f, 122f);
+        Position = new Vector2(56f, 58f);
+        Size = new Vector2(368f, 154f);
         Visible = false;
         ProcessMode = ProcessModeEnum.WhenPaused;
         MouseFilter = MouseFilterEnum.Stop;
@@ -31,8 +31,9 @@ public partial class LevelUpPanel : PanelContainer
         root.AddChild(cards);
         foreach (StatUpgradeOffer offer in offers)
         {
-            Button card = new() { Text = offer.DisplayName, CustomMinimumSize = new Vector2(110f, 68f), FocusMode = FocusModeEnum.All };
+            Button card = new() { Text = offer.DisplayName, CustomMinimumSize = new Vector2(106f, 112f), FocusMode = FocusModeEnum.All };
             card.AddThemeFontSizeOverride("font_size", 8);
+            IndustrialUiSkin.ApplyRewardCard(card);
             card.Pressed += () => UpgradeChosen?.Invoke(offer.Id);
             cards.AddChild(card);
         }

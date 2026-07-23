@@ -20,8 +20,8 @@ public partial class WaveRewardPanel : PanelContainer
     public override void _Ready()
     {
         Name = "WaveRewardPanel";
-        Position = new Vector2(124f, 86f);
-        Size = new Vector2(232f, 92f);
+        Position = new Vector2(70f, 55f);
+        Size = new Vector2(340f, 160f);
         Visible = false;
         MouseFilter = MouseFilterEnum.Stop;
 
@@ -84,10 +84,11 @@ public partial class WaveRewardPanel : PanelContainer
             {
                 Text = choice.DisplayName,
                 TooltipText = choice.Description,
-                CustomMinimumSize = new Vector2(66f, 40f),
+                CustomMinimumSize = new Vector2(96f, 98f),
                 FocusMode = FocusModeEnum.All
             };
             card.AddThemeFontSizeOverride("font_size", 7);
+            IndustrialUiSkin.ApplyRewardCard(card);
             card.Pressed += () => Confirm(choice.Id);
             _cards.AddChild(card);
         }

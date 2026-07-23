@@ -1,4 +1,4 @@
 namespace Game1;
 
-/// <summary>三种 MVP 敌军职责；职责决定优先目标和后续攻击节奏。</summary>
-public enum BehaviorId { Patrol, Assault, Siege }
+/// <summary>封锁城区的四种敌军职责；所有单位只以玩家坦克为目标。</summary>
+public enum BehaviorId { Scout, Patrol, Assault, Mortar }

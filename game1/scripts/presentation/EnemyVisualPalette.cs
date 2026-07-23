@@ -7,8 +7,9 @@ public static class EnemyVisualPalette
 {
     public static Color GetRoleTint(BehaviorId behavior) => behavior switch
     {
+        BehaviorId.Scout => new Color(0.35f, 0.92f, 0.88f),
         BehaviorId.Assault => new Color(1f, 0.42f, 0.25f),
-        BehaviorId.Siege => new Color(0.72f, 0.30f, 0.85f),
+        BehaviorId.Mortar => new Color(0.72f, 0.30f, 0.85f),
         _ => new Color(0.95f, 0.75f, 0.20f)
     };
 }

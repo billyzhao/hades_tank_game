@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/AuxiliaryDefinition.cs" id="1"]
+
+[resource]
+script = ExtResource("1")
+Id = "aux_side_cannon"
+DisplayName = "侧挂速射炮"
+Description = "自动锁定最近敌军并发射侧挂炮弹。"
+TargetMode = 0
+BaseCooldown = 0.8
+MaximumRank = 3
+BaseDamage = 7
+Range = 125.0

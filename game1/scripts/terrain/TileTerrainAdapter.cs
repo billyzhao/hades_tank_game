@@ -29,7 +29,8 @@ public partial class TileTerrainAdapter : Node
         {
             _hitPointsByCell[cell] = hitPoints;
             _blockedCells.Add(cell);
-            _destructibleLayer.SetCell(cell, 0, Vector2I.Zero);
+            // 同一 TileSet 的第二格是可破坏墙；规则仍由本适配器维护，贴图不承担耐久判定。
+            _destructibleLayer.SetCell(cell, 0, new Vector2I(1, 0));
         }
     }
 

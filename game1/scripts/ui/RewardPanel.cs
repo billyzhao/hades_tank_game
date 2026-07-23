@@ -14,12 +14,13 @@ public partial class RewardPanel : PanelContainer
     public override void _Ready()
     {
         Visible = false;
-        var row = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center, CustomMinimumSize = new Vector2(420, 72) };
+        var row = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center, CustomMinimumSize = new Vector2(420, 116) };
         AddChild(row);
         for (int index = 0; index < _cards.Length; index++)
         {
             int captured = index;
-            _cards[index] = new Button { CustomMinimumSize = new Vector2(132, 68), AutowrapMode = TextServer.AutowrapMode.WordSmart };
+            _cards[index] = new Button { CustomMinimumSize = new Vector2(132, 112), AutowrapMode = TextServer.AutowrapMode.WordSmart };
+            IndustrialUiSkin.ApplyRewardCard(_cards[index]);
             _cards[index].Pressed += () => Choose(captured);
             row.AddChild(_cards[index]);
         }

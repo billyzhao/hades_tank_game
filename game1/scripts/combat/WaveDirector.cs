@@ -25,6 +25,8 @@ public partial class WaveDirector : Node
     private bool _started;
     private bool _clearEmitted;
     private bool _eliteSpawned;
+    private bool _cancelPendingSpawnsForAcceptance;
+    private int _pendingSpawns;
     private readonly HashSet<EnemyTank> _aliveEnemies = new();
 
     public int AliveEnemyCount { get; private set; }
@@ -83,6 +85,7 @@ public partial class WaveDirector : Node
         _started = true;
         _clearEmitted = false;
         _eliteSpawned = false;
+        _cancelPendingSpawnsForAcceptance = false;
         _aliveEnemies.Clear();
         EliteAlive = false;
         AliveEnemyCount = 0;
@@ -101,7 +104,7 @@ public partial class WaveDirector : Node
         RemainingSpawnSeconds = Math.Max(0d, RemainingSpawnSeconds - delta);
         TimeChanged?.Invoke(RemainingSpawnSeconds);
         _spawnCooldown -= (float)delta;
-        if (_spawnCooldown <= 0f && AliveEnemyCount < _definition.MaximumAliveEnemies)
+        if (_spawnCooldown <= 0f && AliveEnemyCount + _pendingSpawns < _definition.MaximumAliveEnemies)
         {
             SpawnEnemy();
             _spawnCooldown = _definition.SpawnIntervalSeconds;
@@ -127,8 +130,17 @@ public partial class WaveDirector : Node
     /// </summary>
     public void ClearAliveEnemiesForAcceptance()
     {
+        // “结束刷新”后的验收清场代表立即结束本轮，必须同时撤销仍处于预警阶段的出生任务。
+        // 刷新仍在进行时只清当前敌军，保留导演继续补兵的既有验收语义。
+        if (!IsSpawning && _pendingSpawns > 0)
+        {
+            _cancelPendingSpawnsForAcceptance = true;
+            _pendingSpawns = 0;
+        }
+
         foreach (EnemyTank enemy in _aliveEnemies.Where(IsInstanceValid).ToArray())
             enemy.ApplyDamage(new DamageContext(Math.Max(1, enemy.Armor)));
+        TryEmitAllEnemiesCleared();
     }
 
     private void SpawnEnemy()
@@ -145,17 +157,45 @@ public partial class WaveDirector : Node
             return;
         }
 
+        // 预警期间也要占用精英资格，避免同一波连续排入多个精英。
+        if (isElite) _eliteSpawned = true;
+        _pendingSpawns++;
+        ShowSpawnWarning(entrance.Value);
+        SpawnEnemyAfterWarning(entrance.Value, behavior, isElite);
+    }
+
+    private async void SpawnEnemyAfterWarning(SpawnEntrance entrance, BehaviorId behavior, bool isElite)
+    {
+        await ToSignal(GetTree().CreateTimer(entrance.WarningSeconds), SceneTreeTimer.SignalName.Timeout);
+        _pendingSpawns = Math.Max(0, _pendingSpawns - 1);
+        if (_cancelPendingSpawnsForAcceptance)
+        {
+            if (isElite) _eliteSpawned = false;
+            return;
+        }
+        // 入口预警开始时已占用波次预算；即使刷新计时在预警期间结束，
+        // 该单位仍必须入场并作为清场残敌，不能被静默取消。
+        if (!IsInsideTree())
+        {
+            if (isElite) _eliteSpawned = false;
+            return;
+        }
+        if (!IsSpawnPositionClear(entrance.Position))
+        {
+            if (isElite) _eliteSpawned = false;
+            return;
+        }
+
         EnemyTank enemy = EnemyScene.Instantiate<EnemyTank>();
         enemy.Name = isElite ? "ElitePlaceholder" : $"WaveEnemy{_spawnOrdinal + 1}";
         enemy.Behavior = behavior;
         enemy.SetPathProvider(_pathProvider);
-        enemy.GlobalPosition = entrance.Value.Position;
+        enemy.GlobalPosition = entrance.Position;
         if (isElite)
         {
             _eliteSpawned = true;
             EliteAlive = true;
             enemy.IsEliteVisual = true;
-            enemy.Armor = Math.Max(enemy.Armor * 3, 60);
             enemy.Scale = Vector2.One * 1.25f;
             enemy.AddToGroup("elite_placeholder");
             EliteStateChanged?.Invoke(true);
@@ -168,6 +208,14 @@ public partial class WaveDirector : Node
         AliveEnemyCount = _aliveEnemies.Count;
         EnemyCountChanged?.Invoke(AliveEnemyCount);
         EnemySpawned?.Invoke(behavior, isElite);
+    }
+
+    private void ShowSpawnWarning(SpawnEntrance entrance)
+    {
+        SpawnWarning warning = new();
+        GetParent().AddChild(warning);
+        warning.GlobalPosition = entrance.Position;
+        warning.Begin(entrance.WarningSeconds, EnemyVisualPalette.GetRoleTint(BehaviorId.Scout));
     }
 
     private SpawnEntrance? FindEntrance()
@@ -219,7 +267,7 @@ public partial class WaveDirector : Node
 
     private void TryEmitAllEnemiesCleared()
     {
-        if (IsSpawning || AliveEnemyCount != 0 || _clearEmitted) return;
+        if (IsSpawning || AliveEnemyCount != 0 || _pendingSpawns != 0 || _clearEmitted) return;
         _clearEmitted = true;
         AllEnemiesCleared?.Invoke();
     }

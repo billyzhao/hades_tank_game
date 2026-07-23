@@ -7,7 +7,7 @@ namespace Game1;
 /// <summary>波间或 Boss 奖励卡的只读显示与选择事实；具体应用仍由 RewardController 负责。</summary>
 public sealed record RewardChoice
 {
-    public RewardChoice(string id, string displayName, string description, IReadOnlyList<string> tags)
+    public RewardChoice(string id, string displayName, string description, IReadOnlyList<string> tags, bool isAuxiliary = false)
     {
         if (string.IsNullOrWhiteSpace(id) || !string.Equals(id, id.Trim(), StringComparison.Ordinal))
             throw new ArgumentException("奖励 Id 必须为非空稳定标识。", nameof(id));
@@ -20,10 +20,12 @@ public sealed record RewardChoice
         DisplayName = displayName;
         Description = description;
         Tags = tags.ToArray();
+        IsAuxiliary = isAuxiliary;
     }
 
     public string Id { get; }
     public string DisplayName { get; }
     public string Description { get; }
     public IReadOnlyList<string> Tags { get; }
+    public bool IsAuxiliary { get; }
 }
