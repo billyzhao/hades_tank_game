@@ -16,6 +16,7 @@ public partial class AcceptanceMenu : Control
     [Signal] public delegate void ExperienceRequestedEventHandler(int amount);
     [Signal] public delegate void BossRequestedEventHandler();
     [Signal] public delegate void BossPhaseTwoRequestedEventHandler();
+    [Signal] public delegate void BossDefeatRequestedEventHandler();
     [Signal] public delegate void RestartRequestedEventHandler();
     [Signal] public delegate void AuxiliaryRequestedEventHandler(string auxiliaryId);
 
@@ -82,6 +83,7 @@ public partial class AcceptanceMenu : Control
         content.AddChild(CreateButton("结束本局（验收）", () => EmitSignal(SignalName.EndRunRequested)));
         content.AddChild(CreateButton("进入 Boss 验收", () => EmitSignal(SignalName.BossRequested)));
         content.AddChild(CreateButton("Boss 推进到第二阶段", () => EmitSignal(SignalName.BossPhaseTwoRequested)));
+        content.AddChild(CreateButton("击败 Boss（验收）", () => EmitSignal(SignalName.BossDefeatRequested)));
         content.AddChild(CreateButton("重新开始本局", () => EmitSignal(SignalName.RestartRequested)));
         content.AddChild(new Label
         {

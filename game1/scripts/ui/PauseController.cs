@@ -43,6 +43,12 @@ public partial class PauseController : CanvasLayer
     public override void _Process(double delta)
     {
         if (!Input.IsActionJustPressed("pause")) return;
+        if (_coordinator.Contains(PauseReason.StartScreen) ||
+            _coordinator.Contains(PauseReason.CoreSelection) ||
+            _coordinator.Contains(PauseReason.LevelUp) ||
+            _coordinator.Contains(PauseReason.RunResult))
+            return;
+
         if (_coordinator.Contains(PauseReason.Manual)) _coordinator.Release(PauseReason.Manual);
         else _coordinator.Acquire(PauseReason.Manual);
     }
@@ -61,7 +67,9 @@ public partial class PauseController : CanvasLayer
         if (_overlay is not null)
         {
             bool selectionUiOwnsPause = _coordinator.Contains(PauseReason.LevelUp) ||
-                                        _coordinator.Contains(PauseReason.CoreSelection);
+                                        _coordinator.Contains(PauseReason.CoreSelection) ||
+                                        _coordinator.Contains(PauseReason.StartScreen) ||
+                                        _coordinator.Contains(PauseReason.RunResult);
             _overlay.Visible = paused && !selectionUiOwnsPause;
         }
     }

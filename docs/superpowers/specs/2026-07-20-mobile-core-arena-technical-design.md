@@ -1,6 +1,6 @@
 # 《废土中继》移动核心竞技场技术设计
 
-状态：Alpha 02A 技术权威基线，等待用户验收。
+状态：技术权威基线；2026-07-24 增补封锁城区单区交付边界。
 
 日期：2026-07-20
 
@@ -8,11 +8,15 @@
 
 对应路线图：[《移动核心竞技场重构总实施路线图》](../plans/2026-07-20-mobile-core-arena-roadmap.md)
 
+当前交付范围：[《封锁城区可交付版收敛设计》](./2026-07-24-blockade-city-deliverable-convergence-design.md)
+
 ## 1. 目的与适用范围
 
 本文定义固定中继站防守原型迁移为移动核心竞技场肉鸽时的运行时职责、公共类型、状态流、数据资源、暂停、存档、错误处理和测试边界。Alpha 02B 及后续实现必须以本文为技术依据。
 
 旧技术文档 `2026-07-15-roguelite-tank-technical-design.md` 只用于解释现有 MVP 代码。与本文冲突时，以本文为准；旧 `RelayStation`、`RelayIntegrity`、房间清场与基地目标不得继续扩展。
+
+2026-07-24 起，当前 Release 只交付封锁城区。五竞技场架构和 0～4 索引继续作为长期扩展能力保留，但当前运行配置的可玩竞技场数量为 1；Boss 1 完成后进入 `Completed`，不实例化第二竞技场占位。
 
 ## 2. 不可变技术基线
 
@@ -71,7 +75,7 @@ Main.tscn / AppRoot
 所有权规则：
 
 - `AppRoot` 只负责装配控制器、实例化竞技场、绑定顶层事件和切换 UI；
-- `RunController` 只管理核心选择、跨竞技场进度、通关和失败；
+- `RunController` 只管理核心选择、已配置竞技场序列、通关和失败；
 - `ArenaController` 是五波、波间奖励和 Boss 衔接的唯一状态机；
 - `WaveDirector` 只生成敌人并报告“刷新窗口结束”“敌军清空”等事实，不决定奖励或换区；
 - `BuildController` 是属性、协议、核心进化和辅助槽的唯一写入口；
@@ -241,7 +245,8 @@ public sealed class RunController
 
     public RunController(
         RunState state,
-        BuildController build);
+        BuildController build,
+        int playableArenaCount);
 
     public void SelectCore(CoreId coreId);
     public void OnArenaCompleted();
@@ -249,12 +254,21 @@ public sealed class RunController
 }
 ```
 
-合法流程：
+长期合法流程：
 
 ```text
 CoreSelection → Arena(0) → Arena(1) → Arena(2) → Arena(3) → Arena(4) → Completed
                          ↘ 任意时点无重启且装甲归零 → Failed
 ```
+
+当前封锁城区交付配置：
+
+```text
+CoreSelection → Arena(0) → Completed
+                         ↘ 无重启且装甲归零 → Failed
+```
+
+`playableArenaCount` 必须显式配置为 1～5；当前 Release 使用 1，后续扩区才增加。完成当前配置中的最后一个竞技场时直接进入 `Completed`，否则恢复装甲并请求下一竞技场。禁止在 `AppRoot` 通过竞技场 Id 或“是否封锁城区”分支复制这项判断。
 
 `RunController.SelectCore()` 只允许在 `CoreSelection` 调用，由它命令 `BuildController.SelectCore()` 并进入 `Arena`。`RunController` 不知道普通敌人数、波次剩余秒数或奖励卡内容，只接受竞技场完成/失败事实。
 
@@ -764,7 +778,7 @@ public sealed class LastRunSummary
 
 每个迭代提供“操作 → 预期画面 / 数值 / 状态变化”脚本。自动化不能替代 OpenGL Compatibility 实际启动、HUD 可读性、输入手感、敌军预警和 Boss 输出窗口验收。
 
-完整 30 敌人、160 炮弹和持续效果压力测试只在 Alpha 08 执行。此前只做当前迭代必要的启动冒烟和局部数量检查。
+完整 30 敌人、160 炮弹和持续效果压力测试在 BC-05 执行。此前只做当前迭代必要的启动冒烟和局部数量检查。
 
 ## 19. 禁止实现方式
 
@@ -781,14 +795,16 @@ public sealed class LastRunSummary
 
 ## 20. 技术完成定义
 
-移动核心首区纵切达到技术完成必须同时满足：
+封锁城区可交付版达到技术完成必须同时满足：
 
 1. 生产运行时、HUD、敌军目标和存档摘要没有独立中继站语义；
 2. `RunController`、`ArenaController`、`WaveDirector`、`BuildController` 和奖励/升级职责分离；
-3. 五波、即时升级、协议维护、精英、Boss、全修和失败可完成闭环；
+3. 五波、即时升级、协议维护、精英、Boss、失败、完成结算和重开可完成闭环；
 4. 三核心、16 普通协议、4 稀有协议、4 辅助和 9 个首次进化通过目录校验；
 5. 固定种子可复现波次与奖励；
-6. 纯 C#、Godot headless、构建、启动和策划可见验收全部通过；
-7. 未经确认的依赖、素材、架构或范围偏离为零。
+6. 当前运行配置只含竞技场 0，Boss 完成后进入 `Completed`，不请求竞技场 1 占位；
+7. 纯 C#、Godot headless、构建、启动、Windows Release 和策划可见验收全部通过；
+8. 目标压力下达到稳定运行标准；
+9. 未经确认的依赖、素材、架构或范围偏离为零。
 
-满足上述条款并通过用户验收后，才能进入后续竞技场内容扩展。
+满足上述条款并通过用户对玩法、美术和交付构建的验收后，才能重新评估后续竞技场内容扩展。

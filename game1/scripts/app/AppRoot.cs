@@ -49,13 +49,14 @@ public partial class AppRoot : Node
     private Label _auxiliaryLabel = null!;
     private AcceptanceMenu _acceptanceMenu = null!;
     private WaveRewardPanel _waveRewardPanel = null!;
+    private StartScreen _startScreen = null!;
     private CoreSelectionPanel _coreSelectionPanel = null!;
     private LevelUpPanel _levelUpPanel = null!;
     private BossHudController _bossHud = null!;
     private RoadblockCommander _activeBoss;
     private RunResultScreen _runResultScreen = null!;
     private DebugOverlay _debugOverlay = null!;
-    private readonly SaveService _saveService = new();
+    private SaveService _saveService = new();
     private SaveData _saveData = null!;
     private ulong _runStartedAtMsec;
     private bool _resultShown;
@@ -71,7 +72,7 @@ public partial class AppRoot : Node
         BlockadeCityArena.Validate();
 
         _buildController = new BuildController(CurrentRun, ProtocolCatalog);
-        _runController = new RunController(CurrentRun, _buildController);
+        _runController = new RunController(CurrentRun, _buildController, playableArenaCount: 1);
         _runController.PhaseChanged += OnRunPhaseChanged;
         _levelUpController = new LevelUpController(CurrentRun, _buildController, new ControlledStatOfferGenerator(), new ExperienceCurve());
         _levelUpController.OfferRequested += ShowLevelUpOffer;
@@ -106,15 +107,22 @@ public partial class AppRoot : Node
         _arenaController.WaveRequested += StartWave;
         _arenaController.RewardRequested += ShowWaveReward;
         _arenaController.BossRequested += BeginBossEncounter;
-        _runController.ArenaRequested += ShowNextArenaPlaceholder;
         _arenaController.ArenaFailed += ShowRunFailure;
         Node2D arena = BlockadeCityArena.Scene.Instantiate<Node2D>();
         GetNode<Node>("ArenaHost").AddChild(arena);
         BindArena(arena);
         _arenaController.BeginArena(BlockadeCityArena);
-        ShowCoreSelection();
+        _pauseCoordinator.Acquire(PauseReason.StartScreen);
         UpdateHud();
         UpdateBuildHud();
+    }
+
+    /// <summary>仅供同程序集的场景级测试在进入场景树前隔离存档路径。</summary>
+    internal void ConfigureSaveServiceForTesting(SaveService saveService)
+    {
+        if (IsInsideTree())
+            throw new InvalidOperationException("测试存档服务必须在 AppRoot 进入场景树前注入。");
+        _saveService = saveService ?? throw new ArgumentNullException(nameof(saveService));
     }
 
     private void BindHudNodes()
@@ -132,11 +140,16 @@ public partial class AppRoot : Node
         _buildLabel = GetNode<Label>("UI/BuildLabel");
         _auxiliaryLabel = GetNode<Label>("UI/AuxiliaryLabel");
         _acceptanceMenu = GetNode<AcceptanceMenu>("UI/AcceptanceMenu");
+        _acceptanceMenu.Visible = OS.IsDebugBuild();
     }
 
     private void CreateUiControllers()
     {
         CanvasLayer ui = GetNode<CanvasLayer>("UI");
+        _startScreen = new StartScreen();
+        ui.AddChild(_startScreen);
+        _startScreen.StartRequested += BeginRunFromStartScreen;
+        _startScreen.QuitRequested += () => GetTree().Quit();
         _waveRewardPanel = new WaveRewardPanel();
         ui.AddChild(_waveRewardPanel);
         _waveRewardPanel.RewardConfirmed += OnWaveRewardChosen;
@@ -153,6 +166,14 @@ public partial class AppRoot : Node
         ui.AddChild(_runResultScreen);
         _runResultScreen.RetryRequested += ReloadRun;
         _runResultScreen.ReturnRequested += ReloadRun;
+    }
+
+    private void BeginRunFromStartScreen()
+    {
+        _runStartedAtMsec = Time.GetTicksMsec();
+        _startScreen.Dismiss();
+        ShowCoreSelection();
+        _pauseCoordinator.Release(PauseReason.StartScreen);
     }
 
     private async void BeginArenaAfterIntro()
@@ -348,7 +369,7 @@ public partial class AppRoot : Node
 
     private void OnArenaStateChanged(ArenaState state)
     {
-        _arenaLabel.Text = $"竞技场  {CurrentRun.ArenaIndex + 1}/5";
+        _arenaLabel.Text = "封锁城区";
         _levelLabel.Text = $"等级 {CurrentRun.Level}";
         int requiredExperience = new ExperienceCurve().GetRequiredExperience(CurrentRun.Level);
         _experienceLabel.Text = $"数据 {CurrentRun.Experience}/{requiredExperience}";
@@ -366,8 +387,8 @@ public partial class AppRoot : Node
                 _eventLabel.Text = "刷新已停止：必须清除全部残敌后才能结算";
                 break;
             case ArenaState.BossIntro:
-                _eventLabel.Text = "五波完成：Boss 即将进入（路障指挥车接入属于 Alpha 02H）";
-                _waveLabel.Text = "Boss  占位已解锁";
+                _eventLabel.Text = "五波完成：路障指挥车即将进入封锁城区";
+                _waveLabel.Text = "Boss  即将入场";
                 break;
         }
         UpdateHud();
@@ -452,6 +473,19 @@ public partial class AppRoot : Node
             if (requiredDamage > 0) _activeBoss.ApplyDamage(new DamageContext(requiredDamage));
             _acceptanceMenu.SetStatus("已通过正式伤害路径推进到第二阶段；请观察冲锋终点和散热弱点窗口。");
         };
+        _acceptanceMenu.BossDefeatRequested += () =>
+        {
+            if (_activeBoss is null || !IsInstanceValid(_activeBoss))
+            {
+                _acceptanceMenu.SetStatus("当前没有正在战斗的 Boss；请先完成第五波。");
+                return;
+            }
+
+            DamageResult result = _activeBoss.ApplyDamage(new DamageContext(_activeBoss.MaximumHealth));
+            _acceptanceMenu.SetStatus(result.DepletedNow
+                ? "已通过正式伤害路径击败 Boss；请检查封锁城区胜利结算。"
+                : "Boss 当前处于二阶段装甲锁定；重新开始后可在一阶段直接验证胜利结算。");
+        };
         _acceptanceMenu.RestartRequested += ReloadRun;
     }
 
@@ -489,9 +523,16 @@ public partial class AppRoot : Node
 
     private void OnRunPhaseChanged(RunPhase phase)
     {
-        if (phase != RunPhase.Failed) return;
-        _arenaController?.OnPlayerRunFailed();
-        ShowRunFailure();
+        switch (phase)
+        {
+            case RunPhase.Completed:
+                ShowRunVictory();
+                break;
+            case RunPhase.Failed:
+                _arenaController?.OnPlayerRunFailed();
+                ShowRunFailure();
+                break;
+        }
     }
 
     private void UpdateHud()
@@ -502,7 +543,7 @@ public partial class AppRoot : Node
             ? $"核心  {MobileCoreCatalog.Get(selectedCore).DisplayName}"
             : "核心  待选择";
         _rebootLabel.Text = $"重启  {CurrentRun.RebootsRemaining}";
-        _arenaLabel.Text = $"竞技场  {CurrentRun.ArenaIndex + 1}/5";
+        _arenaLabel.Text = "封锁城区";
         _levelLabel.Text = $"等级 {CurrentRun.Level}";
         int requiredExperience = new ExperienceCurve().GetRequiredExperience(CurrentRun.Level);
         _experienceLabel.Text = $"数据 {CurrentRun.Experience}/{requiredExperience}";
@@ -584,19 +625,23 @@ public partial class AppRoot : Node
         CurrentRun.RestoreArmorForNextArena();
         _playerHealth.SetArmor(CurrentRun.PlayerArmor);
         _runController.OnArenaCompleted();
-        _eventLabel.Text = "封锁城区突破：装甲已全修，重启次数保持不变；正在进入下一竞技场占位。";
-        _acceptanceMenu.SetStatus("Boss 已击败：已完成首区、全修装甲并进入竞技场 2 占位。 ");
     }
 
-    private void ShowNextArenaPlaceholder(int arenaIndex)
+    private void ShowRunVictory()
     {
+        if (_resultShown) return;
+        _resultShown = true;
         _bossHud.Unbind();
         ClearCombatActors();
-        DisposeNavigationFactory();
-        ClearArenaHost();
-        _waveLabel.Text = $"竞技场 {arenaIndex + 1}/5  内容开发中";
-        _arenaLabel.Text = $"竞技场 {arenaIndex + 1}/5";
-        _eventLabel.Text = "首区闭环完成：下一竞技场将在 Alpha 03 接入。可重新开始本局继续验收。";
+        _waveRewardPanel.Hide();
+        RunResultSnapshot snapshot = CreateResultSnapshot();
+        SaveLastRun(snapshot, "victory");
+        _pauseCoordinator.Acquire(PauseReason.RunResult);
+        _runResultScreen.ShowResult(snapshot, true);
+        _waveLabel.Text = "封锁城区  已完成";
+        _arenaLabel.Text = "封锁城区";
+        _eventLabel.Text = "封锁城区突破完成：可重新开始挑战其他核心与构筑。";
+        _acceptanceMenu.SetStatus("封锁城区已完成：胜利结算已记录本局核心、协议、等级与耗时。");
     }
 
     private void ShowRunFailure()
@@ -607,6 +652,7 @@ public partial class AppRoot : Node
         _waveRewardPanel.Hide();
         RunResultSnapshot snapshot = CreateResultSnapshot();
         SaveLastRun(snapshot, "failed");
+        _pauseCoordinator.Acquire(PauseReason.RunResult);
         _runResultScreen.ShowResult(snapshot, false);
         _eventLabel.Text = "坦克报废：可立即重试本局";
     }
@@ -620,8 +666,9 @@ public partial class AppRoot : Node
     private RunResultSnapshot CreateResultSnapshot()
     {
         ulong elapsedMsec = Time.GetTicksMsec() - _runStartedAtMsec;
-        return new RunResultSnapshot(CurrentRun.Seed, CurrentRun.SelectedProtocolIds, string.Empty,
-            CurrentRun.ArenaIndex, CurrentRun.WaveIndex, 1, TimeSpan.FromMilliseconds(elapsedMsec));
+        string coreId = CurrentRun.SelectedCore?.ToString() ?? string.Empty;
+        return new RunResultSnapshot(CurrentRun.Seed, CurrentRun.SelectedProtocolIds, coreId,
+            CurrentRun.ArenaIndex, CurrentRun.WaveIndex, CurrentRun.Level, TimeSpan.FromMilliseconds(elapsedMsec));
     }
 
     private void SaveLastRun(RunResultSnapshot snapshot, string result)

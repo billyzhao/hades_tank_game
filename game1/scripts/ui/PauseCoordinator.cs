@@ -8,9 +8,11 @@ public enum PauseReason
 {
     Manual,
     FocusLost,
+    StartScreen,
     LevelUp,
     CoreSelection,
-    InterWaveReward
+    InterWaveReward,
+    RunResult
 }
 
 /// <summary>

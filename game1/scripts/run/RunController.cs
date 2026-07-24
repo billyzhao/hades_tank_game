@@ -13,11 +13,18 @@ public enum RunPhase
 public sealed class RunController
 {
     private readonly RunState _state;
+    private readonly int _playableArenaCount;
 
-    public RunController(RunState state, BuildController build)
+    public RunController(RunState state, BuildController build, int playableArenaCount)
     {
         _state = state ?? throw new ArgumentNullException(nameof(state));
         ArgumentNullException.ThrowIfNull(build);
+        if (playableArenaCount is < 1 or > 5)
+            throw new ArgumentOutOfRangeException(nameof(playableArenaCount), "可玩竞技场数量必须为 1 到 5。");
+        if (_state.ArenaIndex >= playableArenaCount)
+            throw new ArgumentException("当前竞技场索引超出本版本可玩范围。", nameof(state));
+
+        _playableArenaCount = playableArenaCount;
         Phase = RunPhase.Arena;
     }
 
@@ -42,7 +49,7 @@ public sealed class RunController
         if (Phase != RunPhase.Arena)
             throw new InvalidOperationException("只有进行中的竞技场可以完成。");
 
-        if (_state.ArenaIndex >= 4)
+        if (_state.ArenaIndex + 1 >= _playableArenaCount)
         {
             SetPhase(RunPhase.Completed);
             return;

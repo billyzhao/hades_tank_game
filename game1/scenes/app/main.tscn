@@ -101,7 +101,7 @@ theme_override_colors/font_color = Color(1, 0.48, 0.32, 1)
 theme_override_font_sizes/font_size = 6
 
 [node name="ArenaLabel" type="Label" parent="UI/Hud"]
-text = "竞技场  1/5"
+text = "封锁城区"
 theme_override_colors/font_color = Color(0.8, 0.85, 1, 1)
 theme_override_font_sizes/font_size = 6
 

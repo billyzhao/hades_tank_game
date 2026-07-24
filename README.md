@@ -1,14 +1,16 @@
 # 废土中继
 
-《废土中继》是一款使用 Godot 4.7 .NET / C# 开发的俯视角坦克肉鸽。重构后的核心体验以**玩家坦克本体**为唯一战斗主体：在黄沙工业竞技场中持续移动、射击和冲刺，通过战斗内即时升级形成构筑，完成 5 座竞技场、每座 5 波敌军与 1 场 Boss 战的完整单局。
+《废土中继》是一款使用 Godot 4.7 .NET / C# 开发的俯视角坦克肉鸽。重构后的核心体验以**玩家坦克本体**为唯一战斗主体：在黄沙工业竞技场中持续移动、射击和冲刺，通过战斗内即时升级形成构筑。长期版本规划 5 座竞技场；当前优先把“封锁城区”完成为五波、精英、Boss 和结算齐全的独立试玩版。
 
 “移动中继核心”只作为坦克内部的世界观与构筑核心存在，不再拥有独立中继站实体、基地血条或守卫失败条件。
 
 ## 当前阶段
 
-Alpha 02A 的重构文档与 Gate 0 真实游戏比例基线已经确认。当前进入 **Alpha 02B：移动核心生存闭环**，把唯一生命线迁移为玩家坦克，并完整移除中继站运行逻辑。
+Alpha 02 已完成玩家唯一生命线、五波、即时升级、三核心/协议、辅助系统、四种敌军、精英和路障指挥车 Boss 的功能纵切。
 
-Alpha 02B 仅建立移动核心的生命、重启、存档迁移和可见验收闭环；五波竞技场、经验升级、核心选择和新敌人仍属于后续迭代范围。
+2026-07-24 起进入 **封锁城区可交付版收敛阶段**：暂停第二至第五竞技场扩展，按 BC-01～BC-05 依次完成正式单区流程、玩法深化、美术、音频、平衡、性能和 Windows 构建。
+
+BC-01 已完成开发与集中自检，当前等待用户验收：项目现在具备标题入口、核心选择、五波/Boss 后正式胜利结算、失败重开和单区 Release/Debug 边界。
 
 Godot 项目入口为 [`game1/project.godot`](game1/project.godot)。环境要求：
 
@@ -41,6 +43,7 @@ OpenGL Compatibility 启动器：
 ## 当前权威文档
 
 - [移动核心竞技场策划重构](docs/superpowers/specs/2026-07-20-mobile-core-arena-roguelite-redesign.md)
+- [封锁城区可交付版收敛设计](docs/superpowers/specs/2026-07-24-blockade-city-deliverable-convergence-design.md)
 - [移动核心竞技场技术设计](docs/superpowers/specs/2026-07-20-mobile-core-arena-technical-design.md)
 - [重构开发路线图](docs/superpowers/plans/2026-07-20-mobile-core-arena-roadmap.md)
 - [项目治理](docs/superpowers/specs/2026-07-17-agent-collaboration-governance-design.md)

@@ -14,10 +14,14 @@ public partial class HudLayoutTestHost : Node
             Node root = scene.Instantiate();
             Panel hudPanel = root.GetNode<Panel>("UI/HudPanel");
             Label buildLabel = root.GetNode<Label>("UI/BuildLabel");
+            Label arenaLabel = root.GetNode<Label>("UI/Hud/ArenaLabel");
 
             Assert(hudPanel.Size.X <= 176f, "常驻 HUD 不能覆盖超过 176px 的左上战场宽度。");
             Assert(hudPanel.Size.Y <= 48f, "常驻 HUD 不能覆盖超过 48px 的左上战场高度。");
             Assert(!buildLabel.Visible, "Alpha 02E 前的构筑占位提示不得常驻遮挡竞技场。");
+            Assert(arenaLabel.Text == "封锁城区", "单区试玩不得继续显示竞技场 1/5。");
+            Assert(!arenaLabel.Text.Contains("/5", StringComparison.Ordinal),
+                "正式 HUD 不得暗示四张尚未交付的地图。");
             root.QueueFree();
             GD.Print("[PASS] hud_compact_layout");
             GetTree().Quit(0);

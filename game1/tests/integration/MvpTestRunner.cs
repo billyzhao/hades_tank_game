@@ -114,11 +114,11 @@ public partial class MvpTestRunner : Node2D
         catalog.Validate();
         RunState state = RunState.CreateNew(8080);
         BuildController build = new(state, catalog);
-        RunController run = new(state, build);
+        RunController run = new(state, build, playableArenaCount: 5);
         Assert(run.Phase == RunPhase.Arena, "移动核心重构后单局必须从竞技场阶段开始。");
 
         RunState rebootState = RunState.CreateNew(8081, reboots: 1);
-        RunController rebootRun = new(rebootState, new BuildController(rebootState, catalog));
+        RunController rebootRun = new(rebootState, new BuildController(rebootState, catalog), playableArenaCount: 5);
         Assert(rebootRun.OnTankDefeated() && rebootState.RebootsRemaining == 0,
             "首次报废必须消耗一次重启并继续战斗。");
         Assert(!rebootRun.OnTankDefeated() && rebootRun.Phase == RunPhase.Failed,

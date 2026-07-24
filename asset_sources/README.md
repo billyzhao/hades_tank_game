@@ -19,6 +19,7 @@
 - 已生成并在 [`AI_PROTOTYPE_ASSETS.md`](AI_PROTOTYPE_ASSETS.md) 登记一批内部 AI 像素原型；
 - 当前素材生产以 [`MOBILE_CORE_ASSET_PLAN.md`](MOBILE_CORE_ASSET_PLAN.md) 为权威批次方案；
 - 游戏元素、运行文件、源批次和确认状态统一登记在 [`GAME_ASSET_CATALOG.md`](GAME_ASSET_CATALOG.md)；
+- 2026-07-24 起只开放封锁城区正式素材、特效、UI 和音频生产，后四区统一为 `DEFERRED`；
 - `batch-00-style` 中包含中继站的旧风格图、旧比例稿与提示词已经失效，并已在 Alpha 02B 删除；
 - `batch-01-units` 是尚未通过批次门禁的本地候选，不会直接进入游戏；
 - 这些 AI 原型只用于内部玩法与表现验收，不视为最终商用素材；

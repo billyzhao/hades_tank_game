@@ -90,7 +90,7 @@ public partial class MobileCoreSurvivalTestHost : Node
         RebootController reboot = room.GetNode<RebootController>("RebootController");
         RunState state = RunState.CreateNew(seed: 20260720, maximumArmor: 100, reboots: 1);
         ContentCatalog catalog = GD.Load<ContentCatalog>("res://resources/content_catalog.tres");
-        RunController run = new(state, new BuildController(state, catalog));
+        RunController run = new(state, new BuildController(state, catalog), playableArenaCount: 5);
         reboot.RebootDelaySeconds = 0.05f;
         reboot.ProtectionSeconds = 0.2f;
         reboot.KnockbackRadius = 96f;

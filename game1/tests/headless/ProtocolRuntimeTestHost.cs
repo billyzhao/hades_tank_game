@@ -62,6 +62,7 @@ public partial class ProtocolRuntimeTestHost : Node
         failures += Run("run_starts_in_arena", RunStartsInArena);
         failures += Run("run_defeat_consumes_reboot_then_fails", RunDefeatConsumesRebootThenFails);
         failures += Run("run_arena_completion_advances_index", RunArenaCompletionAdvancesIndex);
+        failures += Run("run_single_arena_completion_ends_run", RunSingleArenaCompletionEndsRun);
 
         GD.Print($"[ProtocolRuntimeTestHost] suite=reward_catalog failures={failures}");
         DisposeCreatedCatalogs();
@@ -376,10 +377,24 @@ public partial class ProtocolRuntimeTestHost : Node
     private static void RunArenaCompletionAdvancesIndex()
     {
         RunState state = RunState.CreateNew(seed: 42);
-        RunController run = CreateRunController(state);
+        RunController run = CreateRunController(state, playableArenaCount: 5);
         run.OnArenaCompleted();
         Assert(state.ArenaIndex == 1 && state.WaveIndex == 0 && run.Phase == RunPhase.Arena,
             "完成非终局竞技场后必须推进竞技场索引、重置波次且保持 Arena 阶段。");
+    }
+
+    private static void RunSingleArenaCompletionEndsRun()
+    {
+        RunState state = RunState.CreateNew(seed: 42);
+        RunController run = CreateRunController(state, playableArenaCount: 1);
+        bool requestedAnotherArena = false;
+        run.ArenaRequested += _ => requestedAnotherArena = true;
+
+        run.OnArenaCompleted();
+
+        Assert(run.Phase == RunPhase.Completed, "单竞技场版本完成封锁城区后必须结束本局。");
+        Assert(state.ArenaIndex == 0, "单竞技场版本不得推进到尚未交付的竞技场索引。");
+        Assert(!requestedAnotherArena, "单竞技场版本不得请求加载未交付的后续竞技场。");
     }
 
     private static void NavigationGridRemovedBrickOpensPath()
@@ -788,13 +803,13 @@ public partial class ProtocolRuntimeTestHost : Node
 
     private static RunController CreateRunController(int reboots = 1)
     {
-        return CreateRunController(RunState.CreateNew(seed: 42, reboots: reboots));
+        return CreateRunController(RunState.CreateNew(seed: 42, reboots: reboots), playableArenaCount: 5);
     }
 
-    private static RunController CreateRunController(RunState state)
+    private static RunController CreateRunController(RunState state, int playableArenaCount = 5)
     {
         ContentCatalog catalog = CreateCatalog();
-        return new RunController(state, new BuildController(state, catalog));
+        return new RunController(state, new BuildController(state, catalog), playableArenaCount);
     }
 
     private static ProtocolDefinition CreateProtocol(string id, ProtocolDepartment department, StatId stat)

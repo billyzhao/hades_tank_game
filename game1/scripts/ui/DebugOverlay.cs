@@ -16,6 +16,7 @@ public partial class DebugOverlay : CanvasLayer
         Layer = 80;
         ProcessMode = ProcessModeEnum.Always;
         Visible = false;
+        SetProcessInput(OS.IsDebugBuild());
 
         Panel panel = new()
         {
