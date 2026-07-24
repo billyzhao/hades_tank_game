@@ -88,7 +88,7 @@ public partial class WaveRewardPanel : PanelContainer
                 FocusMode = FocusModeEnum.All
             };
             card.AddThemeFontSizeOverride("font_size", 7);
-            IndustrialUiSkin.ApplyRewardCard(card);
+            IndustrialUiSkin.ApplyRewardCard(card, ArtTextureCatalog.RewardIcon(choice.Id));
             card.Pressed += () => Confirm(choice.Id);
             _cards.AddChild(card);
         }

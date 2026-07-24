@@ -1,0 +1,64 @@
+{
+  "target": "asset",
+  "mode": "sheet",
+  "prompt": "",
+  "role": "",
+  "input": "asset_sources\\ai_generated\\batch-08-blockade-city-final-art\\raw\\warning-barrier-final-cell.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 200,
+  "rows": 1,
+  "cols": 1,
+  "cell_size": 64,
+  "fit_scale": 0.78,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": false,
+  "component_mode": "largest",
+  "component_padding": 2,
+  "min_component_area": 1,
+  "edge_touch_margin": 1,
+  "frame_labels": [
+    "warning_fx-1"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        313,
+        313
+      ],
+      "component_mode": "largest",
+      "component_count": 34,
+      "selected_component_area": 30048,
+      "selected_component_bbox": [
+        23,
+        97,
+        251,
+        250
+      ],
+      "crop_bbox": [
+        21,
+        95,
+        253,
+        252
+      ],
+      "edge_touch": false,
+      "output_size": [
+        49,
+        33
+      ],
+      "paste_position": [
+        7,
+        15
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

@@ -28,6 +28,7 @@ public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
     private bool _charging;
     private bool _chargeTelegraph;
     private Line2D _chargeWarning = null!;
+    private AnimatedSprite2D _chargeWarningSprite = null!;
     private Vector2 _chargeTarget;
 
     public int CurrentHealth => _currentHealth;
@@ -40,6 +41,13 @@ public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
         _weakpoint = GetNode<Sprite2D>("Weakpoint");
         _chargeWarning = new Line2D { Name = "ChargeWarning", Width = 3f, DefaultColor = new Color(1f, .12f, .06f, .8f), ZIndex = 5, Visible = false };
         AddChild(_chargeWarning);
+        _chargeWarningSprite = SpriteEffectPlayer.Create(
+            "ChargeWarningSprite", ArtTextureCatalog.ChargeWarning, 10f, true);
+        _chargeWarningSprite.Scale = Vector2.One * .62f;
+        _chargeWarningSprite.ZIndex = 6;
+        _chargeWarningSprite.Visible = false;
+        AddChild(_chargeWarningSprite);
+        _chargeWarningSprite.Play();
         if (Definition is not null) Initialize(Definition);
     }
 
@@ -92,6 +100,8 @@ public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
         _chargeTarget = targetPosition;
         _chargeWarning.Points = new Vector2[] { Vector2.Zero, ToLocal(targetPosition) };
         _chargeWarning.Visible = true;
+        _chargeWarningSprite.Position = ToLocal(targetPosition);
+        _chargeWarningSprite.Visible = true;
     }
 
     private void UpdateCharge(float delta)
@@ -111,7 +121,13 @@ public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
         if (_chargeTelegraph)
         {
             _chargeTimer -= delta;
-            if (_chargeTimer <= 0f) { _chargeTelegraph = false; _charging = true; _chargeWarning.Visible = false; }
+            if (_chargeTimer <= 0f)
+            {
+                _chargeTelegraph = false;
+                _charging = true;
+                _chargeWarning.Visible = false;
+                _chargeWarningSprite.Visible = false;
+            }
             return;
         }
         if (!_charging) return;
@@ -135,6 +151,7 @@ public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
     private void EnterVulnerableWindow()
     {
         _charging = false;
+        _chargeWarningSprite.Visible = false;
         _vulnerableTimer = VulnerableSeconds;
         _weakpoint.Visible = true;
         Velocity = Vector2.Zero;
@@ -161,6 +178,14 @@ public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
         if (player is null) return;
         Vector2 direction = GlobalPosition.DirectionTo(player.GlobalPosition);
         if (direction.IsZeroApprox()) return;
+        SpriteEffectPlayer.Spawn(
+            GetTree().CurrentScene,
+            GlobalPosition + direction * 24f,
+            ArtTextureCatalog.MuzzleFlash,
+            16f,
+            .75f,
+            18,
+            new Color(1f, .32f, .12f));
         foreach (float offset in new[] { Mathf.DegToRad(-14f), 0f, Mathf.DegToRad(14f) })
         {
             Projectile projectile = ProjectileScene.Instantiate<Projectile>();

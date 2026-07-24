@@ -151,6 +151,14 @@ public partial class AuxiliaryHost : Node, IAuxiliaryRuntime
         if (_owner is null) return;
         Vector2 direction = (target - _owner.GlobalPosition).Normalized();
         if (direction.IsZeroApprox()) return;
+        SpriteEffectPlayer.Spawn(
+            GetTree().CurrentScene,
+            _owner.GlobalPosition + direction * 12f,
+            ArtTextureCatalog.MuzzleFlash,
+            18f,
+            .34f,
+            11,
+            new Color(.35f, .9f, 1f));
         Projectile projectile = ProjectileScene.Instantiate<Projectile>();
         GetTree().CurrentScene.AddChild(projectile);
         projectile.GlobalPosition = _owner.GlobalPosition + direction * 11f;
@@ -160,6 +168,15 @@ public partial class AuxiliaryHost : Node, IAuxiliaryRuntime
     private void ApplyAreaSuppression(AuxiliaryDefinition definition, int rank)
     {
         if (_owner is null) return;
+        // 区域压制仍复用正式地面环序列，但采用青色友军语义；表现不参与范围或伤害计算。
+        SpriteEffectPlayer.Spawn(
+            GetTree().CurrentScene,
+            _owner.GlobalPosition,
+            ArtTextureCatalog.MortarWarning,
+            12f,
+            .85f,
+            8,
+            new Color(.24f, .9f, 1f, .72f));
         foreach (Node2D target in GetTree().GetNodesInGroup("enemies").OfType<Node2D>())
         {
             if (target.GlobalPosition.DistanceTo(_owner.GlobalPosition) <= definition.Range && target is ITeamDamageable damageable)

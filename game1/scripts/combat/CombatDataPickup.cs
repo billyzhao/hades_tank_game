@@ -6,6 +6,7 @@ namespace Game1;
 /// <summary>敌军掉落的正整数战斗数据；靠近玩家或波末回收时只收集一次。</summary>
 public partial class CombatDataPickup : Node2D
 {
+    private AnimatedSprite2D _visual = null!;
     public int Amount { get; private set; }
     public event Action<CombatDataPickup, int> Collected;
 
@@ -13,8 +14,10 @@ public partial class CombatDataPickup : Node2D
     {
         if (amount <= 0) throw new ArgumentOutOfRangeException(nameof(amount));
         Amount = amount;
-        QueueRedraw();
+        if (IsInsideTree()) EnsureVisual();
     }
+
+    public override void _Ready() => EnsureVisual();
 
     public override void _Process(double delta)
     {
@@ -33,12 +36,6 @@ public partial class CombatDataPickup : Node2D
         }
     }
 
-    public override void _Draw()
-    {
-        DrawCircle(Vector2.Zero, 4f, new Color(0.32f, 0.9f, 1f));
-        DrawArc(Vector2.Zero, 6f, 0f, Mathf.Tau, 12, new Color(0.85f, 1f, 1f), 1f);
-    }
-
     public void Collect()
     {
         if (Amount <= 0) return;
@@ -46,5 +43,15 @@ public partial class CombatDataPickup : Node2D
         Amount = 0;
         Collected?.Invoke(this, collected);
         QueueFree();
+    }
+
+    private void EnsureVisual()
+    {
+        if (_visual is not null) return;
+        _visual = SpriteEffectPlayer.Create("CombatDataVisual", ArtTextureCatalog.CombatData, 8f, true);
+        _visual.Scale = Vector2.One * .65f;
+        _visual.ZIndex = 5;
+        AddChild(_visual);
+        _visual.Play();
     }
 }

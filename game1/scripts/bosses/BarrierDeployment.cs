@@ -10,7 +10,7 @@ public partial class BarrierDeployment : Node
     private Node2D _player;
     private int _cellSize;
     private System.Action _navigationRefresh;
-    private Polygon2D _preview;
+    private AnimatedSprite2D _preview;
     private bool _previewing;
 
     /// <summary>由遭遇编排器注入房间实例对象；不保存或修改任何静态 TileSet 资源。</summary>
@@ -63,15 +63,13 @@ public partial class BarrierDeployment : Node
     private void EnsurePreview()
     {
         if (_preview is not null) return;
-        float half = _cellSize * .46f;
-        _preview = new Polygon2D
-        {
-            Name = "BarrierPreview",
-            Polygon = new Vector2[] { new(-half, -half), new(half, -half), new(half, half), new(-half, half) },
-            Color = new Color(1f, .16f, .08f, .55f),
-            ZIndex = 6,
-            Visible = false
-        };
+        _preview = SpriteEffectPlayer.Create(
+            "BarrierPreview", ArtTextureCatalog.BarrierWarning, 10f, true);
+        _preview.Scale = Vector2.One * (_cellSize / 64f);
+        _preview.Modulate = new Color(1f, .86f, .78f, .88f);
+        _preview.ZIndex = 6;
+        _preview.Visible = false;
         AddChild(_preview);
+        _preview.Play();
     }
 }

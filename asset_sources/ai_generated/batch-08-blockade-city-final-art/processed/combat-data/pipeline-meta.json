@@ -1,0 +1,155 @@
+{
+  "target": "asset",
+  "mode": "sheet",
+  "prompt": "",
+  "role": "",
+  "input": "asset_sources\\ai_generated\\batch-08-blockade-city-final-art\\raw\\combat-data-2x2-raw.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 200,
+  "rows": 2,
+  "cols": 2,
+  "cell_size": 20,
+  "fit_scale": 0.78,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 1,
+  "min_component_area": 1,
+  "edge_touch_margin": 1,
+  "frame_labels": [
+    "combat_data-1",
+    "combat_data-2",
+    "combat_data-3",
+    "combat_data-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        217,
+        171,
+        448,
+        476
+      ],
+      "edge_touch": false,
+      "output_size": [
+        10,
+        13
+      ],
+      "paste_position": [
+        5,
+        3
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        627,
+        0,
+        1254,
+        627
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        164,
+        171,
+        395,
+        476
+      ],
+      "edge_touch": false,
+      "output_size": [
+        10,
+        13
+      ],
+      "paste_position": [
+        5,
+        3
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        627,
+        627,
+        1254
+      ],
+      "component_mode": "all",
+      "component_count": 30,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        183,
+        121,
+        482,
+        462
+      ],
+      "edge_touch": false,
+      "output_size": [
+        13,
+        15
+      ],
+      "paste_position": [
+        3,
+        2
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        627,
+        627,
+        1254,
+        1254
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        164,
+        145,
+        395,
+        450
+      ],
+      "edge_touch": false,
+      "output_size": [
+        10,
+        13
+      ],
+      "paste_position": [
+        5,
+        3
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

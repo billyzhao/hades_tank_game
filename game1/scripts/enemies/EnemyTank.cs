@@ -24,6 +24,7 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
     private Polygon2D _visual = null!;
     private Sprite2D _roleSprite = null!;
     private Line2D _attackWarning = null!;
+    private AnimatedSprite2D _mortarWarning;
     private float _baseVisualScale;
     private float _motionClock;
     private IEnemyPathProvider _pathProvider;
@@ -70,6 +71,16 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
         SetVisualColor(EnemyVisualPalette.GetRoleTint(Behavior));
         _attackWarning.DefaultColor = EnemyVisualPalette.GetRoleTint(Behavior);
         _attackWarning.Visible = false;
+        if (_definition.MovementMode == EnemyMovementMode.StandOff)
+        {
+            _mortarWarning = SpriteEffectPlayer.Create(
+                "MortarWarning", ArtTextureCatalog.MortarWarning, 10f, true);
+            _mortarWarning.Scale = Vector2.One * .55f;
+            _mortarWarning.ZIndex = 6;
+            _mortarWarning.Visible = false;
+            AddChild(_mortarWarning);
+            _mortarWarning.Play();
+        }
         _baseVisualScale = _definition.VisualScale;
         _roleSprite.Scale = Vector2.One * _baseVisualScale;
         if (IsEliteVisual)
@@ -116,6 +127,11 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
             Velocity = Vector2.Zero;
             ApplyMovementPose((float)delta, false);
             _attackWarning.Visible = true;
+            if (_mortarWarning is not null)
+            {
+                _mortarWarning.GlobalPosition = targetNode.GlobalPosition;
+                _mortarWarning.Visible = true;
+            }
             _attackTelegraphRemaining -= (float)delta;
             SetVisualColor(new Color(1f, 1f, 1f));
             if (_attackTelegraphRemaining <= 0f)
@@ -123,6 +139,7 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
                 FireAt(targetNode);
                 _attackCooldown = _definition.AttackCooldown;
                 _attackWarning.Visible = false;
+                if (_mortarWarning is not null) _mortarWarning.Visible = false;
                 SetVisualColor(EnemyVisualPalette.GetRoleTint(Behavior));
             }
             return;
@@ -135,9 +152,15 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
             ApplyMovementPose((float)delta, false);
             _attackTelegraphRemaining = _definition.TelegraphSeconds;
             _attackWarning.Visible = true;
+            if (_mortarWarning is not null)
+            {
+                _mortarWarning.GlobalPosition = targetNode.GlobalPosition;
+                _mortarWarning.Visible = true;
+            }
             return;
         }
         _attackWarning.Visible = false;
+        if (_mortarWarning is not null) _mortarWarning.Visible = false;
         if (!movement.ShouldMove)
         {
             Velocity = Vector2.Zero;
@@ -170,6 +193,14 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
         Vector2 direction = GlobalPosition.DirectionTo(targetNode.GlobalPosition);
         if (direction.IsZeroApprox()) return;
 
+        SpriteEffectPlayer.Spawn(
+            GetTree().CurrentScene,
+            GlobalPosition + direction * 10f,
+            ArtTextureCatalog.MuzzleFlash,
+            18f,
+            .42f,
+            12,
+            new Color(1f, .48f, .18f));
         Projectile projectile = ProjectileScene.Instantiate<Projectile>();
         GetTree().CurrentScene.AddChild(projectile);
         projectile.GlobalPosition = GlobalPosition + direction * 12f;

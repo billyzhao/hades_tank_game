@@ -8,3 +8,4 @@
 
 - [BC-01：封锁城区单竞技场正式流程](iteration-bc01-single-arena-flow.md)
 - [BC-02：战斗、敌军与构筑深化](iteration-bc02-combat-build-depth.md)
+- [BC-03：封锁城区正式美术](iteration-bc03-blockade-city-final-art.md)

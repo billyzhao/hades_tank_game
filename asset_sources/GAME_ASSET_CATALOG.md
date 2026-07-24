@@ -44,12 +44,12 @@
 
 | 素材 ID | 游戏元素 | 运行素材 | 源批次/来源 | 当前状态 | 维护说明 |
 | --- | --- | --- | --- | --- | --- |
-| `player_hull` | 玩家坦克车体 | `game1/assets/art/actors/hero_hull.png` | 2026-07-16 AI 原型拆分 | `PROVISIONAL` | 已接入并可用，但仍是早期原型；后续三核心正式版替换时保持车体节点不变 |
-| `player_turret` | 玩家独立炮塔 | `game1/assets/art/actors/hero_turret.png` | 2026-07-16 AI 原型拆分 | `PROVISIONAL` | 已支持独立旋转；正式版本需要补炮口、受击和核心差异 |
+| `player_hull` | 玩家坦克车体 | `game1/assets/sprites/player/player_hull.png` | Batch 08 | `CONFIRMED` | 已接入正式重型履带底盘；2026-07-24 实机验收通过 |
+| `player_turret` | 玩家独立炮塔 | `game1/assets/sprites/player/player_turret.png` | Batch 08 | `CONFIRMED` | 已接入独立炮塔并保留原瞄准节点；2026-07-24 实机验收通过 |
 | `player_assembled_reference` | 玩家整车历史参考 | `game1/assets/art/actors/hero_tank.png` | 2026-07-16 AI 原型 | `CANDIDATE` | 当前场景不直接引用，只用于车体/炮塔来源审计 |
-| `core_breakthrough_visual` | 突破重炮核心视觉 | 尚无独立运行素材 | Batch 01 第二版样张是视觉基准 | `MISSING` | 需要核心嵌入部件、激活光色、冲刺与开火反馈 |
-| `core_overload_visual` | 过载速射核心视觉 | 尚无独立运行素材 | 尚未生产 | `MISSING` | 不得只用文字区分 |
-| `core_electric_visual` | 电驱游骑核心视觉 | 尚无独立运行素材 | 尚未生产 | `MISSING` | 需要独立能量色和冲刺轨迹 |
+| `core_breakthrough_visual` | 突破重炮核心视觉 | `game1/assets/sprites/player/core_breakthrough.png` | Batch 08 | `CONFIRMED` | 选择核心后替换坦克中央部件，并与对应 HUD 图标一致 |
+| `core_overload_visual` | 过载速射核心视觉 | `game1/assets/sprites/player/core_overdrive.png` | Batch 08 | `CONFIRMED` | 橙红散热结构已独立，不再只靠文字区分 |
+| `core_electric_visual` | 电驱游骑核心视觉 | `game1/assets/sprites/player/core_electric.png` | Batch 08 | `CONFIRMED` | 青蓝线圈结构与冲刺序列已接入 |
 | `aux_orbit_drone` | 环绕无人机 | `game1/assets/sprites/auxiliaries/orbit_drone.png` | Batch 07 | `CONFIRMED` | 当前为静态部件加程序环绕；后续可补开火帧 |
 | `aux_side_cannon` | 侧挂速射炮 | `game1/assets/sprites/auxiliaries/side_cannon.png` | Batch 07 | `CONFIRMED` | 当前显示与自动开火逻辑已接入 |
 | `aux_mine_layer` | 履带布雷器 | `game1/assets/sprites/auxiliaries/mine_layer.png` | Batch 07 | `CONFIRMED` | 当前是随车部件；独立地雷实体表现尚未制作 |
@@ -74,7 +74,7 @@
 
 | 素材 ID | 游戏元素 | 运行素材 | 源批次/来源 | 当前状态 | 维护说明 |
 | --- | --- | --- | --- | --- | --- |
-| `enemy_scout` | 侦察无人机/轻型侦察单位 | `game1/assets/sprites/enemies/patrol_tank.png` | Batch 06 | `PARTIAL` | 当前与巡逻坦克共用贴图；需要独立轻型轮廓 |
+| `enemy_scout` | 侦察无人机/轻型侦察单位 | `game1/assets/sprites/enemies/scout_drone.png` | Batch 08 | `CONFIRMED` | 独立悬浮轮廓已由敌军定义资源引用；2026-07-24 群体实机验收通过 |
 | `enemy_patrol` | 巡逻坦克 | `game1/assets/sprites/enemies/patrol_tank.png` | Batch 06 | `CONFIRMED` | 当前可用 |
 | `enemy_assault` | 突击车 | `game1/assets/sprites/enemies/assault_vehicle.png` | Batch 06 | `CONFIRMED` | 当前可用 |
 | `enemy_mortar` | 迫击炮/攻城车 | `game1/assets/sprites/enemies/siege_tank.png` | Batch 06 | `CONFIRMED` | 当前可用；范围落点特效仍缺失 |
@@ -89,9 +89,9 @@
 | `boss_01_turret` | Boss 独立炮塔 | `game1/assets/sprites/bosses/roadblock_commander_turret.png` | Batch 07 | `CONFIRMED` | 与车体分层 |
 | `boss_01_weakpoint` | 二阶段散热弱点 | `game1/assets/sprites/bosses/roadblock_commander_weakpoint.png` | Batch 07 | `CONFIRMED` | 只在冲锋结束后的可受伤窗口显示 |
 | `boss_01_emplacement` | Boss 火力哨位 | `game1/assets/sprites/bosses/roadblock_gun_emplacement.png` | Batch 07 | `CONFIRMED` | 直线预警仍由程序线条表现 |
-| `boss_01_phase_transition_fx` | 阶段转换表现 | 尚无独立素材 | 尚未生产 | `MISSING` | 当前只使用短时调色 |
-| `boss_01_charge_telegraph_fx` | 二阶段冲锋预警 | 程序 `Line2D` | 尚未生产 | `PROVISIONAL` | 需要与 Boss 机械语言一致的地面危险带 |
-| `boss_01_death_fx` | Boss 击毁表现 | 尚无 Boss 专属素材 | 尚未生产 | `MISSING` | 不能长期复用普通敌军爆炸 |
+| `boss_01_phase_transition_fx` | 阶段转换表现 | `game1/assets/sprites/effects/animations/boss_phase_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 二阶段信号触发专属机械能量序列 |
+| `boss_01_charge_telegraph_fx` | 二阶段冲锋预警 | `game1/assets/sprites/effects/animations/charge_warning_1.png` 等四帧 + `Line2D` | Batch 08 | `CONFIRMED` | 地面终点序列与方向线共同表达冲锋 |
+| `boss_01_death_fx` | Boss 击毁表现 | `game1/assets/sprites/effects/animations/boss_death_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 使用 Boss 专属重型击毁序列 |
 
 ## 5. 弹道与战斗特效
 
@@ -99,22 +99,22 @@
 
 | 素材 ID | 游戏元素 | 运行素材/当前表现 | 源批次/来源 | 当前状态 | 下一步 |
 | --- | --- | --- | --- | --- | --- |
-| `fx_player_shell` | 玩家炮弹 | `game1/assets/sprites/effects/player_shell.png` | Batch 06 | `PROVISIONAL` | 补旅行帧、炮口焰和核心差异 |
-| `fx_enemy_shell` | 敌军炮弹 | `game1/assets/sprites/effects/enemy_shell.png` | Batch 06 | `PROVISIONAL` | 按直射、迫击、Boss 炮弹区分 |
-| `fx_steel_impact` | 钢墙命中 | `game1/assets/sprites/effects/steel_impact.png` | Batch 06 | `PROVISIONAL` | 当前为单张闪光，需要短动画 |
-| `fx_enemy_burst` | 普通敌军击毁 | `game1/assets/sprites/effects/enemy_burst.png` | Batch 06 | `PROVISIONAL` | 当前为单张爆点，需要四帧爆炸与残骸 |
-| `fx_muzzle_flash` | 玩家炮口焰 | `player_tank.tscn` 中的多边形闪光 | 无 | `MISSING` | 制作独立炮口帧 |
-| `fx_tank_dust` | 履带扬尘 | `TankVisualAnimator` 程序多边形 | 无 | `MISSING` | 制作黄沙扬尘短循环 |
-| `fx_dash_trail` | 动力冲刺轨迹 | `DashTrail` 程序圆形 | 无 | `MISSING` | 三核心需要可区分版本 |
-| `fx_combat_data` | 战斗数据掉落与吸附 | `CombatDataPickup` 程序圆形 | 无 | `MISSING` | 制作数据芯片、吸附拖尾和收集闪光 |
-| `fx_player_hit` | 玩家受击 | 运行时调色闪烁 | 无 | `MISSING` | 补装甲火花和方向反馈 |
-| `fx_armor_break` | 装甲破裂 | 尚无 | 无 | `MISSING` | 与低装甲 HUD 状态联动 |
-| `fx_reboot` | 原地重启 1.2 秒表现 | 尚无正式序列 | 无 | `MISSING` | 制作核心重构、脉冲和保护罩 |
-| `fx_level_up` | 即时升级反馈 | 尚无正式特效 | 无 | `MISSING` | 暂停前后需要清晰但不遮挡 |
-| `fx_spawn_warning` | 普通敌军刷新预警 | 信标贴图 + 程序圆环 | Batch 07 | `PARTIAL` | 可补闪烁帧和声音 |
-| `fx_barrier_warning` | Boss 路障落点 | 程序红色多边形 | 无 | `MISSING` | 使用独立地面警示动画 |
-| `fx_suppression_field` | 区域压制范围 | 尚无 | 无 | `MISSING` | 不能只靠敌人掉血表达 |
-| `fx_mortar_warning` | 迫击炮范围预警 | 尚无正式素材 | 无 | `MISSING` | 需要形状和倒计时共同提示 |
+| `fx_player_shell` | 玩家炮弹 | `game1/assets/sprites/effects/animations/player_projectile_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 青色核心与金属弹体循环，阵营伤害规则不变 |
+| `fx_enemy_shell` | 敌军炮弹 | `game1/assets/sprites/effects/animations/enemy_projectile_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 橙红危险弹道循环；迫击差异由落点预警补充 |
+| `fx_steel_impact` | 钢墙命中 | `game1/assets/sprites/effects/animations/steel_impact_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 已由单张闪光改为短序列 |
+| `fx_enemy_burst` | 普通敌军击毁 | `game1/assets/sprites/effects/animations/enemy_burst_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 已由单张爆点改为四帧击毁 |
+| `fx_muzzle_flash` | 玩家炮口焰 | `game1/assets/sprites/effects/animations/muzzle_flash_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 由开火信号重播并在结束后隐藏 |
+| `fx_tank_dust` | 履带扬尘 | `game1/assets/sprites/effects/animations/tank_dust_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 普通移动按节奏生成短寿命序列 |
+| `fx_dash_trail` | 动力冲刺轨迹 | `game1/assets/sprites/effects/animations/dash_trail_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 冲刺期间替代普通扬尘 |
+| `fx_combat_data` | 战斗数据掉落与吸附 | `game1/assets/sprites/effects/animations/combat_data_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 芯片循环保留原磁吸与实时经验结算 |
+| `fx_player_hit` | 玩家受击 | `game1/assets/sprites/effects/animations/player_hit_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 与原调色闪烁叠加，仍不参与伤害结算 |
+| `fx_armor_break` | 装甲破裂 | 复用 `player_hit_*.png` 强火花段 | Batch 08 | `PARTIAL` | 已有可读火花；低装甲专属持续态留到 BC-04/验收缺口处理 |
+| `fx_reboot` | 原地重启 1.2 秒表现 | `game1/assets/sprites/effects/animations/reboot_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 重构开始与恢复完成各触发一次 |
+| `fx_level_up` | 即时升级反馈 | `game1/assets/sprites/effects/animations/level_up_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 每次确认即时升级后在玩家位置播放 |
+| `fx_spawn_warning` | 普通敌军刷新预警 | `game1/assets/sprites/effects/animations/spawn_warning_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 替换程序圆环，出生安全规则不变 |
+| `fx_barrier_warning` | Boss 路障落点 | `game1/assets/sprites/effects/animations/barrier_warning_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 独立矩形落点预警后才写入 TileMap |
+| `fx_suppression_field` | 区域压制范围 | 复用 `mortar_warning_*.png` 的青色友军环 | Batch 08 | `PARTIAL` | 已有范围触发反馈；后续可补独立持续场纹理 |
+| `fx_mortar_warning` | 迫击炮范围预警 | `game1/assets/sprites/effects/animations/mortar_warning_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 迫击职责进入攻击前摇时锁定玩家落点显示 |
 
 ## 6. UI 与图标
 
@@ -122,18 +122,18 @@
 
 | 素材 ID | 游戏元素 | 运行素材/当前表现 | 源批次/来源 | 当前状态 | 下一步 |
 | --- | --- | --- | --- | --- | --- |
-| `ui_hud_frame` | 左上装甲/核心/重启 HUD 框 | `game1/assets/sprites/ui/hud_status_frame.png` | Batch 07 | `PARTIAL` | 框架已接入；缺装甲、核心、重启图标与状态变化 |
+| `ui_hud_frame` | 左上装甲/核心/重启 HUD 框 | `game1/assets/sprites/ui/hud_status_frame.png` + `ui/icons/` | Batch 07 + Batch 08 | `CONFIRMED` | 框架和语义图标已接入；2026-07-24 实机验收通过 |
 | `ui_experience_frame` | 等级与经验区域 | `game1/assets/sprites/ui/experience_frame.png` | Batch 07 | `PARTIAL` | 框架已接入；经验条仍为 Godot 基础样式 |
-| `ui_reward_card_frame` | 核心、升级、协议、维护卡片框 | `game1/assets/sprites/ui/reward_card_frame.png` | Batch 07 | `PARTIAL` | 框架已接入；缺卡片图标、稀有度、部门和选中状态 |
-| `ui_boss_status_frame` | Boss 名称、阶段和血条框 | `game1/assets/sprites/ui/boss_status_frame.png` | Batch 07 | `PARTIAL` | 框架已接入；血条填充和阶段徽记仍是基础控件 |
-| `ui_armor_icon` | 装甲图标 | 尚无 | 无 | `MISSING` | 需含低装甲警告状态 |
-| `ui_core_icons` | 三核心图标 | 尚无 | 无 | `MISSING` | 与三核心车体视觉一致 |
-| `ui_stat_icons` | 即时属性升级图标 | 尚无 | 无 | `MISSING` | 伤害、射速、弹速、移动、装甲等 |
-| `ui_department_icons` | 四部门协议图标 | 尚无 | 无 | `MISSING` | 兵工、工程、侦察电子、后勤维修 |
-| `ui_auxiliary_icons` | 四辅助系统 HUD 图标 | 当前仅使用文字 | Batch 07 只有战场部件 | `MISSING` | 可从部件提炼但必须单独确认可读性 |
-| `ui_wave_elite_icons` | 波次、残敌、精英标识 | 当前文字 | 无 | `MISSING` | 不能只靠颜色区分精英状态 |
-| `ui_pause_overlay` | 暂停界面 | 纯色遮罩与文字 | 无 | `PROVISIONAL` | 后续统一工业框架 |
-| `ui_result_screen` | 失败/首区完成结算 | 纯色遮罩与按钮 | 无 | `PROVISIONAL` | 需要统计层级、按钮状态和控制器焦点 |
+| `ui_reward_card_frame` | 核心、升级、协议、维护卡片框 | `game1/assets/sprites/ui/reward_card_frame.png` + 语义图标 | Batch 07 + Batch 08 | `CONFIRMED` | 核心、属性和部门图标已接入卡片；2026-07-24 实机验收通过 |
+| `ui_boss_status_frame` | Boss 名称、阶段和血条框 | `game1/assets/sprites/ui/boss_status_frame.png` + 精英/阶段图标 | Batch 07 + Batch 08 | `CONFIRMED` | 工业血条样式和阶段徽记已接入 |
+| `ui_armor_icon` | 装甲图标 | `game1/assets/sprites/ui/icons/armor.png` | Batch 08 | `CONFIRMED` | HUD、维护和结算可复用 |
+| `ui_core_icons` | 三核心图标 | `game1/assets/sprites/ui/icons/core_*.png` | Batch 08 | `CONFIRMED` | 与坦克核心部件使用相同色形语言 |
+| `ui_stat_icons` | 即时属性升级图标 | `game1/assets/sprites/ui/icons/{armor,move_speed,damage,fire_rate,projectile_speed}.png` | Batch 08 | `CONFIRMED` | 已接入即时升级三选一 |
+| `ui_department_icons` | 四部门协议图标 | `game1/assets/sprites/ui/icons/{arsenal,engineering,reconnaissance,logistics}.png` | Batch 08 | `CONFIRMED` | 奖励 ID 按部门前缀选择图标 |
+| `ui_auxiliary_icons` | 辅助系统 HUD 图标 | `game1/assets/sprites/ui/icons/auxiliary.png` | Batch 08 | `PARTIAL` | HUD 已有统一辅助槽图标；四种辅助独立小图仍使用战场部件 |
+| `ui_wave_elite_icons` | 波次、残敌、精英标识 | `game1/assets/sprites/ui/icons/{wave,elite}.png` | Batch 08 | `CONFIRMED` | 与实时文字和计数并列，不只依靠颜色 |
+| `ui_pause_overlay` | 暂停界面 | 工业卡框 + `wave.png` + 遮罩 | Batch 07 + Batch 08 | `CONFIRMED` | Esc 暂停语义和输入规则不变 |
+| `ui_result_screen` | 失败/首区完成结算 | 工业卡框 + 核心图标 + 统计与按钮 | Batch 07 + Batch 08 | `CONFIRMED` | 保留控制器焦点并显示本局核心 |
 | `ui_acceptance_menu` | Debug 策划验收菜单 | Godot 基础控件 | Debug 工具 | `CONFIRMED` | 不属于正式玩家 UI，可保持工具风格 |
 
 ## 7. 音频
@@ -153,7 +153,7 @@
 
 | 竞技场 | 地图/地形 | 普通敌军 | Boss | 专属特效 | 当前总体状态 |
 | --- | --- | --- | --- | --- | --- |
-| 1 封锁城区 | 基础地面、钢墙、砖墙、信标已接入 | 3 张普通职责图 + 1 张精英图；侦察/巡逻共用 | 路障指挥车拆件已接入 | 大部分未完成 | `PARTIAL` |
+| 1 封锁城区 | 基础地面、钢墙、砖墙、信标已接入 | 四类职责图 + 1 张精英图 | 路障指挥车拆件及专属阶段/击毁序列已接入 | Batch 08 已完成实机验收 | `CONFIRMED` |
 | 2 废弃工厂 | 延期 | 自爆工程车、布雷车、盾甲车延期 | 熔炉装甲列车延期 | 延期 | `DEFERRED` |
 | 3 干涸水库 | 延期 | 掠行艇、狙击炮车、导弹载具延期 | 双联重炮平台延期 | 延期 | `DEFERRED` |
 | 4 军阀要塞 | 延期 | 攻城炮车、维修车、指挥坦克延期 | 军阀旗舰坦克延期 | 延期 | `DEFERRED` |
@@ -195,5 +195,6 @@
 | 2026-07-22 | Batch 06 | 首区地面、敌军职责图、基础炮弹/命中 | 确认并接入 | 地面和敌军进入运行目录；特效仍为过渡版本 |
 | 2026-07-23 | Batch 07 | 首区 Boss、地形模块、四辅助、工业 UI 框架 | 素材总体可用；特效和 UI 尚未完整替换 | Boss/地形/辅助标记确认；UI/特效标记部分或过渡 |
 | 2026-07-24 | 范围收敛 | 暂停后四区，优先完成封锁城区正式美术、特效、UI 和音频 | 用户确认方案 1 | 后四区改为 `DEFERRED`；当前缺口只按封锁城区统计 |
+| 2026-07-24 | Batch 08 | 玩家/三核心、侦察、弹道与战斗序列、关键预警、正式 UI 图标 | 用户实机验收通过 | 正式运行素材升级为 `CONFIRMED`；独立扩展项继续保持 `PARTIAL` |
 
 后续新增批次按时间追加，不覆盖历史结论。

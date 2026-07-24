@@ -23,6 +23,7 @@ public partial class AppRoot : Node
     public RunState CurrentRun { get; private set; } = null!;
 
     private HealthComponent _playerHealth = null!;
+    private PlayerTank _player = null!;
     private RebootController _rebootController = null!;
     private BuildController _buildController = null!;
     private LevelUpController _levelUpController = null!;
@@ -48,6 +49,7 @@ public partial class AppRoot : Node
     private Label _eventLabel = null!;
     private Label _buildLabel = null!;
     private Label _auxiliaryLabel = null!;
+    private TextureRect _coreHudIcon = null!;
     private AcceptanceMenu _acceptanceMenu = null!;
     private WaveRewardPanel _waveRewardPanel = null!;
     private StartScreen _startScreen = null!;
@@ -142,6 +144,25 @@ public partial class AppRoot : Node
         _auxiliaryLabel = GetNode<Label>("UI/AuxiliaryLabel");
         _acceptanceMenu = GetNode<AcceptanceMenu>("UI/AcceptanceMenu");
         _acceptanceMenu.Visible = OS.IsDebugBuild();
+
+        TextureRect armorIcon = IndustrialUiSkin.ApplyCornerIcon(_armorLabel, ArtTextureCatalog.ArmorIcon, 9f);
+        armorIcon.Position = new Vector2(43f, 0f);
+        _coreHudIcon = IndustrialUiSkin.ApplyCornerIcon(
+            _coreLabel, ArtTextureCatalog.CoreIcon(CoreId.BreakthroughCannon), 9f);
+        _coreHudIcon.Position = new Vector2(43f, 0f);
+        _coreHudIcon.Modulate = new Color(1f, 1f, 1f, .35f);
+        TextureRect rebootIcon = IndustrialUiSkin.ApplyCornerIcon(_rebootLabel, ArtTextureCatalog.RebootIcon, 9f);
+        rebootIcon.Position = new Vector2(43f, 0f);
+        TextureRect enemyIcon = IndustrialUiSkin.ApplyCornerIcon(_enemyLabel, ArtTextureCatalog.EliteIcon, 9f);
+        enemyIcon.Position = new Vector2(43f, 0f);
+        TextureRect waveIcon = IndustrialUiSkin.ApplyCornerIcon(_waveLabel, ArtTextureCatalog.WaveIcon, 9f);
+        waveIcon.Position = new Vector2(43f, 0f);
+        TextureRect experienceIcon = IndustrialUiSkin.ApplyCornerIcon(
+            _experienceLabel, ArtTextureCatalog.ReconnaissanceIcon, 10f);
+        experienceIcon.Position = new Vector2(101f, 0f);
+        TextureRect auxiliaryIcon = IndustrialUiSkin.ApplyCornerIcon(
+            _auxiliaryLabel, ArtTextureCatalog.AuxiliaryIcon, 10f);
+        auxiliaryIcon.Position = new Vector2(442f, 0f);
     }
 
     private void CreateUiControllers()
@@ -159,7 +180,14 @@ public partial class AppRoot : Node
         _coreSelectionPanel.CoreChosen += ChooseCore;
         _levelUpPanel = new LevelUpPanel();
         ui.AddChild(_levelUpPanel);
-        _levelUpPanel.UpgradeChosen += _levelUpController.Choose;
+        _levelUpPanel.UpgradeChosen += id =>
+        {
+            _levelUpController.Choose(id);
+            if (_player is not null && IsInstanceValid(_player))
+                SpriteEffectPlayer.Spawn(
+                    GetTree().CurrentScene, _player.GlobalPosition,
+                    ArtTextureCatalog.LevelUp, 12f, .72f, 24);
+        };
 
         _bossHud = new BossHudController { Visible = false };
         ui.AddChild(_bossHud);
@@ -195,6 +223,7 @@ public partial class AppRoot : Node
     private void ChooseCore(CoreId coreId)
     {
         _buildController.ApplyCore(MobileCoreCatalog.Get(coreId));
+        _player.SetCoreVisual(coreId);
         _pauseCoordinator.Release(PauseReason.CoreSelection);
         UpdateHud();
         UpdateBuildHud();
@@ -221,6 +250,7 @@ public partial class AppRoot : Node
     private void BindPlayerAndReboot(Node2D arena)
     {
         PlayerTank player = arena.GetNode<PlayerTank>("PlayerTank");
+        _player = player;
         _playerHealth = player.GetNode<HealthComponent>("HealthComponent");
         _playerHealth.ValueChanged += (armor, _) =>
         {
@@ -240,11 +270,15 @@ public partial class AppRoot : Node
         _rebootController.Configure(_runController, CurrentRun);
         _rebootController.RebootStarted += seconds =>
         {
+            SpriteEffectPlayer.Spawn(
+                arena, player.GlobalPosition, ArtTextureCatalog.Reboot, 10f, .82f, 24);
             _eventLabel.Text = $"移动核心重构中：原地保持 {seconds:0.0} 秒";
             _acceptanceMenu.SetStatus("重构中：位置保持，装甲暂为 0");
         };
         _rebootController.Rebooted += () =>
         {
+            SpriteEffectPlayer.Spawn(
+                arena, player.GlobalPosition, ArtTextureCatalog.Reboot, 12f, .9f, 24);
             _eventLabel.Text = "重启成功：原地恢复 50% 装甲，保护 2.0 秒";
             _acceptanceMenu.SetStatus("重启完成：原地、50% 装甲、2 秒保护");
         };
@@ -544,6 +578,11 @@ public partial class AppRoot : Node
         _coreLabel.Text = CurrentRun.SelectedCore is CoreId selectedCore
             ? $"核心  {MobileCoreCatalog.Get(selectedCore).DisplayName}"
             : "核心  待选择";
+        if (CurrentRun.SelectedCore is CoreId hudCore)
+        {
+            _coreHudIcon.Texture = ArtTextureCatalog.CoreIcon(hudCore);
+            _coreHudIcon.Modulate = Colors.White;
+        }
         _rebootLabel.Text = $"重启  {CurrentRun.RebootsRemaining}";
         _arenaLabel.Text = "封锁城区";
         _levelLabel.Text = $"等级 {CurrentRun.Level}";
@@ -616,7 +655,18 @@ public partial class AppRoot : Node
         room.AddChild(encounter);
         encounter.Initialize(boss, room, _navigationFactory, RoadblockCommanderDefinition.CellSize);
         _bossHud.Bind(boss, RoadblockCommanderDefinition);
-        boss.Defeated += ShowBossResult;
+        boss.PhaseChanged += phase =>
+        {
+            if (phase == (int)BossPhase.PhaseTwo)
+                SpriteEffectPlayer.Spawn(
+                    room, boss.GlobalPosition, ArtTextureCatalog.BossPhase, 10f, .88f, 25);
+        };
+        boss.Defeated += () =>
+        {
+            SpriteEffectPlayer.Spawn(
+                room, boss.GlobalPosition, ArtTextureCatalog.BossDeath, 12f, 1f, 25);
+            ShowBossResult();
+        };
         if (_arenaController.State == ArenaState.BossIntro) _arenaController.OnBossStarted();
         _eventLabel.Text = "路障指挥车入场：只锁定玩家坦克；拆障、躲避冲撞并攻击弱点窗口";
         _waveLabel.Text = "阶段  1/2";

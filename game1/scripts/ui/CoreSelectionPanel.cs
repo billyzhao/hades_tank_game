@@ -55,7 +55,7 @@ public partial class CoreSelectionPanel : PanelContainer
                 FocusMode = FocusModeEnum.All
             };
             card.AddThemeFontSizeOverride("font_size", 7);
-            IndustrialUiSkin.ApplyRewardCard(card);
+            IndustrialUiSkin.ApplyRewardCard(card, ArtTextureCatalog.CoreIcon(definition.Id));
             card.Pressed += () => Choose(definition.Id);
             _cards.AddChild(card);
         }

@@ -9,10 +9,9 @@ public partial class TankVisualAnimator : Node
     private PlayerTank _player = null!;
     private Sprite2D _bodyVisual = null!;
     private Node2D _turretVisual = null!;
-    private CanvasItem _muzzleFlash = null!;
+    private AnimatedSprite2D _muzzleFlash = null!;
     private Vector2 _velocity;
     private bool _isDashing;
-    private float _flashRemaining;
     private float _motionClock;
     private float _dustCooldown;
     private int _dustSide = 1;
@@ -24,8 +23,11 @@ public partial class TankVisualAnimator : Node
         _bodyVisual = _player.GetNode<Sprite2D>("BodyVisual");
         _bodyBaseScale = _bodyVisual.Scale;
         _turretVisual = _player.GetNode<Node2D>("Turret/TurretVisual");
-        _muzzleFlash = _player.GetNode<CanvasItem>("Turret/Muzzle/MuzzleFlash");
+        _muzzleFlash = _player.GetNode<AnimatedSprite2D>("Turret/Muzzle/MuzzleFlash");
+        _muzzleFlash.SpriteFrames = SpriteEffectPlayer.Create(
+            "MuzzleFrames", ArtTextureCatalog.MuzzleFlash, 20f).SpriteFrames;
         _player.GetNode<WeaponController>("WeaponController").Fired += OnFired;
+        _muzzleFlash.AnimationFinished += () => _muzzleFlash.Visible = false;
         _muzzleFlash.Visible = false;
     }
 
@@ -39,15 +41,14 @@ public partial class TankVisualAnimator : Node
     {
         float deltaSeconds = (float)delta;
         _turretVisual.Position = new Vector2(-_recoil.Advance(deltaSeconds), 0f);
-        _flashRemaining = Mathf.Max(0f, _flashRemaining - deltaSeconds);
-        _muzzleFlash.Visible = _flashRemaining > 0f;
         UpdateMovement(deltaSeconds);
     }
 
     private void OnFired(Vector2 origin, Vector2 direction, int team)
     {
         _recoil.Kick(2f, 0.10f);
-        _flashRemaining = 0.08f;
+        _muzzleFlash.Visible = true;
+        _muzzleFlash.Play();
     }
 
     private void UpdateMovement(float delta)
@@ -81,19 +82,14 @@ public partial class TankVisualAnimator : Node
         Vector2 backward = -_player.Transform.X.Normalized();
         Vector2 sideways = backward.Orthogonal() * (4f * _dustSide);
         _dustSide *= -1;
-        Polygon2D dust = new()
-        {
-            GlobalPosition = _player.GlobalPosition + backward * 10f + sideways,
-            Polygon = new Vector2[] { new(-2f, -1f), new(2f, -1f), new(3f, 1f), new(-3f, 1f) },
-            Color = new Color(0.68f, 0.45f, 0.20f, 0.72f),
-            Rotation = _player.Rotation,
-            ZIndex = -1
-        };
-        GetTree().CurrentScene.AddChild(dust);
-        Tween tween = dust.CreateTween();
-        tween.SetParallel();
-        tween.TweenProperty(dust, "scale", Vector2.One * intensity * 2.2f, 0.24);
-        tween.TweenProperty(dust, "modulate:a", 0f, 0.26);
-        tween.Chain().TweenCallback(Callable.From(dust.QueueFree));
+        AnimatedSprite2D dust = SpriteEffectPlayer.Spawn(
+            GetTree().CurrentScene,
+            _player.GlobalPosition + backward * 10f + sideways,
+            _isDashing ? ArtTextureCatalog.DashTrail : ArtTextureCatalog.TankDust,
+            _isDashing ? 18f : 13f,
+            intensity * (_isDashing ? .55f : .42f),
+            -1,
+            new Color(1f, 1f, 1f, _isDashing ? .82f : .70f));
+        dust.Rotation = _player.Rotation + Mathf.Pi / 2f;
     }
 }

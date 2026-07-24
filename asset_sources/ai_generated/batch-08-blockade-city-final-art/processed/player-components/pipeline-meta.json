@@ -1,0 +1,219 @@
+{
+  "target": "asset",
+  "mode": "sheet",
+  "prompt": "",
+  "role": "",
+  "input": "asset_sources\\ai_generated\\batch-08-blockade-city-final-art\\raw\\player-components-2x3-raw.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 200,
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 64,
+  "fit_scale": 0.8,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 2,
+  "min_component_area": 1,
+  "edge_touch_margin": 1,
+  "frame_labels": [
+    "player_component-1",
+    "player_component-2",
+    "player_component-3",
+    "player_component-4",
+    "player_component-5",
+    "player_component-6"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        557,
+        470
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        133,
+        78,
+        543,
+        444
+      ],
+      "edge_touch": false,
+      "output_size": [
+        51,
+        45
+      ],
+      "paste_position": [
+        6,
+        9
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        557,
+        0,
+        1114,
+        470
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        153,
+        68,
+        398,
+        440
+      ],
+      "edge_touch": false,
+      "output_size": [
+        30,
+        46
+      ],
+      "paste_position": [
+        17,
+        9
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1114,
+        0,
+        1671,
+        470
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        106,
+        212,
+        311,
+        416
+      ],
+      "edge_touch": false,
+      "output_size": [
+        25,
+        25
+      ],
+      "paste_position": [
+        19,
+        19
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        470,
+        557,
+        940
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        199,
+        81,
+        474,
+        328
+      ],
+      "edge_touch": false,
+      "output_size": [
+        34,
+        30
+      ],
+      "paste_position": [
+        15,
+        17
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        557,
+        470,
+        1114,
+        940
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        137,
+        89,
+        411,
+        328
+      ],
+      "edge_touch": false,
+      "output_size": [
+        34,
+        29
+      ],
+      "paste_position": [
+        15,
+        17
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        1114,
+        470,
+        1671,
+        940
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        66,
+        88,
+        351,
+        329
+      ],
+      "edge_touch": false,
+      "output_size": [
+        35,
+        30
+      ],
+      "paste_position": [
+        14,
+        17
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

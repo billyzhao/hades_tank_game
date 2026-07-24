@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3]
 [ext_resource type="Script" path="res://scripts/combat/Projectile.cs" id="1"]
-[ext_resource type="Texture2D" path="res://assets/sprites/effects/player_shell.png" id="2_shell"]
+[ext_resource type="Texture2D" path="res://assets/sprites/effects/animations/player_projectile_1.png" id="2_shell"]
 [node name="Projectile" type="Node2D"]
 script = ExtResource("1")
 collision_mask = 27
@@ -8,6 +8,7 @@ collision_mask = 27
 texture = ExtResource("2_shell")
 texture_filter = 1
 scale = Vector2(0.5, 0.5)
+rotation = 1.5707963
 
 [node name="Trail" type="Line2D" parent="."]
 points = PackedVector2Array(-10, 0, -2, 0)

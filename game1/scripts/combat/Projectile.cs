@@ -5,8 +5,6 @@ namespace Game1;
 public partial class Projectile : Node2D
 {
     private static readonly PackedScene ProjectileScene = GD.Load<PackedScene>("res://scenes/combat/projectile.tscn");
-    private static readonly Texture2D PlayerShellTexture = GD.Load<Texture2D>("res://assets/sprites/effects/player_shell.png");
-    private static readonly Texture2D EnemyShellTexture = GD.Load<Texture2D>("res://assets/sprites/effects/enemy_shell.png");
     [Signal] public delegate void ImpactedEventHandler(Vector2 position, bool destroyedTarget, bool reflected);
     [Export] public uint CollisionMask { get; set; } = 27;
     private ProjectileSpec _spec;
@@ -15,6 +13,9 @@ public partial class Projectile : Node2D
     private int _bounces;
     private int _splits;
     private Team _team;
+    private Sprite2D _visual = null!;
+    private Texture2D[] _animationFrames = System.Array.Empty<Texture2D>();
+    private float _animationClock;
 
     public void Initialize(ProjectileSpec spec, Team team, Vector2 direction)
     {
@@ -26,7 +27,14 @@ public partial class Projectile : Node2D
         _splits = spec.SplitCount;
         _team = team;
         CollisionMask = ProjectileTargeting.CollisionMaskFor(team);
-        GetNode<Sprite2D>("Visual").Texture = team == Team.Player ? PlayerShellTexture : EnemyShellTexture;
+        _visual = GetNode<Sprite2D>("Visual");
+        _animationFrames = team == Team.Player
+            ? ArtTextureCatalog.PlayerProjectile
+            : ArtTextureCatalog.EnemyProjectile;
+        _visual.Texture = _animationFrames[0];
+        GetNode<Line2D>("Trail").DefaultColor = team == Team.Player
+            ? new Color(.20f, .9f, 1f, .72f)
+            : new Color(1f, .28f, .08f, .72f);
         if (team == Team.Enemy) AddToGroup("enemy_projectiles");
         // 炮弹颜色由独立像素贴图承担，避免二次染色破坏玩家黄弹与敌军红弹的识别。
         Modulate = Colors.White;
@@ -34,6 +42,9 @@ public partial class Projectile : Node2D
 
     public override void _PhysicsProcess(double delta)
     {
+        _animationClock += (float)delta * 14f;
+        if (_animationFrames.Length > 0)
+            _visual.Texture = _animationFrames[(int)_animationClock % _animationFrames.Length];
         // 不依赖 Node2D 的逐帧位移碰撞：高速炮弹可能跨过薄墙，故每帧对“当前位置到目标位置”做线段查询。
         float remaining = _spec.Speed * (float)delta;
         _lifetime -= (float)delta;

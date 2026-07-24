@@ -59,8 +59,8 @@ public partial class SingleArenaFlowTestHost : Node
             Assert(resultScreen.Visible, "胜利结果界面必须可见。");
             Assert(visibleText.Contains("封锁城区突破", StringComparison.Ordinal),
                 "胜利标题必须明确封锁城区已经突破。");
-            Assert(visibleText.Contains("BreakthroughCannon", StringComparison.Ordinal),
-                "胜利摘要必须记录本局核心。");
+            Assert(visibleText.Contains("突破重炮核心", StringComparison.Ordinal),
+                "胜利摘要必须以玩家可读名称记录本局核心。");
             Assert(visibleText.Contains("等级", StringComparison.Ordinal) &&
                    visibleText.Contains("12:00", StringComparison.Ordinal),
                 "胜利摘要必须包含等级与耗时。");

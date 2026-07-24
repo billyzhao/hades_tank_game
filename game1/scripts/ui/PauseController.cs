@@ -5,6 +5,8 @@ namespace Game1;
 /// <summary>失焦自动暂停；重新获得焦点后仍需玩家明确按 Esc 才恢复。</summary>
 public partial class PauseController : CanvasLayer
 {
+    private static Texture2D PanelTexture =>
+        GD.Load<Texture2D>("res://assets/sprites/ui/reward_card_frame.png");
     private Control _overlay = null!;
     private PauseCoordinator _coordinator = null!;
 
@@ -27,6 +29,19 @@ public partial class PauseController : CanvasLayer
             Visible = false
         };
         AddChild(_overlay);
+        TextureRect frame = new()
+        {
+            Name = "PauseFrame",
+            Texture = PanelTexture,
+            TextureFilter = CanvasItem.TextureFilterEnum.Nearest,
+            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+            StretchMode = TextureRect.StretchModeEnum.Scale,
+            Position = new Vector2(145, 76),
+            Size = new Vector2(190, 116),
+            MouseFilter = Control.MouseFilterEnum.Ignore
+        };
+        _overlay.AddChild(frame);
+        IndustrialUiSkin.ApplyCornerIcon(frame, ArtTextureCatalog.WaveIcon, 22f);
         Label label = new()
         {
             Text = "战术暂停\n\n按 Esc 继续战斗",

@@ -33,7 +33,7 @@ public partial class LevelUpPanel : PanelContainer
         {
             Button card = new() { Text = offer.DisplayName, CustomMinimumSize = new Vector2(106f, 112f), FocusMode = FocusModeEnum.All };
             card.AddThemeFontSizeOverride("font_size", 8);
-            IndustrialUiSkin.ApplyRewardCard(card);
+            IndustrialUiSkin.ApplyRewardCard(card, ArtTextureCatalog.StatIcon(offer.Id));
             card.Pressed += () => UpgradeChosen?.Invoke(offer.Id);
             cards.AddChild(card);
         }

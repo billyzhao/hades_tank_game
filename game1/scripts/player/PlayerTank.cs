@@ -10,6 +10,7 @@ public partial class PlayerTank : CharacterBody2D, ITeamDamageable
     private Node2D _turret = null!;
     private WeaponController _weaponController = null!;
     private TankVisualAnimator _visualAnimator = null!;
+    private Sprite2D _coreVisual = null!;
     private BuildController _buildController;
 
     public Vector2 AimDirection { get; private set; } = Vector2.Up;
@@ -22,6 +23,7 @@ public partial class PlayerTank : CharacterBody2D, ITeamDamageable
         _turret = GetNode<Node2D>("Turret");
         _weaponController = GetNode<WeaponController>("WeaponController");
         _visualAnimator = GetNode<TankVisualAnimator>("TankVisualAnimator");
+        _coreVisual = GetNode<Sprite2D>("CoreVisual");
     }
 
     public override void _PhysicsProcess(double delta)
@@ -64,6 +66,13 @@ public partial class PlayerTank : CharacterBody2D, ITeamDamageable
 
     public void AttachBuild(BuildController buildController) =>
         _buildController = buildController ?? throw new System.ArgumentNullException(nameof(buildController));
+
+    /// <summary>核心选择后只替换坦克中央模块，底盘、炮塔和碰撞体保持不变。</summary>
+    public void SetCoreVisual(CoreId coreId)
+    {
+        _coreVisual.Texture = ArtTextureCatalog.CoreSprite(coreId);
+        _coreVisual.Visible = true;
+    }
 
     /// <summary>玩家碰撞体是敌方弹丸的命中实体；伤害统一交由生命组件结算。</summary>
     public DamageResult ApplyDamage(DamageContext context) =>
