@@ -1,14 +1,15 @@
-[gd_resource type="Resource" load_steps=8 format=3]
+[gd_resource type="Resource" load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/content/ArenaDefinition.cs" id="1_arena"]
 [ext_resource type="PackedScene" path="res://scenes/rooms/mvp_combat_room.tscn" id="2_scene"]
 [ext_resource type="Script" path="res://scripts/content/WaveDefinition.cs" id="3_wave"]
+[ext_resource type="Resource" path="res://resources/elites/overdrive_elite.tres" id="4_elite"]
 
 [sub_resource type="Resource" id="Wave1"]
 script = ExtResource("3_wave")
 WaveNumber = 1
 SpawnDurationSeconds = 45.0
-SpawnIntervalSeconds = 4.4
+SpawnIntervalSeconds = 4.0
 MaximumAliveEnemies = 4
 MinimumPlayerDistance = 72.0
 RewardKind = 1
@@ -19,29 +20,29 @@ Behaviors = [0, 1]
 script = ExtResource("3_wave")
 WaveNumber = 2
 SpawnDurationSeconds = 50.0
-SpawnIntervalSeconds = 4.2
+SpawnIntervalSeconds = 3.8
 MaximumAliveEnemies = 5
 MinimumPlayerDistance = 72.0
 RewardKind = 2
 IncludesElite = false
-Behaviors = [0, 1, 2, 3]
+Behaviors = [0, 2, 1]
 
 [sub_resource type="Resource" id="Wave3"]
 script = ExtResource("3_wave")
 WaveNumber = 3
 SpawnDurationSeconds = 55.0
-SpawnIntervalSeconds = 4.0
+SpawnIntervalSeconds = 3.6
 MaximumAliveEnemies = 5
 MinimumPlayerDistance = 72.0
 RewardKind = 1
 IncludesElite = false
-Behaviors = [1, 0, 2, 3]
+Behaviors = [1, 2, 3]
 
 [sub_resource type="Resource" id="Wave4"]
 script = ExtResource("3_wave")
 WaveNumber = 4
 SpawnDurationSeconds = 60.0
-SpawnIntervalSeconds = 3.8
+SpawnIntervalSeconds = 3.4
 MaximumAliveEnemies = 6
 MinimumPlayerDistance = 72.0
 RewardKind = 2
@@ -52,12 +53,13 @@ Behaviors = [0, 1, 2, 3]
 script = ExtResource("3_wave")
 WaveNumber = 5
 SpawnDurationSeconds = 70.0
-SpawnIntervalSeconds = 3.5
-MaximumAliveEnemies = 6
+SpawnIntervalSeconds = 3.2
+MaximumAliveEnemies = 7
 MinimumPlayerDistance = 72.0
 RewardKind = 3
 IncludesElite = true
-Behaviors = [3, 2, 1, 0]
+EliteModifier = ExtResource("4_elite")
+Behaviors = [3, 1, 0, 2]
 
 [resource]
 script = ExtResource("1_arena")

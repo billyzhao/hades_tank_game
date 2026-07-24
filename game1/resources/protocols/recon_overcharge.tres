@@ -14,5 +14,6 @@ Description = "大幅缩短冲刺冷却。"
 Department = 1
 Rarity = 2
 BaseWeight = 0.6
+Tags = Array[String](["dash", "mobility", "rapid_fire"])
 StackLimit = 1
 Effects = [SubResource("E")]

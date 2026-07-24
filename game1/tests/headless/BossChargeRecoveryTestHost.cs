@@ -15,13 +15,14 @@ public partial class BossChargeRecoveryTestHost : Node2D
             RoadblockCommander boss = scene.Instantiate<RoadblockCommander>();
             AddChild(boss);
             boss.GlobalPosition = new Vector2(120f, 120f);
-            boss.ChargeTelegraphSeconds = 0.1f;
-            boss.VulnerableSeconds = 1.5f;
             boss.Initialize(definition);
+            Assert(Mathf.IsEqualApprox(boss.ChargeTelegraphSeconds, definition.ChargeTelegraphSeconds) &&
+                   Mathf.IsEqualApprox(boss.VulnerableSeconds, definition.VulnerableSeconds),
+                "Boss 实例必须从 BossDefinition 接收冲锋预警与弱点窗口。");
 
             boss.ApplyDamage(new DamageContext(151));
             boss.BeginCharge(boss.GlobalPosition + new Vector2(24f, 0f));
-            for (int step = 0; step < 10; step++) boss._PhysicsProcess(0.05d);
+            for (int step = 0; step < 24; step++) boss._PhysicsProcess(0.05d);
 
             DamageResult weakPointHit = boss.ApplyDamage(new DamageContext(1));
             Assert(weakPointHit.AppliedDamage == 1,

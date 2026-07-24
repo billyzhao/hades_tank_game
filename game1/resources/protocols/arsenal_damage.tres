@@ -14,5 +14,6 @@ Description = "反弹路线获得更高火力。"
 Department = 0
 Rarity = 1
 BaseWeight = 1.0
+Tags = Array[String](["ricochet", "impact"])
 StackLimit = 1
 Effects = [SubResource("E")]

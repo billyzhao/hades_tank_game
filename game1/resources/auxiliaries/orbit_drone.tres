@@ -12,3 +12,4 @@ BaseCooldown = 1.05
 MaximumRank = 3
 BaseDamage = 10
 Range = 142.0
+BuildTags = Array[String](["auxiliary", "on_hit"])

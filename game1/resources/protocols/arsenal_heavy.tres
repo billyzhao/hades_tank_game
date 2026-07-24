@@ -19,5 +19,6 @@ Description = "火力提升，射速降低。"
 Department = 0
 Rarity = 2
 BaseWeight = 0.6
+Tags = Array[String](["ricochet", "impact", "on_hit"])
 StackLimit = 1
 Effects = [SubResource("E"), SubResource("CooldownPenalty")]

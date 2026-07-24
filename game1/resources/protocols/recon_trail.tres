@@ -14,5 +14,6 @@ Description = "冲刺起点留下电能履带，对敌造成伤害。"
 Department = 1
 Rarity = 1
 BaseWeight = 1.0
+Tags = Array[String](["dash", "mobility"])
 StackLimit = 1
 Effects = [SubResource("E")]

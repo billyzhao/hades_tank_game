@@ -18,6 +18,7 @@ public partial class WaveDirector : Node
     private WaveDefinition _definition;
     private IReadOnlyList<SpawnEntrance> _entrances = Array.Empty<SpawnEntrance>();
     private IEnemyPathProvider _pathProvider;
+    private ContentCatalog _contentCatalog;
     private int _entranceOffset;
     private int _spawnOrdinal;
     private float _spawnCooldown;
@@ -50,7 +51,8 @@ public partial class WaveDirector : Node
         int runSeed,
         int arenaIndex,
         int waveIndex,
-        IEnemyPathProvider pathProvider)
+        IEnemyPathProvider pathProvider,
+        ContentCatalog contentCatalog = null)
     {
         if (_started) throw new InvalidOperationException("已经启动的 WaveDirector 不能重新配置。");
         definition = definition ?? throw new ArgumentNullException(nameof(definition));
@@ -60,6 +62,8 @@ public partial class WaveDirector : Node
         if (arenaIndex is < 0 or > 4) throw new ArgumentOutOfRangeException(nameof(arenaIndex));
         if (waveIndex is < 0 or > 4) throw new ArgumentOutOfRangeException(nameof(waveIndex));
         pathProvider = pathProvider ?? throw new ArgumentNullException(nameof(pathProvider));
+        contentCatalog ??= GD.Load<ContentCatalog>("res://resources/content_catalog.tres");
+        contentCatalog.Validate();
 
         HashSet<string> entranceIds = new(StringComparer.Ordinal);
         foreach (SpawnEntrance entrance in entrances)
@@ -72,6 +76,7 @@ public partial class WaveDirector : Node
         _definition = definition;
         _entrances = entrances.ToArray();
         _pathProvider = pathProvider;
+        _contentCatalog = contentCatalog;
         uint stableOffset = unchecked((uint)(runSeed * 397 ^ arenaIndex * 31 ^ waveIndex * 17));
         _entranceOffset = (int)(stableOffset % (uint)_entrances.Count);
         _configured = true;
@@ -160,7 +165,7 @@ public partial class WaveDirector : Node
         // 预警期间也要占用精英资格，避免同一波连续排入多个精英。
         if (isElite) _eliteSpawned = true;
         _pendingSpawns++;
-        ShowSpawnWarning(entrance.Value);
+        ShowSpawnWarning(entrance.Value, behavior, isElite);
         SpawnEnemyAfterWarning(entrance.Value, behavior, isElite);
     }
 
@@ -187,17 +192,16 @@ public partial class WaveDirector : Node
         }
 
         EnemyTank enemy = EnemyScene.Instantiate<EnemyTank>();
-        enemy.Name = isElite ? "ElitePlaceholder" : $"WaveEnemy{_spawnOrdinal + 1}";
-        enemy.Behavior = behavior;
+        enemy.Name = isElite ? "OverdriveElite" : $"WaveEnemy{_spawnOrdinal + 1}";
+        enemy.Configure(_contentCatalog.GetEnemy(behavior), isElite ? _definition.EliteModifier : null);
         enemy.SetPathProvider(_pathProvider);
         enemy.GlobalPosition = entrance.Position;
         if (isElite)
         {
             _eliteSpawned = true;
             EliteAlive = true;
-            enemy.IsEliteVisual = true;
             enemy.Scale = Vector2.One * 1.25f;
-            enemy.AddToGroup("elite_placeholder");
+            enemy.AddToGroup("elite_enemies");
             EliteStateChanged?.Invoke(true);
         }
 
@@ -210,12 +214,13 @@ public partial class WaveDirector : Node
         EnemySpawned?.Invoke(behavior, isElite);
     }
 
-    private void ShowSpawnWarning(SpawnEntrance entrance)
+    private void ShowSpawnWarning(SpawnEntrance entrance, BehaviorId behavior, bool isElite)
     {
         SpawnWarning warning = new();
         GetParent().AddChild(warning);
         warning.GlobalPosition = entrance.Position;
-        warning.Begin(entrance.WarningSeconds, EnemyVisualPalette.GetRoleTint(BehaviorId.Scout));
+        Color warningColor = isElite ? new Color(1f, 0.72f, 0.18f) : EnemyVisualPalette.GetRoleTint(behavior);
+        warning.Begin(entrance.WarningSeconds, warningColor);
     }
 
     private SpawnEntrance? FindEntrance()

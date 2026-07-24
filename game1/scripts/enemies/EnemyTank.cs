@@ -8,10 +8,8 @@ namespace Game1;
 public partial class EnemyTank : CharacterBody2D, ITeamDamageable
 {
     private static readonly PackedScene ProjectileScene = GD.Load<PackedScene>("res://scenes/combat/projectile.tscn");
-    private static readonly Texture2D PatrolTexture = GD.Load<Texture2D>("res://assets/sprites/enemies/patrol_tank.png");
-    private static readonly Texture2D AssaultTexture = GD.Load<Texture2D>("res://assets/sprites/enemies/assault_vehicle.png");
-    private static readonly Texture2D MortarTexture = GD.Load<Texture2D>("res://assets/sprites/enemies/siege_tank.png");
     private static readonly Texture2D EliteTexture = GD.Load<Texture2D>("res://assets/sprites/enemies/elite_tank.png");
+    private static readonly ContentCatalog EnemyCatalog = GD.Load<ContentCatalog>("res://resources/content_catalog.tres");
     [Export] public BehaviorId Behavior { get; set; } = BehaviorId.Patrol;
     [Export] public float MoveSpeed { get; set; } = 42f;
     [Export] public float TelegraphSeconds { get; set; } = 0.35f;
@@ -33,9 +31,26 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
     private int _pathIndex;
     private float _repathRemaining;
     private float _eliteCycle;
+    private float _movementClock;
+    private EnemyDefinition _definition;
+    private EliteModifierDefinition _eliteModifier;
     public Team DamageTeam => Team.Enemy;
 
     public void SetPathProvider(IEnemyPathProvider pathProvider) => _pathProvider = pathProvider;
+
+    public void Configure(EnemyDefinition definition, EliteModifierDefinition eliteModifier = null)
+    {
+        if (IsInsideTree()) throw new InvalidOperationException("敌军职责必须在加入场景树前配置。");
+        _definition = definition ?? throw new ArgumentNullException(nameof(definition));
+        _definition.Validate();
+        eliteModifier?.Validate();
+        _eliteModifier = eliteModifier;
+        IsEliteVisual = eliteModifier is not null;
+        Behavior = _definition.Behavior;
+        MoveSpeed = _definition.MoveSpeed;
+        TelegraphSeconds = _definition.TelegraphSeconds;
+        Armor = _definition.Armor;
+    }
 
     public override void _Ready()
     {
@@ -43,16 +58,27 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
         AddToGroup("enemies");
         _visual = GetNode<Polygon2D>("Visual");
         _roleSprite = GetNode<Sprite2D>("RoleSprite");
-        _roleSprite.Texture = SelectRuntimeTexture();
+        _definition ??= EnemyCatalog.GetEnemy(Behavior);
+        _definition.Validate();
+        Behavior = _definition.Behavior;
+        MoveSpeed = _definition.MoveSpeed;
+        TelegraphSeconds = _definition.TelegraphSeconds;
+        Armor = _definition.Armor;
+        _roleSprite.Texture = IsEliteVisual ? EliteTexture : _definition.Texture;
         _attackWarning = GetNode<Line2D>("AttackWarning");
-        _telegraphRemaining = Behavior switch { BehaviorId.Scout => 0.12f, BehaviorId.Assault => 0.2f, BehaviorId.Mortar => 0.75f, _ => TelegraphSeconds };
+        _telegraphRemaining = TelegraphSeconds;
         SetVisualColor(EnemyVisualPalette.GetRoleTint(Behavior));
         _attackWarning.DefaultColor = EnemyVisualPalette.GetRoleTint(Behavior);
         _attackWarning.Visible = false;
-        _baseVisualScale = Behavior == BehaviorId.Mortar ? 0.62f : Behavior == BehaviorId.Scout ? 0.38f : 0.50f;
-        MoveSpeed = Behavior switch { BehaviorId.Scout => Math.Max(MoveSpeed, 68f), BehaviorId.Assault => Math.Max(MoveSpeed, 54f), BehaviorId.Mortar => Math.Min(MoveSpeed, 36f), _ => MoveSpeed };
+        _baseVisualScale = _definition.VisualScale;
         _roleSprite.Scale = Vector2.One * _baseVisualScale;
-        if (IsEliteVisual) _eliteCycle = 1.25f;
+        if (IsEliteVisual)
+        {
+            _eliteModifier ??= EnemyCatalog.EliteModifiers[0];
+            _eliteModifier.Validate();
+            _eliteCycle = _eliteModifier.BoostSeconds + _eliteModifier.RecoverySeconds;
+            Armor = Mathf.RoundToInt(Armor * _eliteModifier.ArmorMultiplier);
+        }
     }
 
     public override void _PhysicsProcess(double delta)
@@ -75,6 +101,15 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
             ApplyMovementPose((float)delta, false);
             return;
         }
+        _movementClock += (float)delta;
+        float targetDistance = GlobalPosition.DistanceTo(targetNode.GlobalPosition);
+        EnemyMovementIntent movement = EnemyMovementPolicy.Calculate(
+            _definition.MovementMode,
+            GlobalPosition,
+            targetNode.GlobalPosition,
+            _definition.AttackRange,
+            _definition.RetreatRange,
+            _movementClock);
         _attackCooldown = Mathf.Max(0f, _attackCooldown - (float)delta);
         if (_attackTelegraphRemaining > 0f)
         {
@@ -86,26 +121,33 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
             if (_attackTelegraphRemaining <= 0f)
             {
                 FireAt(targetNode);
-                _attackCooldown = 1.3f;
+                _attackCooldown = _definition.AttackCooldown;
                 _attackWarning.Visible = false;
                 SetVisualColor(EnemyVisualPalette.GetRoleTint(Behavior));
             }
             return;
         }
-        float attackRange = Behavior == BehaviorId.Mortar ? 145f : Behavior == BehaviorId.Scout ? 72f : 95f;
-        if (_attackCooldown <= 0f && GlobalPosition.DistanceTo(targetNode.GlobalPosition) < attackRange)
+        bool mustRetreat = _definition.MovementMode == EnemyMovementMode.StandOff &&
+                           targetDistance < _definition.RetreatRange;
+        if (!mustRetreat && _attackCooldown <= 0f && targetDistance < _definition.AttackRange)
         {
             Velocity = Vector2.Zero;
             ApplyMovementPose((float)delta, false);
-            _attackTelegraphRemaining = Behavior switch { BehaviorId.Scout => 0.16f, BehaviorId.Assault => 0.2f, BehaviorId.Mortar => 0.75f, _ => 0.35f };
+            _attackTelegraphRemaining = _definition.TelegraphSeconds;
             _attackWarning.Visible = true;
             return;
         }
         _attackWarning.Visible = false;
+        if (!movement.ShouldMove)
+        {
+            Velocity = Vector2.Zero;
+            ApplyMovementPose((float)delta, false);
+            return;
+        }
         _repathRemaining -= (float)delta;
         if (_pathProvider is not null && _repathRemaining <= 0f)
         {
-            _path = _pathProvider.GetWorldPath(GlobalPosition, targetNode.GlobalPosition);
+            _path = _pathProvider.GetWorldPath(GlobalPosition, movement.Destination);
             _pathIndex = _path.Count > 1 ? 1 : 0;
             _repathRemaining = 0.25f;
         }
@@ -116,7 +158,7 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
             return;
         }
         while (_pathProvider is not null && _pathIndex < _path.Count - 1 && GlobalPosition.DistanceTo(_path[_pathIndex]) < 10f) _pathIndex++;
-        Vector2 nextPoint = _pathProvider is null ? targetNode.GlobalPosition : _path[_pathIndex];
+        Vector2 nextPoint = _pathProvider is null ? movement.Destination : _path[_pathIndex];
         Velocity = GlobalPosition.DirectionTo(nextPoint) * GetEffectiveMoveSpeed((float)delta);
         if (!Velocity.IsZeroApprox()) Rotation = Velocity.Angle();
         MoveAndSlide();
@@ -131,9 +173,7 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
         Projectile projectile = ProjectileScene.Instantiate<Projectile>();
         GetTree().CurrentScene.AddChild(projectile);
         projectile.GlobalPosition = GlobalPosition + direction * 12f;
-        int damage = Behavior switch { BehaviorId.Scout => 5, BehaviorId.Mortar => 14, _ => 10 };
-        float speed = Behavior == BehaviorId.Mortar ? 135f : 190f;
-        projectile.Initialize(new ProjectileSpec(damage, speed, 1.7f, 0), Team.Enemy, direction);
+        projectile.Initialize(new ProjectileSpec(_definition.Damage, _definition.ProjectileSpeed, 1.7f, 0), Team.Enemy, direction);
         EmitSignal(SignalName.ProjectileFired);
     }
 
@@ -145,26 +185,15 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
         _roleSprite.Scale = pose.Scale;
     }
 
-    private Texture2D SelectRuntimeTexture()
-    {
-        if (IsEliteVisual) return EliteTexture;
-        return Behavior switch
-        {
-            BehaviorId.Assault => AssaultTexture,
-            BehaviorId.Mortar => MortarTexture,
-            _ => PatrolTexture
-        };
-    }
-
     private float GetEffectiveMoveSpeed(float delta)
     {
         if (!IsEliteVisual) return MoveSpeed;
         _eliteCycle -= delta;
-        if (_eliteCycle <= 0f) _eliteCycle = 2.0f;
-        // 周期前 1.25 秒冲刺追击，后 0.75 秒明显冷却，为玩家提供可读反击窗口。
-        bool overdrive = _eliteCycle > 0.75f;
+        float cycleSeconds = _eliteModifier.BoostSeconds + _eliteModifier.RecoverySeconds;
+        if (_eliteCycle <= 0f) _eliteCycle = cycleSeconds;
+        bool overdrive = _eliteCycle > _eliteModifier.RecoverySeconds;
         _roleSprite.Modulate = overdrive ? new Color(1f, 0.72f, 0.18f) : new Color(0.55f, 0.55f, 0.55f);
-        return MoveSpeed * (overdrive ? 1.55f : 0.55f);
+        return MoveSpeed * (overdrive ? _eliteModifier.BoostSpeedMultiplier : _eliteModifier.RecoverySpeedMultiplier);
     }
 
     private void SetVisualColor(Color color)

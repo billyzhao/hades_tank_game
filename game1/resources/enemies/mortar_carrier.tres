@@ -1,0 +1,21 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/EnemyDefinition.cs" id="1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/siege_tank.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+Id = "mortar_carrier"
+DisplayName = "迫击炮车"
+Behavior = 3
+MovementMode = 3
+Armor = 18
+MoveSpeed = 32.0
+AttackRange = 175.0
+RetreatRange = 105.0
+AttackCooldown = 2.1
+TelegraphSeconds = 0.85
+Damage = 16
+ProjectileSpeed = 135.0
+VisualScale = 0.62
+Texture = ExtResource("2")

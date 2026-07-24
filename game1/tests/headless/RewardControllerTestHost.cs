@@ -79,6 +79,9 @@ public partial class RewardControllerTestHost : Node
                 Range = 100f
             });
         }
+        ContentCatalog production = GD.Load<ContentCatalog>("res://resources/content_catalog.tres");
+        foreach (EnemyDefinition enemy in production.Enemies) catalog.Enemies.Add(enemy);
+        foreach (EliteModifierDefinition modifier in production.EliteModifiers) catalog.EliteModifiers.Add(modifier);
         return catalog;
     }
 

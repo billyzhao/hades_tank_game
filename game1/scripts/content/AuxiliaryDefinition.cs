@@ -14,4 +14,6 @@ public partial class AuxiliaryDefinition : Resource
     [Export] public int MaximumRank { get; set; } = 3;
     [Export] public int BaseDamage { get; set; } = 6;
     [Export] public float Range { get; set; } = 105f;
+    /// <summary>用于构筑路线识别和软权重的稳定标签。</summary>
+    [Export] public Godot.Collections.Array<string> BuildTags { get; set; } = new();
 }

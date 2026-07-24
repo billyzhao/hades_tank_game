@@ -16,6 +16,7 @@ public partial class AppRoot : Node
     private static readonly ContentCatalog ProtocolCatalog =
         GD.Load<ContentCatalog>("res://resources/content_catalog.tres");
     private static readonly CoreCatalog MobileCoreCatalog = CoreCatalog.CreateDefault();
+    private static readonly BuildRouteAnalyzer RouteAnalyzer = new(BuildRouteCatalog.CreateDefault());
     private static readonly BossDefinition RoadblockCommanderDefinition =
         GD.Load<BossDefinition>("res://resources/bosses/roadblock_commander.tres");
 
@@ -298,7 +299,8 @@ public partial class AppRoot : Node
             CurrentRun.Seed,
             CurrentRun.ArenaIndex,
             CurrentRun.WaveIndex,
-            _navigationFactory.Provider);
+            _navigationFactory.Provider,
+            ProtocolCatalog);
         _waveDirector.StartWave();
         _acceptanceMenu.SetStatus($"第 {definition.WaveNumber} 波开始：可用“结束当前刷新窗口”快速进入清场验收。");
     }
@@ -560,16 +562,21 @@ public partial class AppRoot : Node
     {
         if (CurrentRun.SelectedCore is null && CurrentRun.SelectedProtocolIds.Count == 0)
         {
-            _buildLabel.Text = "构筑：请先选择移动核心";
+            _buildLabel.Text = "构筑路线：请先选择移动核心";
             return;
         }
-        string core = CurrentRun.SelectedCore is CoreId selectedCore
-            ? MobileCoreCatalog.Get(selectedCore).DisplayName
-            : "未选择核心";
-        string protocols = CurrentRun.SelectedProtocolIds.Count == 0
-            ? "未获得协议"
-            : string.Join("  |  ", CurrentRun.SelectedProtocolIds.Select(id => ProtocolCatalog.GetProtocol(id).DisplayName));
-        _buildLabel.Text = $"构筑：{core}  |  {protocols}";
+        string routeName = "待成型";
+        if (CurrentRun.SelectedCore is CoreId selectedCore)
+        {
+            BuildRouteAnalysis analysis = RouteAnalyzer.Analyze(
+                selectedCore,
+                CurrentRun.SelectedProtocolIds,
+                CurrentRun.AuxiliarySlots.Select(slot => slot.AuxiliaryId),
+                ProtocolCatalog);
+            if (analysis.IsFormed) routeName = analysis.Route.DisplayName;
+        }
+        _buildLabel.Text =
+            $"构筑路线：{routeName}  |  协议 {CurrentRun.OwnedProtocols.Count}  |  辅助 {CurrentRun.AuxiliarySlots.Count}/2";
     }
 
     private void ApplyBuildStatsToPlayer()

@@ -10,14 +10,17 @@ public partial class BossSummonController : Node
     [Export] public Godot.Collections.Array<Vector2> SpawnPoints { get; set; } = new();
     private Node2D _room = null!;
     private IEnemyPathProvider _pathProvider = null!;
+    private ContentCatalog _contentCatalog = null!;
     private int _alive;
     private int _spawnIndex;
     private bool _active;
 
-    public void Initialize(Node2D room, IEnemyPathProvider pathProvider)
+    public void Initialize(Node2D room, IEnemyPathProvider pathProvider, ContentCatalog contentCatalog = null)
     {
         _room = room;
         _pathProvider = pathProvider;
+        _contentCatalog = contentCatalog ?? GD.Load<ContentCatalog>("res://resources/content_catalog.tres");
+        _contentCatalog.Validate();
         _active = true;
     }
 
@@ -25,7 +28,7 @@ public partial class BossSummonController : Node
     {
         if (!_active || _alive >= MaximumAlive || SpawnPoints.Count == 0) return;
         EnemyTank enemy = EnemyScene.Instantiate<EnemyTank>();
-        enemy.Behavior = BehaviorId.Patrol;
+        enemy.Configure(_contentCatalog.GetEnemy(BehaviorId.Patrol));
         enemy.SetPathProvider(_pathProvider);
         enemy.AddToGroup("enemies");
         enemy.GlobalPosition = SpawnPoints[_spawnIndex++ % SpawnPoints.Count];

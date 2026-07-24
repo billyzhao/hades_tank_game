@@ -15,6 +15,10 @@ public partial class ContentCatalog : Resource
 
     [Export] public Godot.Collections.Array<AuxiliaryDefinition> Auxiliaries { get; set; } = new();
 
+    [Export] public Godot.Collections.Array<EnemyDefinition> Enemies { get; set; } = new();
+
+    [Export] public Godot.Collections.Array<EliteModifierDefinition> EliteModifiers { get; set; } = new();
+
     public void Validate()
     {
         if (string.IsNullOrWhiteSpace(Version) || !string.Equals(Version, Version.Trim(), StringComparison.Ordinal))
@@ -43,6 +47,8 @@ public partial class ContentCatalog : Resource
 
         ValidatePrerequisiteGraph(protocolsById);
         ValidateAuxiliaries();
+        ValidateEnemies();
+        ValidateEliteModifiers();
     }
 
     public ProtocolDefinition GetProtocol(string protocolId)
@@ -73,6 +79,50 @@ public partial class ContentCatalog : Resource
         throw new ArgumentException($"ContentCatalog 中不存在辅助 '{auxiliaryId}'。", nameof(auxiliaryId));
     }
 
+    public EnemyDefinition GetEnemy(BehaviorId behavior)
+    {
+        foreach (EnemyDefinition enemy in Enemies)
+        {
+            if (enemy is not null && enemy.Behavior == behavior) return enemy;
+        }
+        throw new ArgumentException($"ContentCatalog 中不存在敌军职责 '{behavior}'。", nameof(behavior));
+    }
+
+    public EliteModifierDefinition GetEliteModifier(string modifierId)
+    {
+        if (string.IsNullOrWhiteSpace(modifierId))
+            throw new ArgumentException("精英规则 Id 不得为空。", nameof(modifierId));
+        foreach (EliteModifierDefinition modifier in EliteModifiers)
+        {
+            if (modifier is not null && string.Equals(modifier.Id, modifierId, StringComparison.Ordinal)) return modifier;
+        }
+        throw new ArgumentException($"ContentCatalog 中不存在精英规则 '{modifierId}'。", nameof(modifierId));
+    }
+
+    private void ValidateEliteModifiers()
+    {
+        if (EliteModifiers is null || EliteModifiers.Count != 1)
+            throw new ArgumentException("封锁城区必须且只能登记一个精英规则。", nameof(EliteModifiers));
+        EliteModifiers[0]?.Validate();
+        if (EliteModifiers[0] is null)
+            throw new ArgumentException("精英规则不得为空。", nameof(EliteModifiers));
+    }
+
+    private void ValidateEnemies()
+    {
+        if (Enemies is null || Enemies.Count != 4)
+            throw new ArgumentException("封锁城区内容目录必须恰好包含四类普通敌军。", nameof(Enemies));
+        HashSet<string> ids = new(StringComparer.Ordinal);
+        HashSet<BehaviorId> behaviors = new();
+        foreach (EnemyDefinition enemy in Enemies)
+        {
+            if (enemy is null) throw new ArgumentException("敌军目录不得包含空引用。", nameof(Enemies));
+            enemy.Validate();
+            if (!ids.Add(enemy.Id) || !behaviors.Add(enemy.Behavior))
+                throw new ArgumentException("敌军 Id 和职责必须唯一。", nameof(Enemies));
+        }
+    }
+
     private void ValidateAuxiliaries()
     {
         if (Auxiliaries is null || Auxiliaries.Count != 4)
@@ -85,6 +135,11 @@ public partial class ContentCatalog : Resource
                 !Enum.IsDefined(auxiliary.TargetMode) || !float.IsFinite(auxiliary.BaseCooldown) || auxiliary.BaseCooldown <= 0f ||
                 auxiliary.MaximumRank <= 0 || auxiliary.BaseDamage <= 0 || !float.IsFinite(auxiliary.Range) || auxiliary.Range <= 0f)
                 throw new ArgumentException("辅助系统目录包含无效或重复的配置。");
+            if (auxiliary.BuildTags is null ||
+                auxiliary.BuildTags.Any(string.IsNullOrWhiteSpace) ||
+                auxiliary.BuildTags.Any(tag => !string.Equals(tag, tag.Trim(), StringComparison.Ordinal)) ||
+                auxiliary.BuildTags.Distinct(StringComparer.Ordinal).Count() != auxiliary.BuildTags.Count)
+                throw new ArgumentException($"辅助系统 '{auxiliary.Id}' 的构筑标签无效或重复。");
         }
     }
 

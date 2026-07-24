@@ -14,5 +14,6 @@ Description = "清场后修复装甲。"
 Department = 2
 Rarity = 1
 BaseWeight = 1.0
+Tags = Array[String](["penetration", "area"])
 StackLimit = 1
 Effects = [SubResource("E")]

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/EliteModifierDefinition.cs" id="1"]
+
+[resource]
+script = ExtResource("1")
+Id = "overdrive_elite"
+DisplayName = "过载突击精英"
+BoostSeconds = 1.25
+RecoverySeconds = 0.75
+BoostSpeedMultiplier = 1.55
+RecoverySpeedMultiplier = 0.55
+ArmorMultiplier = 1.0

@@ -18,7 +18,11 @@ public partial class HudLayoutTestHost : Node
 
             Assert(hudPanel.Size.X <= 176f, "常驻 HUD 不能覆盖超过 176px 的左上战场宽度。");
             Assert(hudPanel.Size.Y <= 48f, "常驻 HUD 不能覆盖超过 48px 的左上战场高度。");
-            Assert(!buildLabel.Visible, "Alpha 02E 前的构筑占位提示不得常驻遮挡竞技场。");
+            Assert(buildLabel.Visible, "BC-02 必须常驻显示当前构筑路线，供玩家识别成长方向。");
+            Assert(buildLabel.OffsetBottom - buildLabel.OffsetTop <= 11f,
+                "构筑路线提示的场景布局必须保持 11px 单行高度，不得遮挡竞技场。");
+            Assert(buildLabel.Text.Contains("构筑路线", StringComparison.Ordinal),
+                "构筑提示必须直接使用“构筑路线”语义。");
             Assert(arenaLabel.Text == "封锁城区", "单区试玩不得继续显示竞技场 1/5。");
             Assert(!arenaLabel.Text.Contains("/5", StringComparison.Ordinal),
                 "正式 HUD 不得暗示四张尚未交付的地图。");

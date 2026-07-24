@@ -14,5 +14,6 @@ Description = "移动速度提高。"
 Department = 1
 Rarity = 1
 BaseWeight = 1.0
+Tags = Array[String](["mobility", "auxiliary"])
 StackLimit = 1
 Effects = [SubResource("E")]

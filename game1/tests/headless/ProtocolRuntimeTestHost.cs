@@ -56,6 +56,7 @@ public partial class ProtocolRuntimeTestHost : Node
         failures += Run("reward_generate_uses_base_weight_for_deterministic_selection", RewardGenerateUsesBaseWeight);
         failures += Run("reward_generate_forces_first_offer_card_to_be_fully_universal", RewardGenerateForcesFullyUniversalFirstCard);
         failures += Run("reward_generate_keeps_mk1_eligible_and_filters_only_mk3", RewardGenerateKeepsMk1EligibleAndFiltersOnlyMk3);
+        failures += Run("reward_generate_uses_route_tags_without_filtering_off_route", RewardGenerateUsesRouteTagsWithoutFilteringOffRoute);
         failures += Run("build_selected_protocol_applies_only_to_current_run", BuildSelectedProtocolAppliesOnlyToCurrentRun);
         failures += Run("build_end_run_clears_selected_protocol_effects", BuildEndRunClearsSelectedProtocolEffects);
         failures += Run("build_rejects_duplicate_selection_at_stack_limit", BuildRejectsDuplicateSelectionAtStackLimit);
@@ -328,6 +329,37 @@ public partial class ProtocolRuntimeTestHost : Node
         Assert(offer.ProtocolIds.Contains("recon_trail"), "Mk.I 协议仍可作为升级候选。\n");
     }
 
+    private static void RewardGenerateUsesRouteTagsWithoutFilteringOffRoute()
+    {
+        ContentCatalog catalog = GD.Load<ContentCatalog>("res://resources/content_catalog.tres");
+        RewardGenerator generator = new();
+        double matchingWeight = RewardGenerator.CalculateWeight(
+            catalog.GetProtocol("arsenal_ricochet"),
+            CoreId.BreakthroughCannon,
+            selectedRouteTag: "ricochet");
+        double offRouteWeight = RewardGenerator.CalculateWeight(
+            catalog.GetProtocol("recon_vector"),
+            CoreId.BreakthroughCannon,
+            selectedRouteTag: "ricochet");
+        Assert(matchingWeight > offRouteWeight, "核心与已选路线标签必须提高匹配候选权重。");
+
+        bool sawOffRoute = false;
+        for (int seed = 1; seed <= 128 && !sawOffRoute; seed++)
+        {
+            ProtocolOffer offer = generator.Generate(new RewardGenerationInput(
+                seed,
+                2,
+                new[] { "arsenal_ricochet" },
+                catalog.Version,
+                RewardKind: RewardKind.NormalProtocol,
+                SelectedCore: CoreId.BreakthroughCannon), catalog);
+            sawOffRoute = offer.ProtocolIds
+                .Select(catalog.GetProtocol)
+                .Any(protocol => !protocol.Tags.Contains("ricochet"));
+        }
+        Assert(sawOffRoute, "受控随机只能软加权，不能过滤非路线候选。");
+    }
+
     private static void BuildSelectedProtocolAppliesOnlyToCurrentRun()
     {
         RunState state = RunState.CreateNew(seed: 11);
@@ -435,6 +467,13 @@ public partial class ProtocolRuntimeTestHost : Node
         Assert(definition.MaximumHealth == 300, "07A Boss 最大生命必须为 300。");
         Assert(definition.GridSize == new Vector2I(20, 12) && definition.CellSize == 24,
             "BossDefinition 必须数据化声明 Boss 房导航网格尺寸。");
+        Assert(Mathf.IsEqualApprox(definition.BarrierIntervalSeconds, 3.4f) &&
+               Mathf.IsEqualApprox(definition.ThreatIntervalSeconds, 4.6f),
+            "Boss 第一阶段的路障与炮台/召唤节奏必须来自定义资源。");
+        Assert(Mathf.IsEqualApprox(definition.ChargeIntervalSeconds, 1.8f) &&
+               Mathf.IsEqualApprox(definition.ChargeTelegraphSeconds, 0.85f) &&
+               definition.VulnerableSeconds >= 1.8f,
+            "Boss 第二阶段必须保留可读冲锋预警与不少于 1.8 秒的弱点窗口。");
 
         Node2D room = GD.Load<PackedScene>("res://scenes/rooms/mvp_boss_room.tscn").Instantiate<Node2D>();
         try
@@ -781,6 +820,9 @@ public partial class ProtocolRuntimeTestHost : Node
                 CreateAuxiliary("aux_suppression_field", AuxiliaryTargetMode.AreaDensity)
             }
         };
+        ContentCatalog production = GD.Load<ContentCatalog>("res://resources/content_catalog.tres");
+        foreach (EnemyDefinition enemy in production.Enemies) catalog.Enemies.Add(enemy);
+        foreach (EliteModifierDefinition modifier in production.EliteModifiers) catalog.EliteModifiers.Add(modifier);
         CreatedCatalogs.Add(catalog);
         return catalog;
     }

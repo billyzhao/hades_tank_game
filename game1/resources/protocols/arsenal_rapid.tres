@@ -19,5 +19,6 @@ Description = "射速提升，火力降低。"
 Department = 0
 Rarity = 1
 BaseWeight = 1.0
+Tags = Array[String](["rapid_fire", "on_hit"])
 StackLimit = 1
 Effects = [SubResource("E"), SubResource("DamagePenalty")]

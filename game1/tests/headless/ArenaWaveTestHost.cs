@@ -16,6 +16,24 @@ public partial class ArenaWaveTestHost : Node
             definition.Validate();
             Assert(definition.Waves.Select(wave => wave.SpawnDurationSeconds).SequenceEqual(new[] { 45d, 50d, 55d, 60d, 70d }),
                 "正式竞技场必须使用 45/50/55/60/70 秒配置。");
+            Assert(definition.Waves.Select(wave => wave.SpawnIntervalSeconds).SequenceEqual(new[] { 4.0f, 3.8f, 3.6f, 3.4f, 3.2f }),
+                "五波刷新间隔必须逐波收紧，形成组合压力。");
+            Assert(definition.Waves.Select(wave => wave.MaximumAliveEnemies).SequenceEqual(new[] { 4, 5, 5, 6, 7 }),
+                "五波场上上限必须按 4/5/5/6/7 收敛。");
+            Assert(definition.Waves[0].Behaviors.SequenceEqual(new[] { BehaviorId.Scout, BehaviorId.Patrol }),
+                "第一波只教学侦察侧绕与巡逻火力。");
+            Assert(definition.Waves[1].Behaviors.SequenceEqual(new[] { BehaviorId.Scout, BehaviorId.Assault, BehaviorId.Patrol }),
+                "第二波必须加入突击车，不得提前加入迫击炮。");
+            Assert(definition.Waves[2].Behaviors.SequenceEqual(new[] { BehaviorId.Patrol, BehaviorId.Assault, BehaviorId.Mortar }),
+                "第三波必须首次组合巡逻、突击和远程迫击炮。");
+            Assert(definition.Waves[4].Behaviors[^1] == BehaviorId.Assault,
+                "第五波唯一精英必须基于突击车，形成可读过载冲锋。");
+            EliteModifierDefinition elite = definition.Waves[4].EliteModifier;
+            elite.Validate();
+            Assert(Mathf.IsEqualApprox(elite.BoostSeconds, 1.25f) &&
+                   Mathf.IsEqualApprox(elite.RecoverySeconds, 0.75f) &&
+                   Mathf.IsEqualApprox(elite.ArmorMultiplier, 1f),
+                "精英只能使用 1.25 秒过载、0.75 秒冷却且不得膨胀生命。");
 
             await AssertDirectorSkipsUnreachableEntrance();
             await AssertDirectorSkipsTerrainBlockedEntrance();
@@ -122,6 +140,7 @@ public partial class ArenaWaveTestHost : Node
         };
         shortEliteWave.Behaviors.Add(BehaviorId.Patrol);
         shortEliteWave.Behaviors.Add(BehaviorId.Mortar);
+        shortEliteWave.EliteModifier = GD.Load<EliteModifierDefinition>("res://resources/elites/overdrive_elite.tres");
 
         WaveDirector director = new();
         arena.AddChild(director);
@@ -146,7 +165,7 @@ public partial class ArenaWaveTestHost : Node
         Assert(director.AliveEnemyCount > 0, "刷新窗口结束不得自动删除场上残敌。");
         Assert(director.EliteAlive, "第 5 波精英槽位在被击毁前必须保持存活标记。");
         Assert(allEnemiesCleared == 0, "仍有残敌或精英时不得发出 AllEnemiesCleared。");
-        Assert(GetTree().GetNodesInGroup("elite_placeholder").Count == 1, "第 5 波必须恰有一个精英槽位。");
+        Assert(GetTree().GetNodesInGroup("elite_enemies").Count == 1, "第 5 波必须恰有一个正式精英单位。");
 
         director.ClearAliveEnemiesForAcceptance();
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);

@@ -14,6 +14,7 @@ public partial class WaveDefinition : Resource
     [Export] public float MinimumPlayerDistance { get; set; }
     [Export] public RewardKind RewardKind { get; set; }
     [Export] public bool IncludesElite { get; set; }
+    [Export] public EliteModifierDefinition EliteModifier { get; set; }
     [Export] public Godot.Collections.Array<BehaviorId> Behaviors { get; set; } = new();
 
     public void Validate()
@@ -36,6 +37,15 @@ public partial class WaveDefinition : Resource
         {
             if (!Enum.IsDefined(behavior))
                 throw new InvalidOperationException($"第 {WaveNumber} 波包含无效敌军行为。");
+        }
+        if (IncludesElite)
+        {
+            if (EliteModifier is null) throw new InvalidOperationException($"第 {WaveNumber} 波缺少精英规则。");
+            EliteModifier.Validate();
+        }
+        else if (EliteModifier is not null)
+        {
+            throw new InvalidOperationException($"第 {WaveNumber} 波未启用精英却配置了精英规则。");
         }
     }
 }

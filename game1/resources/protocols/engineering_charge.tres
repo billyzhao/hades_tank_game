@@ -14,5 +14,6 @@ Description = "冲刺履带的电能伤害提高。"
 Department = 3
 Rarity = 1
 BaseWeight = 1.0
+Tags = Array[String](["dash", "area"])
 StackLimit = 1
 Effects = [SubResource("E")]

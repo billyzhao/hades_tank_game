@@ -14,5 +14,6 @@ Description = "首次命中后分裂为两枚子弹。"
 Department = 0
 Rarity = 1
 BaseWeight = 1.0
+Tags = Array[String](["impact", "on_hit"])
 StackLimit = 1
 Effects = [SubResource("E")]

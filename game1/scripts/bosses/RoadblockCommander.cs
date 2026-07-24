@@ -47,6 +47,8 @@ public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
     {
         definition.Validate();
         Definition = definition;
+        ChargeTelegraphSeconds = definition.ChargeTelegraphSeconds;
+        VulnerableSeconds = definition.VulnerableSeconds;
         _currentHealth = definition.MaximumHealth;
         _phaseController = new BossPhaseController();
         _phaseController.PhaseChanged += OnPhaseChanged;

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/EnemyDefinition.cs" id="1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/patrol_tank.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+Id = "scout_drone"
+DisplayName = "侦察无人机"
+Behavior = 0
+MovementMode = 0
+Armor = 12
+MoveSpeed = 72.0
+AttackRange = 78.0
+RetreatRange = 28.0
+AttackCooldown = 1.0
+TelegraphSeconds = 0.16
+Damage = 5
+ProjectileSpeed = 205.0
+VisualScale = 0.38
+Texture = ExtResource("2")

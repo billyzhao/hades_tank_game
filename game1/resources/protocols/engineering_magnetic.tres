@@ -14,5 +14,6 @@ Description = "炮弹额外获得一次反弹。"
 Department = 3
 Rarity = 1
 BaseWeight = 1.0
+Tags = Array[String](["auxiliary", "area"])
 StackLimit = 1
 Effects = [SubResource("E")]

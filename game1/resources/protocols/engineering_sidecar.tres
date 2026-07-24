@@ -14,5 +14,6 @@ Description = "火控校准提高主炮伤害。"
 Department = 3
 Rarity = 1
 BaseWeight = 1.0
+Tags = Array[String](["auxiliary", "rapid_fire"])
 StackLimit = 1
 Effects = [SubResource("E")]

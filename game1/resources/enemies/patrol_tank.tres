@@ -1,0 +1,21 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/EnemyDefinition.cs" id="1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/patrol_tank.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+Id = "patrol_tank"
+DisplayName = "巡逻坦克"
+Behavior = 1
+MovementMode = 1
+Armor = 20
+MoveSpeed = 42.0
+AttackRange = 100.0
+RetreatRange = 32.0
+AttackCooldown = 1.35
+TelegraphSeconds = 0.35
+Damage = 9
+ProjectileSpeed = 190.0
+VisualScale = 0.5
+Texture = ExtResource("2")

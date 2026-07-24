@@ -111,12 +111,11 @@ theme_override_colors/font_color = Color(0.95, 0.75, 0.35, 1)
 theme_override_font_sizes/font_size = 6
 
 [node name="BuildLabel" type="Label" parent="UI"]
-visible = false
 offset_left = 10.0
 offset_top = 53.0
 offset_right = 300.0
 offset_bottom = 64.0
-text = "构筑：验证五波节奏"
+text = "构筑路线：请先选择移动核心"
 autowrap_mode = 0
 theme_override_colors/font_color = Color(0.62, 0.88, 1, 1)
 theme_override_constants/outline_size = 2

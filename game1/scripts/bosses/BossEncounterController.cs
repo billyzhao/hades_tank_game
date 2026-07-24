@@ -8,6 +8,8 @@ public partial class BossEncounterController : Node
     [Export] public Godot.Collections.Array<Vector2I> PhaseOneBarrierCells { get; set; } = new();
     [Export] public Godot.Collections.Array<Vector2I> PhaseTwoOpeningCells { get; set; } = new();
     [Export] public float BarrierIntervalSeconds { get; set; } = 3.2f;
+    [Export] public float ThreatIntervalSeconds { get; set; } = 4.5f;
+    [Export] public float ChargeIntervalSeconds { get; set; } = 1.4f;
     public RoadblockCommander Boss { get; private set; }
     private BarrierDeployment _barrier;
     private int _nextBarrierIndex;
@@ -24,6 +26,10 @@ public partial class BossEncounterController : Node
         Boss = boss ?? throw new System.ArgumentNullException(nameof(boss));
         if (room is null) throw new System.ArgumentNullException(nameof(room));
         if (navigation is null) throw new System.ArgumentNullException(nameof(navigation));
+        if (boss.Definition is null) throw new System.InvalidOperationException("Boss 必须先用 BossDefinition 初始化。");
+        BarrierIntervalSeconds = boss.Definition.BarrierIntervalSeconds;
+        ThreatIntervalSeconds = boss.Definition.ThreatIntervalSeconds;
+        ChargeIntervalSeconds = boss.Definition.ChargeIntervalSeconds;
 
         _barrier = GetNode<BarrierDeployment>("BarrierDeployment");
         _player = room.GetNode<Node2D>("PlayerTank");
@@ -84,7 +90,7 @@ public partial class BossEncounterController : Node
     {
         while (_phaseOneActive && IsInsideTree())
         {
-            await ToSignal(GetTree().CreateTimer(4.5f), SceneTreeTimer.SignalName.Timeout);
+            await ToSignal(GetTree().CreateTimer(ThreatIntervalSeconds), SceneTreeTimer.SignalName.Timeout);
             if (!_phaseOneActive || !IsInsideTree()) continue;
             _gun.TriggerBurst();
             _summons.TrySummon();
@@ -95,7 +101,7 @@ public partial class BossEncounterController : Node
     {
         while (_phaseTwoActive && IsInsideTree())
         {
-            await ToSignal(GetTree().CreateTimer(1.4f), SceneTreeTimer.SignalName.Timeout);
+            await ToSignal(GetTree().CreateTimer(ChargeIntervalSeconds), SceneTreeTimer.SignalName.Timeout);
             if (_phaseTwoActive && IsInsideTree()) Boss.BeginCharge(_player.GlobalPosition);
         }
     }

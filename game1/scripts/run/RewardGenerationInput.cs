@@ -10,4 +10,5 @@ public sealed record RewardGenerationInput(
     string ContentCatalogVersion,
     System.Collections.Generic.IReadOnlyDictionary<string, ProtocolRank>? ProtocolRanks = null,
     RewardKind? RewardKind = null,
-    CoreId? SelectedCore = null);
+    CoreId? SelectedCore = null,
+    System.Collections.Generic.IReadOnlyList<string>? SelectedAuxiliaryIds = null);

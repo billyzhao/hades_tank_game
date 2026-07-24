@@ -8,6 +8,9 @@ namespace Game1;
 /// <summary>仅生成奖励候选；不写入本局构筑状态。</summary>
 public sealed class RewardGenerator
 {
+    private static readonly BuildRouteCatalog RouteCatalog = BuildRouteCatalog.CreateDefault();
+    private static readonly BuildRouteAnalyzer RouteAnalyzer = new(RouteCatalog);
+
     public ProtocolOffer Generate(RewardGenerationInput input, ContentCatalog catalog)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -47,6 +50,16 @@ public sealed class RewardGenerator
         HashSet<string> selectedTags = selectedIds
             .SelectMany(selectedId => catalog.GetProtocol(selectedId).Tags)
             .ToHashSet(StringComparer.Ordinal);
+        string selectedRouteTag = null;
+        if (input.SelectedCore is CoreId selectedCore)
+        {
+            BuildRouteAnalysis route = RouteAnalyzer.Analyze(
+                selectedCore,
+                selectedInStableOrder,
+                input.SelectedAuxiliaryIds ?? Array.Empty<string>(),
+                catalog);
+            selectedRouteTag = route.Route?.Tag;
+        }
 
         List<ProtocolDefinition> eligible = catalog.Protocols
             .OrderBy(protocol => protocol.Id, StringComparer.Ordinal)
@@ -69,13 +82,13 @@ public sealed class RewardGenerator
         DeterministicRandom random = new(CreateSeed(input, selectedInStableOrder));
         List<ProtocolDefinition> offer = new(3)
         {
-            TakeWeighted(universal, random, input.SelectedCore)
+            TakeWeighted(universal, random, input.SelectedCore, selectedRouteTag)
         };
         eligible.RemoveAll(protocol => string.Equals(protocol.Id, offer[0].Id, StringComparison.Ordinal));
 
         while (offer.Count < 3 && eligible.Count > 0)
         {
-            offer.Add(TakeWeighted(eligible, random, input.SelectedCore));
+            offer.Add(TakeWeighted(eligible, random, input.SelectedCore, selectedRouteTag));
         }
 
         if (offer.Count != 3)
@@ -145,14 +158,18 @@ public sealed class RewardGenerator
         _ => false
     };
 
-    private static ProtocolDefinition TakeWeighted(IList<ProtocolDefinition> candidates, DeterministicRandom random, CoreId? selectedCore)
+    private static ProtocolDefinition TakeWeighted(
+        IList<ProtocolDefinition> candidates,
+        DeterministicRandom random,
+        CoreId? selectedCore,
+        string selectedRouteTag)
     {
-        double totalWeight = candidates.Sum(candidate => GetWeight(candidate, selectedCore));
+        double totalWeight = candidates.Sum(candidate => CalculateWeight(candidate, selectedCore, selectedRouteTag));
         double roll = random.NextUnitInterval() * totalWeight;
         double cumulativeWeight = 0d;
         for (int index = 0; index < candidates.Count; index++)
         {
-            cumulativeWeight += GetWeight(candidates[index], selectedCore);
+            cumulativeWeight += CalculateWeight(candidates[index], selectedCore, selectedRouteTag);
             if (roll < cumulativeWeight || index == candidates.Count - 1)
             {
                 ProtocolDefinition selected = candidates[index];
@@ -164,18 +181,18 @@ public sealed class RewardGenerator
         throw new InvalidOperationException("加权候选池不能为空。");
     }
 
-    /// <summary>核心只提高相关部门的出现倾向，所有未冲突部门始终保留候选资格。</summary>
-    private static double GetWeight(ProtocolDefinition candidate, CoreId? selectedCore)
+    /// <summary>核心和已成型路线只做软加权，所有未冲突候选始终保留资格。</summary>
+    internal static double CalculateWeight(ProtocolDefinition candidate, CoreId? selectedCore, string selectedRouteTag)
     {
         double baseWeight = candidate.BaseWeight;
-        bool preferred = selectedCore switch
-        {
-            CoreId.BreakthroughCannon => candidate.Department == ProtocolDepartment.Arsenal,
-            CoreId.OverdriveAutocannon => candidate.Department == ProtocolDepartment.Arsenal,
-            CoreId.ElectricRider => candidate.Department is ProtocolDepartment.Recon or ProtocolDepartment.Engineering,
-            _ => false
-        };
-        return preferred ? baseWeight * 1.6d : baseWeight;
+        bool coreMatch = selectedCore is CoreId core &&
+            candidate.Tags.Any(RouteCatalog.GetRoutes(core)
+                .Select(route => route.Tag)
+                .Contains);
+        bool routeMatch = !string.IsNullOrWhiteSpace(selectedRouteTag) && candidate.Tags.Contains(selectedRouteTag);
+        if (coreMatch) baseWeight *= 1.4d;
+        if (routeMatch) baseWeight *= 1.25d;
+        return baseWeight;
     }
 
     private static ulong CreateSeed(RewardGenerationInput input, IEnumerable<string> selectedInStableOrder)

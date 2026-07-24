@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Godot;
 
 namespace Game1.Tests.Headless;
@@ -24,6 +25,29 @@ public partial class CoreBuildTestHost : Node
             Assert(state.GetProtocolRank("core_test_protocol") == ProtocolRank.MkI, "首次获得协议必须成为 Mk.I。");
             build.SelectProtocol("core_test_protocol");
             Assert(state.GetProtocolRank("core_test_protocol") == ProtocolRank.MkII, "重复获得同一协议必须升级到 Mk.II，而不是被旧叠层规则拒绝。");
+
+            BuildRouteCatalog routeCatalog = BuildRouteCatalog.CreateDefault();
+            ContentCatalog productionCatalog = GD.Load<ContentCatalog>("res://resources/content_catalog.tres");
+            foreach (CoreDefinition core in CoreCatalog.CreateDefault().Definitions)
+            {
+                BuildRouteDefinition[] routes = routeCatalog.GetRoutes(core.Id).ToArray();
+                Assert(routes.Length == 3, $"{core.DisplayName} 必须恰好拥有三条构筑路线。");
+                Assert(routes.Select(route => route.Tag).Distinct(StringComparer.Ordinal).Count() == 3,
+                    $"{core.DisplayName} 的三条路线必须使用唯一标签。");
+                Assert(core.BuildTags.OrderBy(tag => tag, StringComparer.Ordinal)
+                        .SequenceEqual(routes.Select(route => route.Tag).OrderBy(tag => tag, StringComparer.Ordinal)),
+                    $"{core.DisplayName} 的核心标签必须与路线目录完全一致。");
+                foreach (BuildRouteDefinition route in routes)
+                {
+                    int normalSupport = productionCatalog.Protocols.Count(protocol =>
+                        protocol.Rarity == 1 && protocol.Tags.Contains(route.Tag));
+                    bool capstoneSupport = productionCatalog.Protocols.Any(protocol =>
+                        protocol.Rarity > 1 && protocol.Tags.Contains(route.Tag)) ||
+                        productionCatalog.Auxiliaries.Any(auxiliary => auxiliary.BuildTags.Contains(route.Tag));
+                    Assert(normalSupport >= 2, $"{route.DisplayName} 至少需要两个普通协议支撑。");
+                    Assert(capstoneSupport, $"{route.DisplayName} 至少需要一个稀有协议或辅助支撑。");
+                }
+            }
 
             GD.Print("[PASS] core_build_pipeline");
             GetTree().Quit(0);
@@ -60,6 +84,7 @@ public partial class CoreBuildTestHost : Node
             Protocols = new Godot.Collections.Array<ProtocolDefinition> { protocol }
         };
         AddRequiredAuxiliaries(catalog);
+        AddRequiredEnemies(catalog);
         return catalog;
     }
 
@@ -80,6 +105,13 @@ public partial class CoreBuildTestHost : Node
                 Range = 100f
             });
         }
+    }
+
+    private static void AddRequiredEnemies(ContentCatalog catalog)
+    {
+        ContentCatalog production = GD.Load<ContentCatalog>("res://resources/content_catalog.tres");
+        foreach (EnemyDefinition enemy in production.Enemies) catalog.Enemies.Add(enemy);
+        foreach (EliteModifierDefinition modifier in production.EliteModifiers) catalog.EliteModifiers.Add(modifier);
     }
 
     private static void Assert(bool condition, string message)

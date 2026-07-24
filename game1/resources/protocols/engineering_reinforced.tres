@@ -14,5 +14,6 @@ Description = "最大装甲提高。"
 Department = 3
 Rarity = 1
 BaseWeight = 1.0
+Tags = Array[String](["penetration", "impact"])
 StackLimit = 1
 Effects = [SubResource("E")]

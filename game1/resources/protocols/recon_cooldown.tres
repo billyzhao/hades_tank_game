@@ -14,5 +14,6 @@ Description = "冲刺冷却 -20%。"
 Department = 1
 Rarity = 1
 BaseWeight = 1.0
+Tags = Array[String](["dash", "rapid_fire"])
 StackLimit = 1
 Effects = [SubResource("E")]

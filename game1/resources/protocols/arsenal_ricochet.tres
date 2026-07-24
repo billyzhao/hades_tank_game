@@ -17,5 +17,6 @@ Description = "炮弹额外反弹一次。"
 Department = 0
 Rarity = 1
 BaseWeight = 1.0
+Tags = Array[String](["ricochet"])
 StackLimit = 1
 Effects = [SubResource("Effect")]

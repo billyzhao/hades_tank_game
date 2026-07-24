@@ -7,3 +7,4 @@
 当前收敛阶段：
 
 - [BC-01：封锁城区单竞技场正式流程](iteration-bc01-single-arena-flow.md)
+- [BC-02：战斗、敌军与构筑深化](iteration-bc02-combat-build-depth.md)

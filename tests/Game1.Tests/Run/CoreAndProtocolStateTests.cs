@@ -14,9 +14,12 @@ public sealed class CoreAndProtocolStateTests
         Assert.That(catalog.Definitions.Select(definition => definition.Id).Distinct().Count(), Is.EqualTo(3));
         Assert.Multiple(() =>
         {
-            Assert.That(catalog.Get(CoreId.BreakthroughCannon).BuildTags, Does.Contain("artillery"));
-            Assert.That(catalog.Get(CoreId.OverdriveAutocannon).BuildTags, Does.Contain("rapid_fire"));
-            Assert.That(catalog.Get(CoreId.ElectricRider).BuildTags, Does.Contain("dash"));
+            Assert.That(catalog.Get(CoreId.BreakthroughCannon).BuildTags,
+                Is.EquivalentTo(new[] { "ricochet", "penetration", "impact" }));
+            Assert.That(catalog.Get(CoreId.OverdriveAutocannon).BuildTags,
+                Is.EquivalentTo(new[] { "rapid_fire", "on_hit", "auxiliary" }));
+            Assert.That(catalog.Get(CoreId.ElectricRider).BuildTags,
+                Is.EquivalentTo(new[] { "dash", "mobility", "area" }));
         });
     }
 

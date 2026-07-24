@@ -29,7 +29,7 @@ public sealed class CoreCatalog
             CoreId.BreakthroughCannon,
             "突破重炮核心",
             "高单发、低射速：优先建立反弹、爆破或穿甲路线。",
-            new[] { "artillery", "impact" },
+            new[] { "ricochet", "penetration", "impact" },
             new[]
             {
                 new StatModifier(StatId.Damage, 4f, 0f, 0f, "core_breakthrough"),
@@ -39,7 +39,7 @@ public sealed class CoreCatalog
             CoreId.OverdriveAutocannon,
             "过载速射核心",
             "高射速、低单发：优先建立命中触发与弹幕路线。",
-            new[] { "rapid_fire", "on_hit" },
+            new[] { "rapid_fire", "on_hit", "auxiliary" },
             new[]
             {
                 new StatModifier(StatId.Damage, -1f, 0f, 0f, "core_overdrive"),
@@ -49,7 +49,7 @@ public sealed class CoreCatalog
             CoreId.ElectricRider,
             "电驱游骑核心",
             "标准火炮、强化位移：优先建立冲刺、电场或侧翼路线。",
-            new[] { "dash", "mobility" },
+            new[] { "dash", "mobility", "area" },
             new[]
             {
                 new StatModifier(StatId.MoveSpeed, 0f, 0.10f, 0f, "core_electric"),

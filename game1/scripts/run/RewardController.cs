@@ -78,7 +78,8 @@ public sealed class RewardController
             _catalog.Version,
             ranks,
             kind,
-            _state.SelectedCore), _catalog);
+            _state.SelectedCore,
+            _state.AuxiliarySlots.Select(slot => slot.AuxiliaryId).ToArray()), _catalog);
         List<RewardChoice> choices = protocolOffer.ProtocolIds.Select(id =>
         {
             ProtocolDefinition definition = _catalog.GetProtocol(id);
