@@ -12,6 +12,11 @@ namespace Game1.Tests.Headless;
 public partial class ProtocolRuntimeTestHost : Node
 {
     private static readonly List<ContentCatalog> CreatedCatalogs = new();
+    // Godot 4.7 下反复 GD.Load 同一缓存 Resource 会创建短命托管包装器，
+    // 集中回归时可能与终结器竞态。宿主全程保留生产目录的唯一强引用。
+    private static readonly ContentCatalog ProductionCatalog =
+        GD.Load<ContentCatalog>("res://resources/content_catalog.tres");
+
     public override void _Ready()
     {
         string[] arguments = OS.GetCmdlineUserArgs();
@@ -820,9 +825,8 @@ public partial class ProtocolRuntimeTestHost : Node
                 CreateAuxiliary("aux_suppression_field", AuxiliaryTargetMode.AreaDensity)
             }
         };
-        ContentCatalog production = GD.Load<ContentCatalog>("res://resources/content_catalog.tres");
-        foreach (EnemyDefinition enemy in production.Enemies) catalog.Enemies.Add(enemy);
-        foreach (EliteModifierDefinition modifier in production.EliteModifiers) catalog.EliteModifiers.Add(modifier);
+        foreach (EnemyDefinition enemy in ProductionCatalog.Enemies) catalog.Enemies.Add(enemy);
+        foreach (EliteModifierDefinition modifier in ProductionCatalog.EliteModifiers) catalog.EliteModifiers.Add(modifier);
         CreatedCatalogs.Add(catalog);
         return catalog;
     }

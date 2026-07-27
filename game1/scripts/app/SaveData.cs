@@ -31,6 +31,9 @@ public sealed class SaveData
         if (LastRun is null) throw new InvalidDataException("存档缺少最近一局摘要。");
         if (Settings.MasterVolume < 0f || Settings.MasterVolume > 1f) throw new InvalidDataException("主音量必须位于 0 到 1。");
         if (Settings.SfxVolume < 0f || Settings.SfxVolume > 1f) throw new InvalidDataException("音效音量必须位于 0 到 1。");
+        if (Settings.MusicVolume < 0f || Settings.MusicVolume > 1f) throw new InvalidDataException("音乐音量必须位于 0 到 1。");
+        if (Settings.AmbienceVolume < 0f || Settings.AmbienceVolume > 1f) throw new InvalidDataException("环境音量必须位于 0 到 1。");
+        if (Settings.UiVolume < 0f || Settings.UiVolume > 1f) throw new InvalidDataException("界面音量必须位于 0 到 1。");
     }
 }
 
@@ -41,6 +44,15 @@ public sealed class SaveSettings
 
     [JsonPropertyName("sfx_volume")]
     public float SfxVolume { get; set; } = 1f;
+
+    [JsonPropertyName("music_volume")]
+    public float MusicVolume { get; set; } = 0.82f;
+
+    [JsonPropertyName("ambience_volume")]
+    public float AmbienceVolume { get; set; } = 0.68f;
+
+    [JsonPropertyName("ui_volume")]
+    public float UiVolume { get; set; } = 0.9f;
 }
 
 public sealed class LastRunSummary

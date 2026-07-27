@@ -31,4 +31,21 @@ public sealed class CameraShakeStateTests
 
         Assert.That(shake.Advance(0.01f), Is.EqualTo(Vector2.Zero));
     }
+
+    [Test]
+    public void Start_WhileActive_AddsTraumaWithoutExceedingCombinedMaximum()
+    {
+        CameraShakeState shake = new();
+        shake.Start(1f, .1f);
+        Vector2 first = shake.Advance(.01f);
+        shake.Start(2f, .2f);
+        Vector2 combined = shake.Advance(.01f);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(first.Length(), Is.GreaterThan(0f));
+            Assert.That(combined.Length(), Is.GreaterThan(0f));
+            Assert.That(combined.Length(), Is.LessThanOrEqualTo(3f));
+        });
+    }
 }

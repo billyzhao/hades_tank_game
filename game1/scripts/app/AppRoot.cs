@@ -49,6 +49,7 @@ public partial class AppRoot : Node
     private Label _eventLabel = null!;
     private Label _buildLabel = null!;
     private Label _auxiliaryLabel = null!;
+    private Label _statusLabel = null!;
     private TextureRect _coreHudIcon = null!;
     private AcceptanceMenu _acceptanceMenu = null!;
     private WaveRewardPanel _waveRewardPanel = null!;
@@ -65,6 +66,8 @@ public partial class AppRoot : Node
     private bool _resultShown;
     private bool _autoAdvanceAcceptanceWave;
     private bool _awaitingWaveRewardAfterLevelUps;
+    private AudioFeedbackController _audioFeedback = null!;
+    private CameraShakeController _cameraFeedback = null!;
 
     public override void _Ready()
     {
@@ -90,6 +93,7 @@ public partial class AppRoot : Node
         _pauseCoordinator = new PauseCoordinator(GetTree());
         PauseController pauseController = new();
         pauseController.Configure(_pauseCoordinator);
+        pauseController.ManualPauseChanged += _ => _audioFeedback?.PlayUiConfirm();
         AddChild(pauseController);
 
         BindHudNodes();
@@ -142,8 +146,12 @@ public partial class AppRoot : Node
         _eventLabel = GetNode<Label>("UI/EventLabel");
         _buildLabel = GetNode<Label>("UI/BuildLabel");
         _auxiliaryLabel = GetNode<Label>("UI/AuxiliaryLabel");
+        _statusLabel = GetNode<Label>("UI/StatusLabel");
         _acceptanceMenu = GetNode<AcceptanceMenu>("UI/AcceptanceMenu");
         _acceptanceMenu.Visible = OS.IsDebugBuild();
+        _statusLabel.Text = OS.IsDebugBuild()
+            ? "WASD/方向键 移动 | 左键 射击 | 空格 冲刺 | Esc 暂停 | M 静音 | 右上角 验收"
+            : "WASD/方向键 移动 | 左键 射击 | 空格 冲刺 | Esc 暂停 | M 静音";
 
         TextureRect armorIcon = IndustrialUiSkin.ApplyCornerIcon(_armorLabel, ArtTextureCatalog.ArmorIcon, 9f);
         armorIcon.Position = new Vector2(43f, 0f);
@@ -233,6 +241,10 @@ public partial class AppRoot : Node
     private void BindArena(Node2D arena)
     {
         BindPlayerAndReboot(arena);
+        _audioFeedback = arena.GetNode<AudioFeedbackController>("AudioFeedbackController");
+        _cameraFeedback = arena.GetNode<CameraShakeController>("CameraShakeController");
+        _audioFeedback.ApplySettings(_saveData.Settings);
+        _audioFeedback.BindUiTree(GetNode<CanvasLayer>("UI"));
         _waveDirectorHost = arena.GetNode<Node>("WaveDirectorHost");
         _spawnEntrances = CollectEntrances(arena.GetNode<Node>("SpawnEntrances"));
         ReplaceNavigationFactory(arena, BlockadeCityArena.GridSize, BlockadeCityArena.CellSize);
@@ -335,6 +347,8 @@ public partial class AppRoot : Node
             CurrentRun.WaveIndex,
             _navigationFactory.Provider,
             ProtocolCatalog);
+        _audioFeedback.BindWaveDirector(_waveDirector, definition.WaveNumber);
+        _cameraFeedback.BindWaveDirector(_waveDirector);
         _waveDirector.StartWave();
         _acceptanceMenu.SetStatus($"第 {definition.WaveNumber} 波开始：可用“结束当前刷新窗口”快速进入清场验收。");
     }
@@ -366,6 +380,7 @@ public partial class AppRoot : Node
         if (chosen.Id == "maintenance_repair_25")
         {
             _playerHealth.SetArmor(CurrentRun.PlayerArmor);
+            _audioFeedback.PlayUiMaintenance();
             UpdateHud();
         }
         _eventLabel.Text = $"已选择：{chosen.DisplayName}";
@@ -387,6 +402,7 @@ public partial class AppRoot : Node
     private void ShowLevelUpOffer(int level, IReadOnlyList<StatUpgradeOffer> offers)
     {
         _pauseCoordinator.Acquire(PauseReason.LevelUp);
+        _audioFeedback.PlayUiLevelUp();
         _levelUpPanel.ShowOffer(level, offers);
     }
 
@@ -654,6 +670,9 @@ public partial class AppRoot : Node
         });
         room.AddChild(encounter);
         encounter.Initialize(boss, room, _navigationFactory, RoadblockCommanderDefinition.CellSize);
+        _audioFeedback.BindBoss(boss, encounter);
+        _audioFeedback.BeginBossMusic();
+        _cameraFeedback.BindBoss(boss);
         _bossHud.Bind(boss, RoadblockCommanderDefinition);
         boss.PhaseChanged += phase =>
         {
@@ -695,6 +714,7 @@ public partial class AppRoot : Node
         SaveLastRun(snapshot, "victory");
         _pauseCoordinator.Acquire(PauseReason.RunResult);
         _runResultScreen.ShowResult(snapshot, true);
+        _audioFeedback.PlayUiVictory();
         _waveLabel.Text = "封锁城区  已完成";
         _arenaLabel.Text = "封锁城区";
         _eventLabel.Text = "封锁城区突破完成：可重新开始挑战其他核心与构筑。";
@@ -711,6 +731,7 @@ public partial class AppRoot : Node
         SaveLastRun(snapshot, "failed");
         _pauseCoordinator.Acquire(PauseReason.RunResult);
         _runResultScreen.ShowResult(snapshot, false);
+        _audioFeedback.PlayUiFailure();
         _eventLabel.Text = "坦克报废：可立即重试本局";
     }
 

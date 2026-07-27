@@ -5,6 +5,7 @@ namespace Game1;
 /// <summary>路障部署的房间级挂载点；07B 后续步骤在此集中处理预警、合法格校验和运行时 TileMap 写入。</summary>
 public partial class BarrierDeployment : Node
 {
+    [Signal] public delegate void DeployedEventHandler(Vector2 position);
     private const float DefaultPreviewSeconds = .8f;
     private TileMapLayer _structure;
     private Node2D _player;
@@ -40,6 +41,7 @@ public partial class BarrierDeployment : Node
         if (!IsLegalCell(cell)) return false;
         _structure.SetCell(cell, 0, Vector2I.Zero);
         _navigationRefresh?.Invoke();
+        EmitSignal(SignalName.Deployed, new Vector2((cell.X + .5f) * _cellSize, (cell.Y + .5f) * _cellSize));
         return true;
     }
 

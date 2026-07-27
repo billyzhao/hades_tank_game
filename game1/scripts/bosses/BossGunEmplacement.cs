@@ -8,6 +8,8 @@ public partial class BossGunEmplacement : Node2D
     private static readonly PackedScene ProjectileScene = GD.Load<PackedScene>("res://scenes/combat/projectile.tscn");
     private static readonly Texture2D BodyTexture = GD.Load<Texture2D>("res://assets/sprites/bosses/roadblock_gun_emplacement.png");
     [Export] public float TelegraphSeconds { get; set; } = .8f;
+    [Signal] public delegate void TelegraphStartedEventHandler();
+    [Signal] public delegate void ShotFiredEventHandler();
     private Line2D _warning = null!;
     private Sprite2D _body = null!;
     private bool _active;
@@ -36,6 +38,7 @@ public partial class BossGunEmplacement : Node2D
         Vector2 direction = GlobalPosition.DirectionTo(player.GlobalPosition);
         _warning.Points = new Vector2[] { Vector2.Zero, ToLocal(player.GlobalPosition) };
         _warning.Visible = true;
+        EmitSignal(SignalName.TelegraphStarted);
         await ToSignal(GetTree().CreateTimer(TelegraphSeconds), SceneTreeTimer.SignalName.Timeout);
         _warning.Visible = false;
         for (int shot = 0; shot < 3 && _active && IsInsideTree(); shot++)
@@ -45,6 +48,7 @@ public partial class BossGunEmplacement : Node2D
             projectile.GlobalPosition = GlobalPosition + direction * 12f;
             projectile.CollisionMask = 19;
             projectile.Initialize(new ProjectileSpec(4, 210f, 1.8f, 0), Team.Enemy, direction);
+            EmitSignal(SignalName.ShotFired);
             await ToSignal(GetTree().CreateTimer(.12f), SceneTreeTimer.SignalName.Timeout);
         }
         _firing = false;

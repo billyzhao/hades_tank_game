@@ -112,6 +112,15 @@ public partial class SingleArenaFlowTestHost : Node
             AddChild(app);
             await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
 
+            Label status = app.GetNode<Label>("UI/StatusLabel");
+            Assert(status.Text.Contains("Esc 暂停", StringComparison.Ordinal) &&
+                   status.Text.Contains("M 静音", StringComparison.Ordinal) &&
+                   !status.Text.Contains("F1", StringComparison.OrdinalIgnoreCase),
+                "正式操作提示必须包含无冲突的暂停/静音键，且不得重新使用 F1。");
+            AudioFeedbackController audio = GetPrivateField<AudioFeedbackController>(app, "_audioFeedback");
+            Assert(audio.LoadedCueCount == Enum.GetValues<AudioCue>().Length,
+                "真实 AppRoot 必须在进入竞技场时加载完整语义音频库。");
+
             StartScreen start = app.FindChildren("*", "Control", true, false)
                 .OfType<StartScreen>()
                 .Single();
@@ -127,6 +136,8 @@ public partial class SingleArenaFlowTestHost : Node
             Button firstCore = coreSelection.FindChildren("*", "Button", true, false)
                 .OfType<Button>()
                 .First();
+            Assert(firstCore.HasMeta("bc04_audio_bound"),
+                "运行时创建的核心选择按钮必须接入统一 UI 移动/确认音效。");
             firstCore.EmitSignal(Button.SignalName.Pressed);
             Assert(!GetTree().Paused && app.CurrentRun.SelectedCore == CoreId.BreakthroughCannon,
                 "选择核心后必须解除整备暂停并写入真实 RunState。");

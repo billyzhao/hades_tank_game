@@ -1,4 +1,5 @@
 using Godot;
+using System;
 
 namespace Game1;
 
@@ -9,6 +10,7 @@ public partial class PauseController : CanvasLayer
         GD.Load<Texture2D>("res://assets/sprites/ui/reward_card_frame.png");
     private Control _overlay = null!;
     private PauseCoordinator _coordinator = null!;
+    public event Action<bool> ManualPauseChanged = delegate { };
 
     public void Configure(PauseCoordinator coordinator) =>
         _coordinator = coordinator ?? throw new System.ArgumentNullException(nameof(coordinator));
@@ -64,8 +66,16 @@ public partial class PauseController : CanvasLayer
             _coordinator.Contains(PauseReason.RunResult))
             return;
 
-        if (_coordinator.Contains(PauseReason.Manual)) _coordinator.Release(PauseReason.Manual);
-        else _coordinator.Acquire(PauseReason.Manual);
+        if (_coordinator.Contains(PauseReason.Manual))
+        {
+            _coordinator.Release(PauseReason.Manual);
+            ManualPauseChanged(false);
+        }
+        else
+        {
+            _coordinator.Acquire(PauseReason.Manual);
+            ManualPauseChanged(true);
+        }
     }
 
     public override void _Notification(int what)

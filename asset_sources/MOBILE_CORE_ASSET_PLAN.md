@@ -110,6 +110,10 @@ Alpha 02C 已生成 `sparse-arena-sample/blockade-city-sparse-arena-v1.png` 作�
 
 同一批次仍遵守少量样张门禁。不得因为“只做一张地图”而一次性生成大量未经确认的 UI 或特效。
 
+### Batch 09：封锁城区音频
+
+BC-04 使用 `generated/batch-09-blockade-city-audio/` 中的项目自有确定性合成脚本生产 34 个 WAV，不下载、不购买也不混入第三方采样。源脚本、生成清单和运行文件一一对应；运行目录为 `game1/assets/audio/blockade_city/`。该批次已于 2026-07-27 通过用户实机听感验收，统一登记为 `CONFIRMED`。
+
 ## 4. 文件与登记规则
 
 - 原始生成结果存入 `asset_sources/ai_generated/<batch>/`；

@@ -7,34 +7,38 @@ namespace Game1;
 /// </summary>
 public sealed class CameraShakeState
 {
-    private float _strength;
-    private float _duration;
-    private float _remaining;
+    private float _trauma;
+    private float _maximumOffset;
+    private float _decayPerSecond;
     private float _phase;
 
     public void Start(float strength, float seconds)
     {
-        _strength = Mathf.Max(0f, strength);
-        _duration = Mathf.Max(0f, seconds);
-        _remaining = _duration;
-        _phase = 0f;
+        if (strength <= 0f || seconds <= 0f) return;
+        float addedTrauma = Mathf.Clamp(strength / 6f, 0f, 1f);
+        _trauma = Mathf.Clamp(_trauma + addedTrauma, 0f, 1f);
+        _maximumOffset = Mathf.Max(_maximumOffset, strength);
+        _decayPerSecond = Mathf.Max(_decayPerSecond, _trauma / seconds);
     }
 
     public Vector2 Advance(float delta)
     {
-        if (_remaining <= 0f || _strength <= 0f)
+        if (_trauma <= 0f || _maximumOffset <= 0f)
         {
             return Vector2.Zero;
         }
 
-        _remaining = Mathf.Max(0f, _remaining - Mathf.Max(0f, delta));
-        if (_remaining <= 0f)
+        _phase += Mathf.Max(0f, delta) * 46f;
+        float shake = _trauma * _trauma;
+        Vector2 offset = new(
+            Mathf.Sin(_phase * 1.71f) * _maximumOffset * shake,
+            Mathf.Sin(_phase * 2.29f + .8f) * _maximumOffset * .72f * shake);
+        _trauma = Mathf.Max(0f, _trauma - _decayPerSecond * Mathf.Max(0f, delta));
+        if (_trauma <= 0f)
         {
-            return Vector2.Zero;
+            _maximumOffset = 0f;
+            _decayPerSecond = 0f;
         }
-
-        _phase += delta * 58f;
-        float intensity = _strength * (_remaining / _duration);
-        return new Vector2(Mathf.Sin(_phase), Mathf.Cos(_phase * 1.37f)) * intensity;
+        return offset;
     }
 }

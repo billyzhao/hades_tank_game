@@ -38,6 +38,8 @@ public partial class WaveDirector : Node
     public event Action<double> TimeChanged;
     public event Action<int> EnemyCountChanged;
     public event Action<BehaviorId, bool> EnemySpawned;
+    public event Action<BehaviorId, bool> SpawnWarningStarted;
+    public event Action<EnemyTank, BehaviorId, bool> EnemyCreated;
     public event Action<Vector2, bool> EnemyDefeated;
     public event Action<bool> EliteStateChanged;
     public event Action SpawnWindowEnded;
@@ -165,6 +167,7 @@ public partial class WaveDirector : Node
         // 预警期间也要占用精英资格，避免同一波连续排入多个精英。
         if (isElite) _eliteSpawned = true;
         _pendingSpawns++;
+        SpawnWarningStarted?.Invoke(behavior, isElite);
         ShowSpawnWarning(entrance.Value, behavior, isElite);
         SpawnEnemyAfterWarning(entrance.Value, behavior, isElite);
     }
@@ -212,6 +215,7 @@ public partial class WaveDirector : Node
         AliveEnemyCount = _aliveEnemies.Count;
         EnemyCountChanged?.Invoke(AliveEnemyCount);
         EnemySpawned?.Invoke(behavior, isElite);
+        EnemyCreated?.Invoke(enemy, behavior, isElite);
     }
 
     private void ShowSpawnWarning(SpawnEntrance entrance, BehaviorId behavior, bool isElite)

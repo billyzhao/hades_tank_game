@@ -1,0 +1,279 @@
+{
+  "batch": "batch-09-blockade-city-audio",
+  "generated_by": "generate_audio.py",
+  "license": "project-owned; no third-party samples",
+  "assets": [
+    {
+      "file": "player_track_loop.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 1.2,
+      "loop": true,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "player_fire_01.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.16,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "player_fire_02.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.16,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "player_fire_03.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.17,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "player_dash.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.28,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "player_hit.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.22,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "armor_low.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.62,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "reboot_start.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 1.05,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "reboot_complete.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.48,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "enemy_scout_fire.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.11,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "enemy_patrol_fire.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.16,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "enemy_assault_fire.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.18,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "enemy_mortar_fire.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.34,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "spawn_warning.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.52,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "enemy_destroy.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.42,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "elite_overdrive.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.72,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "boss_intro.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 1.25,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "boss_barrier.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.46,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "boss_turret.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.17,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "boss_charge_warning.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.78,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "boss_charge.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.55,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "boss_weakpoint.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.62,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "boss_phase.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.92,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "boss_destroy.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 1.35,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "ui_move.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.06,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "ui_confirm.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.13,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "ui_level_up.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.55,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "ui_maintenance.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.42,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "ui_failure.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 0.95,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "ui_victory.wav",
+      "sample_rate": 22050,
+      "channels": 1,
+      "duration_seconds": 1.0,
+      "loop": false,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "ambience_blockade_city.wav",
+      "sample_rate": 22050,
+      "channels": 2,
+      "duration_seconds": 8.0,
+      "loop": true,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "music_combat_base.wav",
+      "sample_rate": 22050,
+      "channels": 2,
+      "duration_seconds": 8.0,
+      "loop": true,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "music_combat_intensity.wav",
+      "sample_rate": 22050,
+      "channels": 2,
+      "duration_seconds": 8.0,
+      "loop": true,
+      "source": "project-owned deterministic procedural synthesis"
+    },
+    {
+      "file": "music_boss.wav",
+      "sample_rate": 22050,
+      "channels": 2,
+      "duration_seconds": 8.0,
+      "loop": true,
+      "source": "project-owned deterministic procedural synthesis"
+    }
+  ]
+}

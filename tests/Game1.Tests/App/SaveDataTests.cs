@@ -29,6 +29,9 @@ public sealed class SaveDataTests
     {
         SaveData source = SaveData.CreateDefault();
         source.Settings.MasterVolume = 0.75f;
+        source.Settings.MusicVolume = 0.65f;
+        source.Settings.AmbienceVolume = 0.55f;
+        source.Settings.UiVolume = 0.85f;
         source.UnlockedIds.Add("boss_roadblock_commander");
         source.LastRun = new LastRunSummary { Seed = 42, Result = "victory" };
         SaveService service = new(_savePath);
@@ -41,6 +44,9 @@ public sealed class SaveDataTests
             Assert.That(SaveData.CurrentSchemaVersion, Is.EqualTo(2));
             Assert.That(loaded.SchemaVersion, Is.EqualTo(SaveData.CurrentSchemaVersion));
             Assert.That(loaded.Settings.MasterVolume, Is.EqualTo(0.75f));
+            Assert.That(loaded.Settings.MusicVolume, Is.EqualTo(0.65f));
+            Assert.That(loaded.Settings.AmbienceVolume, Is.EqualTo(0.55f));
+            Assert.That(loaded.Settings.UiVolume, Is.EqualTo(0.85f));
             Assert.That(loaded.UnlockedIds, Is.EqualTo(source.UnlockedIds));
             Assert.That(loaded.LastRun.Seed, Is.EqualTo(42));
             Assert.That(loaded.LastRun.Result, Is.EqualTo("victory"));
@@ -77,6 +83,9 @@ public sealed class SaveDataTests
             Assert.That(loaded.SchemaVersion, Is.EqualTo(2));
             Assert.That(loaded.Settings.MasterVolume, Is.EqualTo(0.6f));
             Assert.That(loaded.Settings.SfxVolume, Is.EqualTo(0.4f));
+            Assert.That(loaded.Settings.MusicVolume, Is.EqualTo(0.82f));
+            Assert.That(loaded.Settings.AmbienceVolume, Is.EqualTo(0.68f));
+            Assert.That(loaded.Settings.UiVolume, Is.EqualTo(0.9f));
             Assert.That(loaded.UnlockedIds, Is.EqualTo(new[] { "legacy_unlock" }));
             Assert.That(loaded.LastRun.Seed, Is.EqualTo(77));
             Assert.That(coreId?.GetValue(loaded.LastRun), Is.EqualTo(string.Empty));
@@ -94,8 +103,11 @@ public sealed class SaveDataTests
         unsupported.SchemaVersion = SaveData.CurrentSchemaVersion + 1;
         SaveData invalidVolume = SaveData.CreateDefault();
         invalidVolume.Settings.SfxVolume = 1.1f;
+        SaveData invalidMusic = SaveData.CreateDefault();
+        invalidMusic.Settings.MusicVolume = -0.1f;
 
         Assert.That(() => unsupported.Validate(), Throws.TypeOf<InvalidDataException>());
         Assert.That(() => invalidVolume.Validate(), Throws.TypeOf<InvalidDataException>());
+        Assert.That(() => invalidMusic.Validate(), Throws.TypeOf<InvalidDataException>());
     }
 }

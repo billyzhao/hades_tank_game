@@ -11,6 +11,8 @@ public partial class BossEncounterController : Node
     [Export] public float ThreatIntervalSeconds { get; set; } = 4.5f;
     [Export] public float ChargeIntervalSeconds { get; set; } = 1.4f;
     public RoadblockCommander Boss { get; private set; }
+    public BarrierDeployment Barrier => _barrier;
+    public BossGunEmplacement Gun => _gun;
     private BarrierDeployment _barrier;
     private int _nextBarrierIndex;
     private bool _phaseOneActive;

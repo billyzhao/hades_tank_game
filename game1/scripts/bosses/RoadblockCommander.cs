@@ -15,6 +15,10 @@ public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
     [Signal] public delegate void HealthChangedEventHandler(int current, int maximum);
     [Signal] public delegate void PhaseChangedEventHandler(int phase);
     [Signal] public delegate void DefeatedEventHandler();
+    [Signal] public delegate void AttackFiredEventHandler();
+    [Signal] public delegate void ChargeTelegraphStartedEventHandler();
+    [Signal] public delegate void ChargeStartedEventHandler();
+    [Signal] public delegate void WeakpointExposedEventHandler();
 
     private BossPhaseController _phaseController = null!;
     private Sprite2D _visual = null!;
@@ -102,6 +106,7 @@ public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
         _chargeWarning.Visible = true;
         _chargeWarningSprite.Position = ToLocal(targetPosition);
         _chargeWarningSprite.Visible = true;
+        EmitSignal(SignalName.ChargeTelegraphStarted);
     }
 
     private void UpdateCharge(float delta)
@@ -127,6 +132,7 @@ public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
                 _charging = true;
                 _chargeWarning.Visible = false;
                 _chargeWarningSprite.Visible = false;
+                EmitSignal(SignalName.ChargeStarted);
             }
             return;
         }
@@ -155,6 +161,7 @@ public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
         _vulnerableTimer = VulnerableSeconds;
         _weakpoint.Visible = true;
         Velocity = Vector2.Zero;
+        EmitSignal(SignalName.WeakpointExposed);
     }
 
     private void UpdatePhaseOneMovement(float delta)
@@ -195,6 +202,7 @@ public partial class RoadblockCommander : CharacterBody2D, ITeamDamageable
             projectile.CollisionMask = 19;
             projectile.Initialize(new ProjectileSpec(8, 180f, 2.2f, 0), Team.Enemy, shotDirection);
         }
+        EmitSignal(SignalName.AttackFired);
         _fanCooldown = FanCooldownSeconds;
     }
 

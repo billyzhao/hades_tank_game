@@ -138,16 +138,16 @@
 
 ## 7. 音频
 
-当前 `game1/assets/audio/` 只有目录占位，尚未接入正式音频。
+BC-04 已生产并接入项目自有 Batch 09 程序化音频。全部文件不含第三方采样，并于 2026-07-27 通过用户实机听感验收。
 
-| 素材 ID 组 | 游戏元素 | 当前状态 | 最小需求 |
-| --- | --- | --- | --- |
-| `audio_player_*` | 移动、开火、冲刺、受击、重启 | `MISSING` | 5～8 个核心动作声音 |
-| `audio_enemy_*` | 敌军开火、迫击预警、精英过载、击毁 | `MISSING` | 按职责提供可辨识提示 |
-| `audio_boss_01_*` | 入场、部署路障、哨位预警、冲锋、弱点、击毁 | `MISSING` | 与阶段机制一一对应 |
-| `audio_ui_*` | 卡片移动、确认、升级、维护、失败 | `MISSING` | 支持鼠标和手柄反馈 |
-| `music_arena_01` | 封锁城区战斗音乐 | `MISSING` | 五波循环与 Boss 过渡 |
-| `ambience_arena_01` | 黄沙工业城区环境 | `MISSING` | 风沙、远处机械和空间底噪 |
+| 素材 ID 组 | 游戏元素 | 运行素材 | 源批次/来源 | 当前状态 | 维护说明 |
+| --- | --- | --- | --- | --- | --- |
+| `audio_player_*` | 履带、三种主炮变体、冲刺、受击、低装甲、重启 | `game1/assets/audio/blockade_city/player_*.wav`、`armor_low.wav`、`reboot_*.wav` | Batch 09 自有合成 | `CONFIRMED` | 高频主炮有三变体；履带循环按移动状态淡入淡出 |
+| `audio_enemy_*` | 四职责开火、刷新预警、迫击预警、精英过载、击毁 | `game1/assets/audio/blockade_city/enemy_*.wav`、`spawn_warning.wav`、`elite_overdrive.wav` | Batch 09 自有合成 | `CONFIRMED` | 四职责使用不同频段与时值；迫击在前摇开始时提示 |
+| `audio_boss_01_*` | 入场、路障、哨位、冲锋、弱点、阶段和击毁 | `game1/assets/audio/blockade_city/boss_*.wav` | Batch 09 自有合成 | `CONFIRMED` | 与 Boss 正式信号一一接线，不读取状态机私有字段 |
+| `audio_ui_*` | 焦点移动、确认、升级、维护、失败、完成 | `game1/assets/audio/blockade_city/ui_*.wav` | Batch 09 自有合成 | `CONFIRMED` | 动态按钮通过 SceneTree 节点接入，鼠标与键盘焦点共用 |
+| `music_arena_01` | 封锁城区五波与 Boss 音乐 | `music_combat_base.wav`、`music_combat_intensity.wav`、`music_boss.wav` | Batch 09 自有合成 | `CONFIRMED` | 两个战斗层同为 120 BPM/8 秒并同步启动；波次仅改变强度层音量 |
+| `ambience_arena_01` | 黄沙工业城区环境 | `ambience_blockade_city.wav` | Batch 09 自有合成 | `CONFIRMED` | 风沙、低频机械与远处警报循环，独立路由 `Ambience` 总线 |
 
 ## 8. 后续竞技场素材覆盖
 
@@ -196,5 +196,6 @@
 | 2026-07-23 | Batch 07 | 首区 Boss、地形模块、四辅助、工业 UI 框架 | 素材总体可用；特效和 UI 尚未完整替换 | Boss/地形/辅助标记确认；UI/特效标记部分或过渡 |
 | 2026-07-24 | 范围收敛 | 暂停后四区，优先完成封锁城区正式美术、特效、UI 和音频 | 用户确认方案 1 | 后四区改为 `DEFERRED`；当前缺口只按封锁城区统计 |
 | 2026-07-24 | Batch 08 | 玩家/三核心、侦察、弹道与战斗序列、关键预警、正式 UI 图标 | 用户实机验收通过 | 正式运行素材升级为 `CONFIRMED`；独立扩展项继续保持 `PARTIAL` |
+| 2026-07-27 | Batch 09 | 玩家、敌军、Boss、UI、五波音乐与黄沙工业环境 | 通过 BC-04 实机听感验收 | 34 个项目自有 WAV 接入运行目录并登记为 `CONFIRMED` |
 
 后续新增批次按时间追加，不覆盖历史结论。

@@ -18,6 +18,8 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
     public bool IsEliteVisual { get; set; }
     [Signal] public delegate void DestroyedEventHandler();
     [Signal] public delegate void ProjectileFiredEventHandler();
+    [Signal] public delegate void EliteOverdriveChangedEventHandler(bool active);
+    [Signal] public delegate void AttackTelegraphStartedEventHandler(int behavior);
     private float _telegraphRemaining;
     private float _attackTelegraphRemaining;
     private float _attackCooldown;
@@ -33,6 +35,7 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
     private float _repathRemaining;
     private float _eliteCycle;
     private float _movementClock;
+    private bool _eliteOverdriveActive;
     private EnemyDefinition _definition;
     private EliteModifierDefinition _eliteModifier;
     public Team DamageTeam => Team.Enemy;
@@ -152,6 +155,7 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
             ApplyMovementPose((float)delta, false);
             _attackTelegraphRemaining = _definition.TelegraphSeconds;
             _attackWarning.Visible = true;
+            EmitSignal(SignalName.AttackTelegraphStarted, (int)Behavior);
             if (_mortarWarning is not null)
             {
                 _mortarWarning.GlobalPosition = targetNode.GlobalPosition;
@@ -223,6 +227,11 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
         float cycleSeconds = _eliteModifier.BoostSeconds + _eliteModifier.RecoverySeconds;
         if (_eliteCycle <= 0f) _eliteCycle = cycleSeconds;
         bool overdrive = _eliteCycle > _eliteModifier.RecoverySeconds;
+        if (overdrive != _eliteOverdriveActive)
+        {
+            _eliteOverdriveActive = overdrive;
+            EmitSignal(SignalName.EliteOverdriveChanged, overdrive);
+        }
         _roleSprite.Modulate = overdrive ? new Color(1f, 0.72f, 0.18f) : new Color(0.55f, 0.55f, 0.55f);
         return MoveSpeed * (overdrive ? _eliteModifier.BoostSpeedMultiplier : _eliteModifier.RecoverySpeedMultiplier);
     }
