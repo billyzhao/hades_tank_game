@@ -11,17 +11,11 @@ namespace Game1;
 public partial class AuxiliaryHost : Node, IAuxiliaryRuntime
 {
     private static readonly PackedScene ProjectileScene = GD.Load<PackedScene>("res://scenes/combat/projectile.tscn");
-    private static readonly IReadOnlyDictionary<string, Texture2D> VisualTextures =
-        new Dictionary<string, Texture2D>(StringComparer.Ordinal)
-        {
-            ["aux_orbit_drone"] = GD.Load<Texture2D>("res://assets/sprites/auxiliaries/orbit_drone.png"),
-            ["aux_side_cannon"] = GD.Load<Texture2D>("res://assets/sprites/auxiliaries/side_cannon.png"),
-            ["aux_mine_layer"] = GD.Load<Texture2D>("res://assets/sprites/auxiliaries/mine_layer.png"),
-            ["aux_suppression_field"] = GD.Load<Texture2D>("res://assets/sprites/auxiliaries/suppression_field.png")
-        };
     private readonly Dictionary<string, AuxiliaryDefinition> _definitions = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Sprite2D> _slotVisuals = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, int> _knownRanks = new(StringComparer.Ordinal);
     private BuildController? _build;
+    private TankBuildVisualCatalog? _visualCatalog;
     private Node2D? _owner;
     private readonly Dictionary<string, float> _cooldowns = new(StringComparer.Ordinal);
     private Vector2 _lastPosition;
@@ -30,9 +24,11 @@ public partial class AuxiliaryHost : Node, IAuxiliaryRuntime
 
     public string AuxiliaryId { get; private set; } = string.Empty;
 
-    public void AttachBuild(BuildController build, ContentCatalog catalog)
+    public void AttachBuild(BuildController build, ContentCatalog catalog, TankBuildVisualCatalog visualCatalog)
     {
         _build = build ?? throw new ArgumentNullException(nameof(build));
+        _visualCatalog = visualCatalog ?? throw new ArgumentNullException(nameof(visualCatalog));
+        _visualCatalog.Validate(catalog);
         _definitions.Clear();
         foreach (AuxiliaryDefinition definition in catalog.Auxiliaries)
             _definitions.Add(definition.Id, definition);
@@ -69,16 +65,15 @@ public partial class AuxiliaryHost : Node, IAuxiliaryRuntime
 
     public override void _Process(double delta)
     {
-        if (_slotVisuals.Count == 0) return;
+        if (_slotVisuals.Count == 0 || _visualCatalog is null || _build is null) return;
         _visualPhase += (float)delta;
-        int index = 0;
-        foreach (Sprite2D visual in _slotVisuals.Values)
+        IReadOnlyList<AuxiliarySlotState> slots = _build.GetSnapshot().AuxiliarySlots;
+        for (int index = 0; index < slots.Count; index++)
         {
-            float baseAngle = index == 0 ? Mathf.Pi : 0f;
-            float angle = baseAngle + Mathf.Sin(_visualPhase * 1.8f + index) * .18f;
-            visual.Position = Vector2.FromAngle(angle) * 15f;
-            visual.Rotation = angle + Mathf.Pi / 2f;
-            index++;
+            AuxiliarySlotState slot = slots[index];
+            if (!_slotVisuals.TryGetValue(slot.AuxiliaryId, out Sprite2D? visual)) continue;
+            AuxiliaryVisualSet visualSet = _visualCatalog.GetAuxiliaryVisual(slot.AuxiliaryId);
+            ApplyVisualPose(visual, visualSet, index);
         }
     }
 
@@ -102,28 +97,51 @@ public partial class AuxiliaryHost : Node, IAuxiliaryRuntime
         _owner = null;
         _cooldowns.Clear();
         ClearSlotVisuals();
+        _knownRanks.Clear();
         SetPhysicsProcess(false);
     }
 
     private void Refresh()
     {
-        if (_build is null) return;
+        if (_build is null || _visualCatalog is null) return;
         IReadOnlyList<AuxiliarySlotState> slots = _build.GetSnapshot().AuxiliarySlots;
         AuxiliarySlotState? first = slots.FirstOrDefault();
         AuxiliaryId = first?.AuxiliaryId ?? string.Empty;
-        ClearSlotVisuals();
+        HashSet<string> activeIds = slots.Take(2)
+            .Select(slot => slot.AuxiliaryId)
+            .ToHashSet(StringComparer.Ordinal);
+        foreach (string removedId in _slotVisuals.Keys.Where(id => !activeIds.Contains(id)).ToArray())
+        {
+            Sprite2D removed = _slotVisuals[removedId];
+            if (IsInstanceValid(removed)) removed.QueueFree();
+            _slotVisuals.Remove(removedId);
+            _knownRanks.Remove(removedId);
+        }
+
+        int index = 0;
         foreach (AuxiliarySlotState slot in slots.Take(2))
         {
-            if (!VisualTextures.TryGetValue(slot.AuxiliaryId, out Texture2D? texture)) continue;
-            Sprite2D visual = new()
+            AuxiliaryVisualSet visualSet = _visualCatalog.GetAuxiliaryVisual(slot.AuxiliaryId);
+            int rank = Math.Clamp(slot.Rank, 1, 3);
+            float scale = visualSet.ScaleForRank(rank);
+            if (!_slotVisuals.TryGetValue(slot.AuxiliaryId, out Sprite2D? visual) || !IsInstanceValid(visual))
             {
-                Name = $"Visual_{slot.AuxiliaryId}",
-                Texture = texture,
-                TextureFilter = CanvasItem.TextureFilterEnum.Nearest,
-                ZIndex = 3
-            };
-            AddChild(visual);
-            _slotVisuals[slot.AuxiliaryId] = visual;
+                visual = new Sprite2D
+                {
+                    Name = $"Visual_{slot.AuxiliaryId}",
+                    TextureFilter = CanvasItem.TextureFilterEnum.Nearest
+                };
+                AddChild(visual);
+                _slotVisuals[slot.AuxiliaryId] = visual;
+            }
+
+            visual.Texture = visualSet.TextureForRank(rank);
+            visual.ZIndex = visualSet.Mode == AuxiliaryVisualMode.Orbit ? 5 : 3;
+            ApplyVisualPose(visual, visualSet, index++);
+            bool upgraded = _knownRanks.GetValueOrDefault(slot.AuxiliaryId) != rank;
+            _knownRanks[slot.AuxiliaryId] = rank;
+            if (upgraded) PlayAssembly(visual, scale, rank);
+            else visual.Scale = Vector2.One * scale;
         }
     }
 
@@ -134,6 +152,64 @@ public partial class AuxiliaryHost : Node, IAuxiliaryRuntime
             if (IsInstanceValid(visual)) visual.QueueFree();
         }
         _slotVisuals.Clear();
+    }
+
+    public void PlayHitFlash()
+    {
+        foreach (Sprite2D visual in _slotVisuals.Values)
+        {
+            if (!IsInstanceValid(visual)) continue;
+            visual.Modulate = new Color(1f, .42f, .24f);
+            visual.CreateTween().TweenProperty(visual, "modulate", Colors.White, .13f);
+        }
+    }
+
+    private void ApplyVisualPose(Sprite2D visual, AuxiliaryVisualSet visualSet, int slotIndex)
+    {
+        float side = slotIndex == 0 ? -1f : 1f;
+        switch (visualSet.Mode)
+        {
+            case AuxiliaryVisualMode.Orbit:
+            {
+                float angle = _visualPhase * 1.7f + slotIndex * Mathf.Pi;
+                visual.Position = visualSet.LocalOffset + Vector2.FromAngle(angle) * visualSet.OrbitRadius;
+                visual.Rotation = angle + Mathf.Pi / 2f;
+                break;
+            }
+            case AuxiliaryVisualMode.SideMount:
+                visual.Position = visualSet.LocalOffset + new Vector2(0f, side * 10f);
+                visual.Rotation = Mathf.Pi / 2f;
+                break;
+            case AuxiliaryVisualMode.RearMount:
+                visual.Position = visualSet.LocalOffset + new Vector2(-8f, side * 3f);
+                visual.Rotation = Mathf.Pi / 2f;
+                break;
+            case AuxiliaryVisualMode.TopMount:
+                visual.Position = visualSet.LocalOffset + new Vector2(0f, side * 3f);
+                visual.Rotation = Mathf.Pi / 2f;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+
+    private void PlayAssembly(Sprite2D visual, float targetScale, int rank)
+    {
+        visual.Scale = Vector2.One * targetScale * .45f;
+        visual.Modulate = new Color(.3f, .95f, 1f, .25f);
+        Tween tween = visual.CreateTween().SetParallel();
+        tween.SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
+        tween.TweenProperty(visual, "scale", Vector2.One * targetScale, .34f);
+        tween.TweenProperty(visual, "modulate", Colors.White, .24f);
+        if (_owner is not null)
+            SpriteEffectPlayer.Spawn(
+                GetTree().CurrentScene,
+                _owner.GlobalPosition,
+                ArtTextureCatalog.LevelUp,
+                15f,
+                .64f + rank * .08f,
+                24,
+                new Color(.32f, .92f, 1f));
     }
 
     private Node2D? GetNearestEnemy(float range)

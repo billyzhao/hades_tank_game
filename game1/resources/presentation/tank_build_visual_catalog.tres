@@ -1,0 +1,119 @@
+[gd_resource type="Resource" load_steps=28 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/TankBuildVisualCatalog.cs" id="1_catalog"]
+[ext_resource type="Script" path="res://scripts/content/ProtocolDepartmentVisualDefinition.cs" id="2_protocol"]
+[ext_resource type="Script" path="res://scripts/content/AuxiliaryVisualSet.cs" id="3_aux"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/upgrades/protocol_arsenal.png" id="4_arsenal"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/upgrades/protocol_recon.png" id="5_recon"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/upgrades/protocol_logistics.png" id="6_logistics"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/upgrades/protocol_engineering.png" id="7_engineering"]
+[ext_resource type="Texture2D" path="res://assets/sprites/auxiliaries/orbit_drone.png" id="8_orbit_1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/auxiliaries/orbit_drone_mk2.png" id="9_orbit_2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/auxiliaries/orbit_drone_mk3.png" id="10_orbit_3"]
+[ext_resource type="Texture2D" path="res://assets/sprites/auxiliaries/side_cannon.png" id="11_side_1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/auxiliaries/side_cannon_mk2.png" id="12_side_2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/auxiliaries/side_cannon_mk3.png" id="13_side_3"]
+[ext_resource type="Texture2D" path="res://assets/sprites/auxiliaries/mine_layer.png" id="14_mine_1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/auxiliaries/mine_layer_mk2.png" id="15_mine_2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/auxiliaries/mine_layer_mk3.png" id="16_mine_3"]
+[ext_resource type="Texture2D" path="res://assets/sprites/auxiliaries/suppression_field.png" id="17_field_1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/auxiliaries/suppression_field_mk2.png" id="18_field_2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/auxiliaries/suppression_field_mk3.png" id="19_field_3"]
+
+[sub_resource type="Resource" id="Protocol_Arsenal"]
+script = ExtResource("2_protocol")
+Department = 0
+Texture = ExtResource("4_arsenal")
+Slot = 2
+LocalPosition = Vector2(-1, 0)
+RotationDegrees = 90.0
+BaseScale = 0.17
+AccentColor = Color(1, 0.32, 0.12, 1)
+
+[sub_resource type="Resource" id="Protocol_Recon"]
+script = ExtResource("2_protocol")
+Department = 1
+Texture = ExtResource("5_recon")
+Slot = 3
+LocalPosition = Vector2(-1, -4)
+RotationDegrees = 90.0
+BaseScale = 0.17
+AccentColor = Color(0.2, 0.9, 1, 1)
+
+[sub_resource type="Resource" id="Protocol_Logistics"]
+script = ExtResource("2_protocol")
+Department = 2
+Texture = ExtResource("6_logistics")
+Slot = 0
+LocalPosition = Vector2(-1, 0)
+RotationDegrees = 90.0
+BaseScale = 0.2
+AccentColor = Color(0.42, 0.92, 0.38, 1)
+
+[sub_resource type="Resource" id="Protocol_Engineering"]
+script = ExtResource("2_protocol")
+Department = 3
+Texture = ExtResource("7_engineering")
+Slot = 1
+LocalPosition = Vector2(-5, 0)
+RotationDegrees = 90.0
+BaseScale = 0.18
+AccentColor = Color(1, 0.72, 0.16, 1)
+
+[sub_resource type="Resource" id="Aux_Orbit"]
+script = ExtResource("3_aux")
+AuxiliaryId = "aux_orbit_drone"
+RankOneTexture = ExtResource("8_orbit_1")
+RankTwoTexture = ExtResource("9_orbit_2")
+RankThreeTexture = ExtResource("10_orbit_3")
+Mode = 0
+LocalOffset = Vector2(0, 0)
+RankOneScale = 1.0
+RankTwoScale = 0.24
+RankThreeScale = 0.27
+OrbitRadius = 16.0
+
+[sub_resource type="Resource" id="Aux_Side"]
+script = ExtResource("3_aux")
+AuxiliaryId = "aux_side_cannon"
+RankOneTexture = ExtResource("11_side_1")
+RankTwoTexture = ExtResource("12_side_2")
+RankThreeTexture = ExtResource("13_side_3")
+Mode = 1
+LocalOffset = Vector2(0, 0)
+RankOneScale = 1.0
+RankTwoScale = 0.23
+RankThreeScale = 0.25
+OrbitRadius = 0.0
+
+[sub_resource type="Resource" id="Aux_Mine"]
+script = ExtResource("3_aux")
+AuxiliaryId = "aux_mine_layer"
+RankOneTexture = ExtResource("14_mine_1")
+RankTwoTexture = ExtResource("15_mine_2")
+RankThreeTexture = ExtResource("16_mine_3")
+Mode = 2
+LocalOffset = Vector2(0, 0)
+RankOneScale = 1.0
+RankTwoScale = 0.24
+RankThreeScale = 0.25
+OrbitRadius = 0.0
+
+[sub_resource type="Resource" id="Aux_Field"]
+script = ExtResource("3_aux")
+AuxiliaryId = "aux_suppression_field"
+RankOneTexture = ExtResource("17_field_1")
+RankTwoTexture = ExtResource("18_field_2")
+RankThreeTexture = ExtResource("19_field_3")
+Mode = 3
+LocalOffset = Vector2(0, 0)
+RankOneScale = 1.0
+RankTwoScale = 0.22
+RankThreeScale = 0.23
+OrbitRadius = 0.0
+
+[resource]
+script = ExtResource("1_catalog")
+Version = "bc05b-v1"
+ProtocolVisuals = [SubResource("Protocol_Arsenal"), SubResource("Protocol_Recon"), SubResource("Protocol_Logistics"), SubResource("Protocol_Engineering")]
+AuxiliaryVisuals = [SubResource("Aux_Orbit"), SubResource("Aux_Side"), SubResource("Aux_Mine"), SubResource("Aux_Field")]

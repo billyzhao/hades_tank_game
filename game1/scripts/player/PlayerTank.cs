@@ -12,6 +12,8 @@ public partial class PlayerTank : CharacterBody2D, ITeamDamageable
     private TankVisualAnimator _visualAnimator = null!;
     private Sprite2D _coreVisual = null!;
     private BuildController _buildController;
+    private float _moveSpeedMultiplier = 1f;
+    public float AppliedMoveSpeedMultiplier => _moveSpeedMultiplier;
 
     public Vector2 AimDirection { get; private set; } = Vector2.Up;
     public Team DamageTeam => Team.Player;
@@ -39,7 +41,8 @@ public partial class PlayerTank : CharacterBody2D, ITeamDamageable
             _dashComponent.TryStart(dashDirection);
         }
 
-        float movementSpeed = _buildController is null ? MoveSpeed : _buildController.EvaluateStat(StatId.MoveSpeed, MoveSpeed);
+        float movementSpeed = (_buildController is null ? MoveSpeed : _buildController.EvaluateStat(StatId.MoveSpeed, MoveSpeed)) *
+                              _moveSpeedMultiplier;
         if (_dashComponent.IsDashing)
         {
             Velocity = _dashComponent.Direction * movementSpeed * _dashComponent.SpeedMultiplier;
@@ -66,6 +69,15 @@ public partial class PlayerTank : CharacterBody2D, ITeamDamageable
 
     public void AttachBuild(BuildController buildController) =>
         _buildController = buildController ?? throw new System.ArgumentNullException(nameof(buildController));
+
+    /// <summary>正式 Profile 与 Debug 工作副本共用的玩家手感入口。</summary>
+    public void ApplyBalance(float moveSpeedMultiplier, float fireRateMultiplier)
+    {
+        if (!float.IsFinite(moveSpeedMultiplier) || moveSpeedMultiplier is < 0.8f or > 1.3f)
+            throw new System.ArgumentOutOfRangeException(nameof(moveSpeedMultiplier));
+        _moveSpeedMultiplier = moveSpeedMultiplier;
+        _weaponController.SetFireRateMultiplier(fireRateMultiplier);
+    }
 
     /// <summary>核心选择后只替换坦克中央模块，底盘、炮塔和碰撞体保持不变。</summary>
     public void SetCoreVisual(CoreId coreId)

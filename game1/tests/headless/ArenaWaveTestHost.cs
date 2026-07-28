@@ -35,6 +35,8 @@ public partial class ArenaWaveTestHost : Node
                    Mathf.IsEqualApprox(elite.ArmorMultiplier, 1f),
                 "精英只能使用 1.25 秒过载、0.75 秒冷却且不得膨胀生命。");
 
+            AssertDirectorBalanceProjection(definition.Waves[0]);
+
             await AssertDirectorSkipsUnreachableEntrance();
             await AssertDirectorSkipsTerrainBlockedEntrance();
             await AssertAcceptanceClearCancelsPendingSpawnAfterStop();
@@ -246,6 +248,26 @@ public partial class ArenaWaveTestHost : Node
         controller.OnBossStarted();
         controller.OnBossDefeated();
         Assert(controller.State == ArenaState.Completed, "Boss 击败后必须成为竞技场完成事实。 ");
+    }
+
+    private static void AssertDirectorBalanceProjection(WaveDefinition wave)
+    {
+        WaveDirector director = new();
+        director.Configure(
+            wave,
+            [new SpawnEntrance("north", new Vector2(240f, 36f), Vector2.Down, 0f)],
+            20260728,
+            0,
+            0,
+            new DirectPathProvider());
+        director.ApplyBalance(BlockadeCityBalanceSettings.HighPressurePreset);
+
+        Assert(Mathf.IsEqualApprox(director.BaseSpawnIntervalSeconds, 4f),
+            "调参不能改写正式 WaveDefinition 的基础刷新间隔。");
+        Assert(Mathf.IsEqualApprox(director.EffectiveSpawnIntervalSeconds, 2f),
+            "高压预设必须把第一波有效刷新间隔从 4 秒缩短到 2 秒。");
+        Assert(director.BaseMaximumAliveEnemies == 4 && director.EffectiveMaximumAliveEnemies == 8,
+            "高压预设必须把第一波有效敌军上限从 4 调整为 8。");
     }
 
     private static void Assert(bool condition, string message)

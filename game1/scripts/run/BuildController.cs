@@ -36,7 +36,11 @@ public sealed class BuildController
 
     public string CatalogVersion => _catalog.Version;
 
-    public BuildSnapshot GetSnapshot() => new(_state.SelectedProtocolIds.ToArray(), ModifierSnapshot, _state.AuxiliarySlots);
+    public BuildSnapshot GetSnapshot() => new(
+        _state.SelectedProtocolIds.ToArray(),
+        _state.OwnedProtocols,
+        ModifierSnapshot,
+        _state.AuxiliarySlots);
 
     /// <summary>辅助槽的唯一写入口：新类型占槽，重复选择提升已有槽位等级。</summary>
     public int AddOrUpgradeAuxiliary(string auxiliaryId)
@@ -177,5 +181,6 @@ public sealed class BuildController
 /// <summary>提供给战斗组件的只读本局构筑快照，禁止修改 Resource 或下一局状态。</summary>
 public sealed record BuildSnapshot(
     System.Collections.Generic.IReadOnlyList<string> SelectedProtocolIds,
+    System.Collections.Generic.IReadOnlyList<OwnedProtocol> OwnedProtocols,
     System.Collections.Generic.IReadOnlyList<StatModifier> Modifiers,
     System.Collections.Generic.IReadOnlyList<AuxiliarySlotState> AuxiliarySlots);

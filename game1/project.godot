@@ -10,7 +10,9 @@ config_version=5
 
 [application]
 
-config/name="Game 1"
+config/name="废土中继"
+config/description="黄沙废土工业区俯视角坦克肉鸽——封锁城区试玩版"
+config/version="0.1.0-rc1"
 run/main_scene="res://scenes/app/main.tscn"
 config/features=PackedStringArray("4.7", "C#")
 

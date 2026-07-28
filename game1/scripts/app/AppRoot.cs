@@ -19,6 +19,8 @@ public partial class AppRoot : Node
     private static readonly BuildRouteAnalyzer RouteAnalyzer = new(BuildRouteCatalog.CreateDefault());
     private static readonly BossDefinition RoadblockCommanderDefinition =
         GD.Load<BossDefinition>("res://resources/bosses/roadblock_commander.tres");
+    private static readonly TankBuildVisualCatalog TankBuildVisuals =
+        GD.Load<TankBuildVisualCatalog>("res://resources/presentation/tank_build_visual_catalog.tres");
 
     public RunState CurrentRun { get; private set; } = null!;
 
@@ -68,6 +70,8 @@ public partial class AppRoot : Node
     private bool _awaitingWaveRewardAfterLevelUps;
     private AudioFeedbackController _audioFeedback = null!;
     private CameraShakeController _cameraFeedback = null!;
+    private BlockadeCityBalanceProfile _balanceProfile = null!;
+    private BlockadeCityBalanceSettings _balanceSettings = BlockadeCityBalanceSettings.DesignBaseline;
 
     public override void _Ready()
     {
@@ -75,7 +79,10 @@ public partial class AppRoot : Node
         _saveData = _saveService.LoadOrDefault();
         _runStartedAtMsec = Time.GetTicksMsec();
         ProtocolCatalog.Validate();
+        TankBuildVisuals.Validate(ProtocolCatalog);
         BlockadeCityArena.Validate();
+        _balanceProfile = BlockadeCityBalanceProfileStore.LoadValidated();
+        _balanceSettings = _balanceProfile.ToSettings();
 
         _buildController = new BuildController(CurrentRun, ProtocolCatalog);
         _runController = new RunController(CurrentRun, _buildController, playableArenaCount: 1);
@@ -264,18 +271,26 @@ public partial class AppRoot : Node
         PlayerTank player = arena.GetNode<PlayerTank>("PlayerTank");
         _player = player;
         _playerHealth = player.GetNode<HealthComponent>("HealthComponent");
+        int previousArmor = _playerHealth.Armor;
         _playerHealth.ValueChanged += (armor, _) =>
         {
+            if (armor < previousArmor) FlashArmorHud();
+            previousArmor = armor;
             CurrentRun.SynchronizeArmor(armor, _playerHealth.MaximumArmor);
             UpdateHud();
         };
         _playerHealth.Depleted += () => _eventLabel.Text = "坦克报废：移动核心开始裁决重启";
         _playerHealth.InitializeArmor(CurrentRun.PlayerArmor, CurrentRun.MaximumArmor);
         player.AttachBuild(_buildController);
+        player.GetNode<TankBuildVisualController>("TankBuildVisualController")
+            .AttachBuild(_buildController, TankBuildVisuals);
         player.GetNode<WeaponController>("WeaponController").AttachBuild(_buildController);
+        player.ApplyBalance(
+            _balanceSettings.PlayerMoveSpeedMultiplier,
+            _balanceSettings.PlayerFireRateMultiplier);
         AuxiliaryHost auxiliaryHost = player.GetNode<AuxiliaryHost>("AuxiliaryHost");
         auxiliaryHost.Activate(player);
-        auxiliaryHost.AttachBuild(_buildController, ProtocolCatalog);
+        auxiliaryHost.AttachBuild(_buildController, ProtocolCatalog, TankBuildVisuals);
         player.GetNode<DashComponent>("DashComponent").AttachBuild(_buildController);
 
         _rebootController = arena.GetNode<RebootController>("RebootController");
@@ -325,8 +340,13 @@ public partial class AppRoot : Node
         {
             string stage = _waveDirector.IsSpawning ? "刷新" : "清场";
             _waveLabel.Text = $"波次  {definition.WaveNumber}/5  {stage}  {seconds:0.0}s";
+            UpdateTuningTelemetry();
         };
-        _waveDirector.EnemyCountChanged += count => _enemyLabel.Text = $"敌军  {count}";
+        _waveDirector.EnemyCountChanged += count =>
+        {
+            _enemyLabel.Text = $"敌军  {count}";
+            UpdateTuningTelemetry();
+        };
         _waveDirector.EnemySpawned += (behavior, elite) =>
             _eventLabel.Text = elite
                 ? "第 5 波精英槽位已入场：金色重装单位必须击毁"
@@ -347,6 +367,7 @@ public partial class AppRoot : Node
             CurrentRun.WaveIndex,
             _navigationFactory.Provider,
             ProtocolCatalog);
+        _waveDirector.ApplyBalance(_balanceSettings);
         _audioFeedback.BindWaveDirector(_waveDirector, definition.WaveNumber);
         _cameraFeedback.BindWaveDirector(_waveDirector);
         _waveDirector.StartWave();
@@ -453,6 +474,30 @@ public partial class AppRoot : Node
 
     private void BindAcceptanceMenu()
     {
+        bool canSaveOfficialProfile = BlockadeCityBalanceProfileStore.CanSaveFromCurrentEnvironment;
+        _acceptanceMenu.InitializeTuning(
+            _balanceSettings,
+            canSaveOfficialProfile,
+            "只能从 Godot 编辑器启动的 Debug 游戏保存正式配置。");
+        _acceptanceMenu.TuningRequested += (
+            spawnRate,
+            maximumAliveAdjustment,
+            enemyMoveSpeed,
+            enemyAttackRate,
+            enemyArmor,
+            playerMoveSpeed,
+            playerFireRate) =>
+        {
+            ApplyBalanceSettings(new BlockadeCityBalanceSettings(
+                spawnRate,
+                maximumAliveAdjustment,
+                enemyMoveSpeed,
+                enemyAttackRate,
+                enemyArmor,
+                playerMoveSpeed,
+                playerFireRate));
+        };
+        _acceptanceMenu.SaveTuningRequested += SaveOfficialBalanceProfile;
         _acceptanceMenu.DamageRequested += amount =>
         {
             _playerHealth.ApplyDamage(new DamageContext(amount));
@@ -493,6 +538,20 @@ public partial class AppRoot : Node
             _levelUpController.AddExperience(amount);
             UpdateHud();
             _acceptanceMenu.SetStatus("已授予战斗数据；若达到阈值应立即进入完全暂停升级。");
+        };
+        _acceptanceMenu.ProtocolRequested += protocolId =>
+        {
+            try
+            {
+                _buildController.SelectProtocol(protocolId);
+                ProtocolDefinition protocol = ProtocolCatalog.GetProtocol(protocolId);
+                UpdateHud();
+                _acceptanceMenu.SetStatus($"已授予协议：{protocol.DisplayName}；请观察坦克上的{protocol.Department}模块装配。");
+            }
+            catch (InvalidOperationException exception)
+            {
+                _acceptanceMenu.SetStatus($"协议请求未应用：{exception.Message}");
+            }
         };
         _acceptanceMenu.AuxiliaryRequested += auxiliaryId =>
         {
@@ -539,6 +598,52 @@ public partial class AppRoot : Node
                 : "Boss 当前处于二阶段装甲锁定；重新开始后可在一阶段直接验证胜利结算。");
         };
         _acceptanceMenu.RestartRequested += ReloadRun;
+    }
+
+    private void ApplyBalanceSettings(BlockadeCityBalanceSettings settings)
+    {
+        settings.Validate();
+        _balanceSettings = settings;
+        if (_player is not null && IsInstanceValid(_player))
+        {
+            _player.ApplyBalance(
+                settings.PlayerMoveSpeedMultiplier,
+                settings.PlayerFireRateMultiplier);
+        }
+        if (_waveDirector is not null && IsInstanceValid(_waveDirector))
+            _waveDirector.ApplyBalance(settings);
+        UpdateTuningTelemetry();
+        _acceptanceMenu.SetStatus($"运行时调参已应用：{settings.ToCompactText()}");
+    }
+
+    private void SaveOfficialBalanceProfile()
+    {
+        BalanceProfileSaveResult result = BlockadeCityBalanceProfileStore.SaveFromEditorDebug(_balanceSettings);
+        _acceptanceMenu.SetStatus(result.Message);
+        if (!result.Success) return;
+
+        _balanceProfile = BlockadeCityBalanceProfileStore.LoadValidated();
+        BlockadeCityBalanceSettings reloaded = _balanceProfile.ToSettings();
+        _balanceSettings = reloaded;
+        ApplyBalanceSettings(reloaded);
+        _acceptanceMenu.MarkTuningSaved(reloaded);
+        _acceptanceMenu.SetStatus(result.Message);
+    }
+
+    private void UpdateTuningTelemetry()
+    {
+        if (_acceptanceMenu is null) return;
+        if (_waveDirector is null || !IsInstanceValid(_waveDirector))
+        {
+            _acceptanceMenu.SetTuningTelemetry($"等待波次开始｜{_balanceSettings.ToCompactText()}");
+            return;
+        }
+
+        _acceptanceMenu.SetTuningTelemetry(
+            $"存活 {_waveDirector.AliveEnemyCount}＋待出生 {_waveDirector.PendingSpawnCount}｜" +
+            $"下次 {_waveDirector.RemainingSpawnCooldown:0.0}s\n" +
+            $"间隔 {_waveDirector.BaseSpawnIntervalSeconds:0.00}→{_waveDirector.EffectiveSpawnIntervalSeconds:0.00}s｜" +
+            $"上限 {_waveDirector.BaseMaximumAliveEnemies}→{_waveDirector.EffectiveMaximumAliveEnemies}");
     }
 
     private void CompleteCurrentWaveForAcceptance()
@@ -611,6 +716,17 @@ public partial class AppRoot : Node
             : $"辅助槽  {string.Join("  |  ", CurrentRun.AuxiliarySlots.Select(slot => $"{ProtocolCatalog.GetAuxiliary(slot.AuxiliaryId).DisplayName} Mk.{slot.Rank}"))}";
         if (_waveDirector is null)
             _waveLabel.Text = $"波次  {_arenaController?.CurrentWave ?? 1}/5  准备中";
+    }
+
+    private void FlashArmorHud()
+    {
+        if (_armorLabel is null) return;
+        _armorLabel.Modulate = new Color(1f, .24f, .12f);
+        _armorLabel.Scale = new Vector2(1.08f, 1.08f);
+        Tween tween = _armorLabel.CreateTween().SetParallel();
+        tween.SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+        tween.TweenProperty(_armorLabel, "modulate", Colors.White, .18f);
+        tween.TweenProperty(_armorLabel, "scale", Vector2.One, .18f);
     }
 
     private void UpdateBuildHud()

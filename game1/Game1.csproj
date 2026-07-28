@@ -4,4 +4,11 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <RootNamespace>Game1</RootNamespace>
   </PropertyGroup>
+  <!--
+    编辑器与 Debug 构建保留 tests，供 Godot headless 场景直接运行；
+    正式 Release 包不编译测试宿主，避免把验收入口带入交付程序集。
+  -->
+  <ItemGroup Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'ExportRelease'">
+    <Compile Remove="tests\**\*.cs" />
+  </ItemGroup>
 </Project>

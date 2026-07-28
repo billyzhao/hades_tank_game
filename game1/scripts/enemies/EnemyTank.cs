@@ -23,7 +23,6 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
     private float _telegraphRemaining;
     private float _attackTelegraphRemaining;
     private float _attackCooldown;
-    private Polygon2D _visual = null!;
     private Sprite2D _roleSprite = null!;
     private Line2D _attackWarning = null!;
     private AnimatedSprite2D _mortarWarning;
@@ -38,6 +37,12 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
     private bool _eliteOverdriveActive;
     private EnemyDefinition _definition;
     private EliteModifierDefinition _eliteModifier;
+    private float _moveSpeedMultiplier = 1f;
+    private float _attackRateMultiplier = 1f;
+    private float _armorMultiplier = 1f;
+    public float AppliedMoveSpeedMultiplier => _moveSpeedMultiplier;
+    public float AppliedAttackRateMultiplier => _attackRateMultiplier;
+    public float AppliedArmorMultiplier => _armorMultiplier;
     public Team DamageTeam => Team.Enemy;
 
     public void SetPathProvider(IEnemyPathProvider pathProvider) => _pathProvider = pathProvider;
@@ -56,11 +61,25 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
         Armor = _definition.Armor;
     }
 
+    /// <summary>出生前接收单次平衡快照；不持有或改写敌军定义 Resource。</summary>
+    public void ConfigureBalance(float moveSpeedMultiplier, float attackRateMultiplier, float armorMultiplier)
+    {
+        if (IsInsideTree()) throw new InvalidOperationException("敌军平衡快照必须在加入场景树前配置。");
+        if (!float.IsFinite(moveSpeedMultiplier) || moveSpeedMultiplier is < 0.75f or > 1.5f)
+            throw new ArgumentOutOfRangeException(nameof(moveSpeedMultiplier));
+        if (!float.IsFinite(attackRateMultiplier) || attackRateMultiplier is < 0.75f or > 1.75f)
+            throw new ArgumentOutOfRangeException(nameof(attackRateMultiplier));
+        if (!float.IsFinite(armorMultiplier) || armorMultiplier is < 0.5f or > 2f)
+            throw new ArgumentOutOfRangeException(nameof(armorMultiplier));
+        _moveSpeedMultiplier = moveSpeedMultiplier;
+        _attackRateMultiplier = attackRateMultiplier;
+        _armorMultiplier = armorMultiplier;
+    }
+
     public override void _Ready()
     {
         // 重启脉冲和房间清理只面向普通敌军；由实体自注册可覆盖场景预置与运行时生成两种来源。
         AddToGroup("enemies");
-        _visual = GetNode<Polygon2D>("Visual");
         _roleSprite = GetNode<Sprite2D>("RoleSprite");
         _definition ??= EnemyCatalog.GetEnemy(Behavior);
         _definition.Validate();
@@ -93,6 +112,8 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
             _eliteCycle = _eliteModifier.BoostSeconds + _eliteModifier.RecoverySeconds;
             Armor = Mathf.RoundToInt(Armor * _eliteModifier.ArmorMultiplier);
         }
+        MoveSpeed *= _moveSpeedMultiplier;
+        Armor = Math.Max(1, Mathf.RoundToInt(Armor * _armorMultiplier));
     }
 
     public override void _PhysicsProcess(double delta)
@@ -140,7 +161,7 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
             if (_attackTelegraphRemaining <= 0f)
             {
                 FireAt(targetNode);
-                _attackCooldown = _definition.AttackCooldown;
+                _attackCooldown = _definition.AttackCooldown / _attackRateMultiplier;
                 _attackWarning.Visible = false;
                 if (_mortarWarning is not null) _mortarWarning.Visible = false;
                 SetVisualColor(EnemyVisualPalette.GetRoleTint(Behavior));
@@ -238,13 +259,11 @@ public partial class EnemyTank : CharacterBody2D, ITeamDamageable
 
     private void SetVisualColor(Color color)
     {
-        _visual.Color = color;
         _roleSprite.Modulate = color;
     }
 
     private void SetVisualVisible(bool visible)
     {
-        _visual.Visible = visible;
         _roleSprite.Visible = visible;
     }
 

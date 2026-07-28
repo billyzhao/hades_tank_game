@@ -187,7 +187,17 @@ public partial class MvpTestRunner : Node2D
             projectile.Initialize(new ProjectileSpec(1, 80f, 3f, 0), Team.Enemy, Vector2.Right);
             stressRoot.AddChild(projectile);
         }
-        for (int index = 0; index < 40; index++) stressRoot.AddChild(new Area2D { Name = $"Hazard{index}" });
+        for (int index = 0; index < 40; index++)
+        {
+            AnimatedSprite2D effect = SpriteEffectPlayer.Create(
+                $"PersistentEffect{index + 1}",
+                ArtTextureCatalog.MortarWarning,
+                10f,
+                true);
+            effect.AddToGroup("mvp_persistent_effects");
+            stressRoot.AddChild(effect);
+            effect.Play();
+        }
 
         await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
         await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
@@ -195,6 +205,7 @@ public partial class MvpTestRunner : Node2D
         {
             Assert(stressRoot.GetChildCount() == 230, "压力场景节点数量不完整或运行两帧后异常丢失。");
             Assert(GetTree().GetNodesInGroup("enemy_projectiles").Count == 160, "敌方炮弹组数量必须保持 160。");
+            Assert(GetTree().GetNodesInGroup("mvp_persistent_effects").Count == 40, "持续特效必须使用正式循环像素序列。");
         });
         stressRoot.QueueFree();
     }

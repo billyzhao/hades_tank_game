@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/EnemyTank.cs" id="1_enemy"]
-[ext_resource type="Texture2D" path="res://assets/art/actors/enemy_vehicle.png" id="2_enemy_sprite"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/patrol_tank.png" id="2_enemy_sprite"]
 [sub_resource type="RectangleShape2D" id="1_shape"]
 size = Vector2(16, 16)
 
@@ -9,10 +9,6 @@ size = Vector2(16, 16)
 collision_layer = 8
 collision_mask = 1
 script = ExtResource("1_enemy")
-
-[node name="Visual" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-9, -7, 9, -7, 11, 0, 9, 7, -9, 7, -11, 0)
-color = Color(0.95, 0.75, 0.2, 1)
 
 [node name="RoleSprite" type="Sprite2D" parent="."]
 texture = ExtResource("2_enemy_sprite")

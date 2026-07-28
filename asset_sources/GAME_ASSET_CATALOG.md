@@ -1,7 +1,7 @@
 # 《废土中继》游戏素材主清单
 
-> 文档版本：asset-catalog-v1
-> 最近更新：2026-07-24
+> 文档版本：asset-catalog-v3
+> 最近更新：2026-07-28
 > 适用范围：封锁城区可交付版；后四区仅保留延期索引
 > 维护原则：游戏元素使用稳定素材 ID；确认新批次后更新本清单，不用文件名承载玩法规则。
 
@@ -46,14 +46,27 @@
 | --- | --- | --- | --- | --- | --- |
 | `player_hull` | 玩家坦克车体 | `game1/assets/sprites/player/player_hull.png` | Batch 08 | `CONFIRMED` | 已接入正式重型履带底盘；2026-07-24 实机验收通过 |
 | `player_turret` | 玩家独立炮塔 | `game1/assets/sprites/player/player_turret.png` | Batch 08 | `CONFIRMED` | 已接入独立炮塔并保留原瞄准节点；2026-07-24 实机验收通过 |
-| `player_assembled_reference` | 玩家整车历史参考 | `game1/assets/art/actors/hero_tank.png` | 2026-07-16 AI 原型 | `CANDIDATE` | 当前场景不直接引用，只用于车体/炮塔来源审计 |
+| `player_assembled_reference` | 玩家整车历史参考 | `game1/assets/art/actors/hero_tank.png` | 2026-07-16 AI 原型 | `RETIRED` | 当前场景不引用，只保留历史来源审计 |
 | `core_breakthrough_visual` | 突破重炮核心视觉 | `game1/assets/sprites/player/core_breakthrough.png` | Batch 08 | `CONFIRMED` | 选择核心后替换坦克中央部件，并与对应 HUD 图标一致 |
 | `core_overload_visual` | 过载速射核心视觉 | `game1/assets/sprites/player/core_overdrive.png` | Batch 08 | `CONFIRMED` | 橙红散热结构已独立，不再只靠文字区分 |
 | `core_electric_visual` | 电驱游骑核心视觉 | `game1/assets/sprites/player/core_electric.png` | Batch 08 | `CONFIRMED` | 青蓝线圈结构与冲刺序列已接入 |
 | `aux_orbit_drone` | 环绕无人机 | `game1/assets/sprites/auxiliaries/orbit_drone.png` | Batch 07 | `CONFIRMED` | 当前为静态部件加程序环绕；后续可补开火帧 |
 | `aux_side_cannon` | 侧挂速射炮 | `game1/assets/sprites/auxiliaries/side_cannon.png` | Batch 07 | `CONFIRMED` | 当前显示与自动开火逻辑已接入 |
-| `aux_mine_layer` | 履带布雷器 | `game1/assets/sprites/auxiliaries/mine_layer.png` | Batch 07 | `CONFIRMED` | 当前是随车部件；独立地雷实体表现尚未制作 |
-| `aux_suppression_field` | 区域压制器 | `game1/assets/sprites/auxiliaries/suppression_field.png` | Batch 07 | `CONFIRMED` | 部件已接入，压制范围特效仍缺失 |
+| `aux_mine_layer` | 履带布雷器 | `game1/assets/sprites/auxiliaries/mine_layer.png` | Batch 07 | `CONFIRMED` | 随车部件与正式自动攻击规则已通过实机验收 |
+| `aux_suppression_field` | 区域压制器 | `game1/assets/sprites/auxiliaries/suppression_field.png` | Batch 07 | `CONFIRMED` | 部件与复用青色范围反馈已通过实机验收 |
+
+### 3.1 构筑外观扩展
+
+| 素材 ID | 游戏元素 | 运行素材 | 源批次/来源 | 当前状态 | 维护说明 |
+| --- | --- | --- | --- | --- | --- |
+| `protocol_module_arsenal` | 军械部门坦克模块 | `game1/assets/sprites/player/upgrades/protocol_arsenal.png` | Batch 10 | `CONFIRMED` | 独立炮塔槽；2026-07-28 实机验收通过 |
+| `protocol_module_recon` | 侦察部门坦克模块 | `game1/assets/sprites/player/upgrades/protocol_recon.png` | Batch 10 | `CONFIRMED` | 独立炮塔顶部槽；2026-07-28 实机验收通过 |
+| `protocol_module_logistics` | 后勤部门坦克模块 | `game1/assets/sprites/player/upgrades/protocol_logistics.png` | Batch 10 | `CONFIRMED` | 独立车体中心槽；2026-07-28 实机验收通过 |
+| `protocol_module_engineering` | 工程部门坦克模块 | `game1/assets/sprites/player/upgrades/protocol_engineering.png` | Batch 10 | `CONFIRMED` | 独立车体后部槽；2026-07-28 实机验收通过 |
+| `aux_orbit_drone_mk2_mk3` | 环绕无人机二、三阶外观 | `game1/assets/sprites/auxiliaries/orbit_drone_mk{2,3}.png` | Batch 10 | `CONFIRMED` | Mk.I 继续使用 Batch 07；2026-07-28 实机验收通过 |
+| `aux_side_cannon_mk2_mk3` | 侧挂速射炮二、三阶外观 | `game1/assets/sprites/auxiliaries/side_cannon_mk{2,3}.png` | Batch 10 | `CONFIRMED` | Mk.I 继续使用 Batch 07；2026-07-28 实机验收通过 |
+| `aux_mine_layer_mk2_mk3` | 履带布雷器二、三阶外观 | `game1/assets/sprites/auxiliaries/mine_layer_mk{2,3}.png` | Batch 10 | `CONFIRMED` | Mk.I 继续使用 Batch 07；2026-07-28 实机验收通过 |
+| `aux_suppression_field_mk2_mk3` | 区域压制器二、三阶外观 | `game1/assets/sprites/auxiliaries/suppression_field_mk{2,3}.png` | Batch 10 | `CONFIRMED` | Mk.I 继续使用 Batch 07；2026-07-28 实机验收通过 |
 
 ## 4. 竞技场 1：封锁城区
 
@@ -66,8 +79,8 @@
 | `arena_01_steel` | 固定钢制掩体 | `game1/assets/sprites/terrain/blockade_steel.png` | Batch 07 | `CONFIRMED` | 单图用于来源和复用；运行 TileMap 使用合并图集 |
 | `arena_01_brick` | 可破坏墙 | `game1/assets/sprites/terrain/blockade_brick.png` | Batch 07 | `CONFIRMED` | 耐久由 `TileTerrainAdapter` 维护，不从图片推断 |
 | `arena_01_spawn_beacon` | 四周敌军刷新预警信标 | `game1/assets/sprites/terrain/spawn_beacon.png` | Batch 07 | `CONFIRMED` | 与程序圆环共同显示；不参与碰撞 |
-| `arena_01_boss_barrier` | 路障指挥车部署路障 | `game1/assets/sprites/terrain/roadblock_barrier.png` | Batch 07 | `CANDIDATE` | 文件已生成，但当前 Boss 部署仍写入钢墙 TileSet，尚未独立引用 |
-| `arena_01_boundary_props` | 场地边界工业设施 | 烘在 `blockade_city_foundation.png` 的非交互边缘 | Batch 06 | `PROVISIONAL` | 后续若需要交互或遮挡，必须拆成独立对象 |
+| `arena_01_boss_barrier` | 未采用的独立路障候选 | `game1/assets/sprites/terrain/roadblock_barrier.png` | Batch 07 | `RETIRED` | 正式 Boss 路障继续使用有碰撞和导航语义的钢墙 TileSet，本候选不得接入 |
+| `arena_01_boundary_props` | 场地边界工业设施 | 烘在 `blockade_city_foundation.png` 的非交互边缘 | Batch 06 | `CONFIRMED` | 作为不参与碰撞的边缘背景已通过 BC-03 实机验收 |
 | `legacy_desert_arena` | 旧黄沙工业背景 | `game1/assets/art/tiles/desert_industrial_arena.png` | 2026-07-16 AI 原型 | `RETIRED` | 当前首区不再引用，不得作为新竞技场正式背景 |
 
 ### 4.2 普通敌军与精英
@@ -77,9 +90,9 @@
 | `enemy_scout` | 侦察无人机/轻型侦察单位 | `game1/assets/sprites/enemies/scout_drone.png` | Batch 08 | `CONFIRMED` | 独立悬浮轮廓已由敌军定义资源引用；2026-07-24 群体实机验收通过 |
 | `enemy_patrol` | 巡逻坦克 | `game1/assets/sprites/enemies/patrol_tank.png` | Batch 06 | `CONFIRMED` | 当前可用 |
 | `enemy_assault` | 突击车 | `game1/assets/sprites/enemies/assault_vehicle.png` | Batch 06 | `CONFIRMED` | 当前可用 |
-| `enemy_mortar` | 迫击炮/攻城车 | `game1/assets/sprites/enemies/siege_tank.png` | Batch 06 | `CONFIRMED` | 当前可用；范围落点特效仍缺失 |
+| `enemy_mortar` | 迫击炮/攻城车 | `game1/assets/sprites/enemies/siege_tank.png` | Batch 06 | `CONFIRMED` | 迫击轮廓和 Batch 08 范围落点预警共同接入 |
 | `enemy_elite_overdrive` | 第五波过载精英 | `game1/assets/sprites/enemies/elite_tank.png` | Batch 06 | `CONFIRMED` | 过载与冷却目前主要靠调色和速度表现 |
-| `enemy_legacy_fallback` | 旧敌军通用底盘 | `game1/assets/art/actors/enemy_vehicle.png` | 2026-07-16 AI 原型 | `PROVISIONAL` | `enemy_tank.tscn` 的场景默认图；运行时会被职责贴图覆盖 |
+| `enemy_legacy_fallback` | 旧敌军通用底盘 | `game1/assets/art/actors/enemy_vehicle.png` | 2026-07-16 AI 原型 | `RETIRED` | `enemy_tank.tscn` 默认图已改为正式巡逻坦克，旧图不再有运行引用 |
 
 ### 4.3 Boss：路障指挥车
 
@@ -95,7 +108,7 @@
 
 ## 5. 弹道与战斗特效
 
-> 用户于 2026-07-23 明确指出特效尚未完成替换，因此本节不得整体标记为完成。
+> 2026-07-23 的缺口已在 Batch 08 与 BC-04 补齐；当前交付范围内的特效方案均已通过用户实机验收。
 
 | 素材 ID | 游戏元素 | 运行素材/当前表现 | 源批次/来源 | 当前状态 | 下一步 |
 | --- | --- | --- | --- | --- | --- |
@@ -108,33 +121,33 @@
 | `fx_dash_trail` | 动力冲刺轨迹 | `game1/assets/sprites/effects/animations/dash_trail_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 冲刺期间替代普通扬尘 |
 | `fx_combat_data` | 战斗数据掉落与吸附 | `game1/assets/sprites/effects/animations/combat_data_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 芯片循环保留原磁吸与实时经验结算 |
 | `fx_player_hit` | 玩家受击 | `game1/assets/sprites/effects/animations/player_hit_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 与原调色闪烁叠加，仍不参与伤害结算 |
-| `fx_armor_break` | 装甲破裂 | 复用 `player_hit_*.png` 强火花段 | Batch 08 | `PARTIAL` | 已有可读火花；低装甲专属持续态留到 BC-04/验收缺口处理 |
+| `fx_armor_break` | 装甲破裂与低装甲持续态 | `player_hit_*.png` 强火花 + 低装甲危险边框 | Batch 08 + BC-04 | `CONFIRMED` | 单次受击与持续低装甲状态均可见，已通过 BC-04 验收 |
 | `fx_reboot` | 原地重启 1.2 秒表现 | `game1/assets/sprites/effects/animations/reboot_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 重构开始与恢复完成各触发一次 |
 | `fx_level_up` | 即时升级反馈 | `game1/assets/sprites/effects/animations/level_up_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 每次确认即时升级后在玩家位置播放 |
 | `fx_spawn_warning` | 普通敌军刷新预警 | `game1/assets/sprites/effects/animations/spawn_warning_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 替换程序圆环，出生安全规则不变 |
 | `fx_barrier_warning` | Boss 路障落点 | `game1/assets/sprites/effects/animations/barrier_warning_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 独立矩形落点预警后才写入 TileMap |
-| `fx_suppression_field` | 区域压制范围 | 复用 `mortar_warning_*.png` 的青色友军环 | Batch 08 | `PARTIAL` | 已有范围触发反馈；后续可补独立持续场纹理 |
+| `fx_suppression_field` | 区域压制范围 | 复用 `mortar_warning_*.png` 的青色友军环 | Batch 08 | `CONFIRMED` | 当前复用方案可明确区分友军范围；独立纹理只作为未来可选升级 |
 | `fx_mortar_warning` | 迫击炮范围预警 | `game1/assets/sprites/effects/animations/mortar_warning_1.png` 等四帧 | Batch 08 | `CONFIRMED` | 迫击职责进入攻击前摇时锁定玩家落点显示 |
 
 ## 6. UI 与图标
 
-> 用户于 2026-07-23 明确指出 UI 尚未完成替换。Batch 07 只接入工业框架，因此本节整体状态为 `PARTIAL`。
+> Batch 07 的工业框架已由 Batch 08 语义图标和 BC-04 玩家体验调整补齐；当前正式 UI 已通过用户实机验收。
 
 | 素材 ID | 游戏元素 | 运行素材/当前表现 | 源批次/来源 | 当前状态 | 下一步 |
 | --- | --- | --- | --- | --- | --- |
 | `ui_hud_frame` | 左上装甲/核心/重启 HUD 框 | `game1/assets/sprites/ui/hud_status_frame.png` + `ui/icons/` | Batch 07 + Batch 08 | `CONFIRMED` | 框架和语义图标已接入；2026-07-24 实机验收通过 |
-| `ui_experience_frame` | 等级与经验区域 | `game1/assets/sprites/ui/experience_frame.png` | Batch 07 | `PARTIAL` | 框架已接入；经验条仍为 Godot 基础样式 |
+| `ui_experience_frame` | 等级与经验区域 | `game1/assets/sprites/ui/experience_frame.png` + Godot 实时进度条 | Batch 07 + 运行控件 | `CONFIRMED` | 框架、实时数值和进度变化已通过实机验收 |
 | `ui_reward_card_frame` | 核心、升级、协议、维护卡片框 | `game1/assets/sprites/ui/reward_card_frame.png` + 语义图标 | Batch 07 + Batch 08 | `CONFIRMED` | 核心、属性和部门图标已接入卡片；2026-07-24 实机验收通过 |
 | `ui_boss_status_frame` | Boss 名称、阶段和血条框 | `game1/assets/sprites/ui/boss_status_frame.png` + 精英/阶段图标 | Batch 07 + Batch 08 | `CONFIRMED` | 工业血条样式和阶段徽记已接入 |
 | `ui_armor_icon` | 装甲图标 | `game1/assets/sprites/ui/icons/armor.png` | Batch 08 | `CONFIRMED` | HUD、维护和结算可复用 |
 | `ui_core_icons` | 三核心图标 | `game1/assets/sprites/ui/icons/core_*.png` | Batch 08 | `CONFIRMED` | 与坦克核心部件使用相同色形语言 |
 | `ui_stat_icons` | 即时属性升级图标 | `game1/assets/sprites/ui/icons/{armor,move_speed,damage,fire_rate,projectile_speed}.png` | Batch 08 | `CONFIRMED` | 已接入即时升级三选一 |
 | `ui_department_icons` | 四部门协议图标 | `game1/assets/sprites/ui/icons/{arsenal,engineering,reconnaissance,logistics}.png` | Batch 08 | `CONFIRMED` | 奖励 ID 按部门前缀选择图标 |
-| `ui_auxiliary_icons` | 辅助系统 HUD 图标 | `game1/assets/sprites/ui/icons/auxiliary.png` | Batch 08 | `PARTIAL` | HUD 已有统一辅助槽图标；四种辅助独立小图仍使用战场部件 |
+| `ui_auxiliary_icons` | 辅助系统 HUD 图标 | `game1/assets/sprites/ui/icons/auxiliary.png` + 四种战场部件 | Batch 08 + Batch 07 | `CONFIRMED` | HUD 使用统一槽位语义，战场以四种独立部件区分，已通过实机验收 |
 | `ui_wave_elite_icons` | 波次、残敌、精英标识 | `game1/assets/sprites/ui/icons/{wave,elite}.png` | Batch 08 | `CONFIRMED` | 与实时文字和计数并列，不只依靠颜色 |
 | `ui_pause_overlay` | 暂停界面 | 工业卡框 + `wave.png` + 遮罩 | Batch 07 + Batch 08 | `CONFIRMED` | Esc 暂停语义和输入规则不变 |
 | `ui_result_screen` | 失败/首区完成结算 | 工业卡框 + 核心图标 + 统计与按钮 | Batch 07 + Batch 08 | `CONFIRMED` | 保留控制器焦点并显示本局核心 |
-| `ui_acceptance_menu` | Debug 策划验收菜单 | Godot 基础控件 | Debug 工具 | `CONFIRMED` | 不属于正式玩家 UI，可保持工具风格 |
+| `ui_acceptance_menu` | Debug 策划验收/节奏调参菜单 | Godot 基础控件 | Debug 工具 | `CONFIRMED` | 双页容器工具；不属于正式玩家 UI，可保持工具风格，Release 隐藏 |
 
 ## 7. 音频
 
@@ -197,5 +210,7 @@ BC-04 已生产并接入项目自有 Batch 09 程序化音频。全部文件不�
 | 2026-07-24 | 范围收敛 | 暂停后四区，优先完成封锁城区正式美术、特效、UI 和音频 | 用户确认方案 1 | 后四区改为 `DEFERRED`；当前缺口只按封锁城区统计 |
 | 2026-07-24 | Batch 08 | 玩家/三核心、侦察、弹道与战斗序列、关键预警、正式 UI 图标 | 用户实机验收通过 | 正式运行素材升级为 `CONFIRMED`；独立扩展项继续保持 `PARTIAL` |
 | 2026-07-27 | Batch 09 | 玩家、敌军、Boss、UI、五波音乐与黄沙工业环境 | 通过 BC-04 实机听感验收 | 34 个项目自有 WAV 接入运行目录并登记为 `CONFIRMED` |
+| 2026-07-27 | BC-05 Release 审计 | 封锁城区全部实际运行引用 | 依据 BC-03/BC-04 已通过的实机验收收敛状态 | 未采用候选改为 `RETIRED`；当前交付范围不再含 `MISSING`、`PROVISIONAL` 或 `PARTIAL` |
+| 2026-07-28 | Batch 10 | 四部门坦克模块、四辅助 Mk.II～Mk.III | 用户实机验收通过 | 新素材升级为 `CONFIRMED`；3×4 第三行拒收并由独立 1×4 Mk.III 母版替代 |
 
 后续新增批次按时间追加，不覆盖历史结论。

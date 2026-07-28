@@ -29,11 +29,22 @@ public partial class WaveDirector : Node
     private bool _cancelPendingSpawnsForAcceptance;
     private int _pendingSpawns;
     private readonly HashSet<EnemyTank> _aliveEnemies = new();
+    private BlockadeCityBalanceSettings _balance = BlockadeCityBalanceSettings.DesignBaseline;
 
     public int AliveEnemyCount { get; private set; }
     public double RemainingSpawnSeconds { get; private set; }
     public bool IsSpawning { get; private set; }
     public bool EliteAlive { get; private set; }
+    public int PendingSpawnCount => _pendingSpawns;
+    public float RemainingSpawnCooldown => Math.Max(0f, _spawnCooldown);
+    public float BaseSpawnIntervalSeconds => _definition?.SpawnIntervalSeconds ?? 0f;
+    public int BaseMaximumAliveEnemies => _definition?.MaximumAliveEnemies ?? 0;
+    public float EffectiveSpawnIntervalSeconds => _definition is null
+        ? 0f
+        : _definition.SpawnIntervalSeconds / _balance.SpawnRateMultiplier;
+    public int EffectiveMaximumAliveEnemies => _definition is null
+        ? 0
+        : Math.Max(1, _definition.MaximumAliveEnemies + _balance.MaximumAliveAdjustment);
 
     public event Action<double> TimeChanged;
     public event Action<int> EnemyCountChanged;
@@ -46,6 +57,17 @@ public partial class WaveDirector : Node
     public event Action AllEnemiesCleared;
 
     public override void _Ready() => SetPhysicsProcess(false);
+
+    /// <summary>
+    /// 应用正式平衡 Profile 或 Debug 工作副本。当前场上敌军保持原快照，后续出生单位使用新倍率。
+    /// </summary>
+    public void ApplyBalance(BlockadeCityBalanceSettings balance)
+    {
+        balance.Validate();
+        _balance = balance;
+        if (_started)
+            _spawnCooldown = Math.Min(_spawnCooldown, EffectiveSpawnIntervalSeconds);
+    }
 
     public void Configure(
         WaveDefinition definition,
@@ -111,10 +133,10 @@ public partial class WaveDirector : Node
         RemainingSpawnSeconds = Math.Max(0d, RemainingSpawnSeconds - delta);
         TimeChanged?.Invoke(RemainingSpawnSeconds);
         _spawnCooldown -= (float)delta;
-        if (_spawnCooldown <= 0f && AliveEnemyCount + _pendingSpawns < _definition.MaximumAliveEnemies)
+        if (_spawnCooldown <= 0f && AliveEnemyCount + _pendingSpawns < EffectiveMaximumAliveEnemies)
         {
             SpawnEnemy();
-            _spawnCooldown = _definition.SpawnIntervalSeconds;
+            _spawnCooldown = EffectiveSpawnIntervalSeconds;
         }
 
         if (RemainingSpawnSeconds <= 0d) StopSpawning();
@@ -197,6 +219,10 @@ public partial class WaveDirector : Node
         EnemyTank enemy = EnemyScene.Instantiate<EnemyTank>();
         enemy.Name = isElite ? "OverdriveElite" : $"WaveEnemy{_spawnOrdinal + 1}";
         enemy.Configure(_contentCatalog.GetEnemy(behavior), isElite ? _definition.EliteModifier : null);
+        enemy.ConfigureBalance(
+            _balance.EnemyMoveSpeedMultiplier,
+            _balance.EnemyAttackRateMultiplier,
+            _balance.EnemyArmorMultiplier);
         enemy.SetPathProvider(_pathProvider);
         enemy.GlobalPosition = entrance.Position;
         if (isElite)

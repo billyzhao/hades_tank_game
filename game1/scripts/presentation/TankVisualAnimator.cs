@@ -16,12 +16,16 @@ public partial class TankVisualAnimator : Node
     private float _dustCooldown;
     private int _dustSide = 1;
     private Vector2 _bodyBaseScale;
+    private Node2D _turret = null!;
+    private Vector2 _hitOffset;
+    private float _hitReactionRemaining;
 
     public override void _Ready()
     {
         _player = GetParent<PlayerTank>();
         _bodyVisual = _player.GetNode<Sprite2D>("BodyVisual");
         _bodyBaseScale = _bodyVisual.Scale;
+        _turret = _player.GetNode<Node2D>("Turret");
         _turretVisual = _player.GetNode<Node2D>("Turret/TurretVisual");
         _muzzleFlash = _player.GetNode<AnimatedSprite2D>("Turret/Muzzle/MuzzleFlash");
         _muzzleFlash.SpriteFrames = SpriteEffectPlayer.Create(
@@ -37,9 +41,17 @@ public partial class TankVisualAnimator : Node
         _isDashing = isDashing;
     }
 
+    /// <summary>只推动表现节点，不改变玩家物理坐标、瞄准方向或碰撞结果。</summary>
+    public void PlayHitReaction()
+    {
+        _hitReactionRemaining = .13f;
+        _hitOffset = new Vector2(-2.2f, 1.1f);
+    }
+
     public override void _Process(double delta)
     {
         float deltaSeconds = (float)delta;
+        UpdateHitReaction(deltaSeconds);
         _turretVisual.Position = new Vector2(-_recoil.Advance(deltaSeconds), 0f);
         UpdateMovement(deltaSeconds);
     }
@@ -56,14 +68,14 @@ public partial class TankVisualAnimator : Node
         bool moving = !_velocity.IsZeroApprox();
         if (!moving)
         {
-            _bodyVisual.Position = _bodyVisual.Position.Lerp(Vector2.Zero, Mathf.Min(1f, delta * 14f));
+            _bodyVisual.Position = _bodyVisual.Position.Lerp(_hitOffset, Mathf.Min(1f, delta * 14f));
             _bodyVisual.Scale = _bodyVisual.Scale.Lerp(_bodyBaseScale, Mathf.Min(1f, delta * 14f));
             return;
         }
 
         _motionClock += delta * (_isDashing ? 2.2f : 1f);
         float treadPulse = Mathf.Sin(_motionClock * 18f);
-        _bodyVisual.Position = new Vector2(0f, treadPulse * (_isDashing ? 0.75f : 0.40f));
+        _bodyVisual.Position = _hitOffset + new Vector2(0f, treadPulse * (_isDashing ? 0.75f : 0.40f));
         _bodyVisual.Scale = new Vector2(
             _bodyBaseScale.X + treadPulse * 0.010f,
             _bodyBaseScale.Y - treadPulse * 0.006f);
@@ -75,6 +87,20 @@ public partial class TankVisualAnimator : Node
             SpawnDust(_isDashing ? 1.7f : 1f);
             _dustCooldown = interval;
         }
+    }
+
+    private void UpdateHitReaction(float delta)
+    {
+        if (_hitReactionRemaining > 0f)
+        {
+            _hitReactionRemaining = Mathf.Max(0f, _hitReactionRemaining - delta);
+            _hitOffset = _hitOffset.Lerp(Vector2.Zero, Mathf.Min(1f, delta * 22f));
+        }
+        else
+        {
+            _hitOffset = Vector2.Zero;
+        }
+        _turret.Position = _hitOffset;
     }
 
     private void SpawnDust(float intensity)

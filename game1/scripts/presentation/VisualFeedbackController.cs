@@ -23,9 +23,15 @@ public partial class VisualFeedbackController : Node2D
         health.ValueChanged += (armor, _) =>
         {
             if (armor < lastArmor)
-                SpriteEffectPlayer.Spawn(this, player.GlobalPosition, ArtTextureCatalog.PlayerHit, 16f, .72f, 21);
+            {
+                SpriteEffectPlayer.Spawn(this, player.GlobalPosition, ArtTextureCatalog.PlayerHit, 18f, 1.02f, 21);
+                player.GetNode<TankVisualAnimator>("TankVisualAnimator").PlayHitReaction();
+                player.GetNode<TankBuildVisualController>("TankBuildVisualController").PlayHitFlash();
+                player.GetNode<AuxiliaryHost>("AuxiliaryHost").PlayHitFlash();
+            }
             Flash(player.GetNode<CanvasItem>("BodyVisual"), armor < lastArmor ? new Color(1f, 0.25f, 0.18f) : new Color(0.35f, 1f, 0.55f));
             Flash(player.GetNode<CanvasItem>("Turret/TurretVisual"), Colors.White);
+            Flash(player.GetNode<CanvasItem>("CoreVisual"), Colors.White);
             SetLowArmorWarning(AudioMixPolicy.IsLowArmor(armor, health.MaximumArmor));
             lastArmor = armor;
         };

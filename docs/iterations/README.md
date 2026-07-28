@@ -10,3 +10,6 @@
 - [BC-02：战斗、敌军与构筑深化](iteration-bc02-combat-build-depth.md)
 - [BC-03：封锁城区正式美术](iteration-bc03-blockade-city-final-art.md)
 - [BC-04：音频、手感与玩家体验](iteration-bc04-audio-game-feel-ux.md)
+- [BC-05：平衡、稳定与发布候选版](iteration-bc05-release-candidate.md)
+- [BC-05A：Debug 策划节奏调参台](iteration-bc05a-debug-tuning-console.md)
+- [BC-05B：构筑外观与受击反馈补强](iteration-bc05b-build-visual-feedback.md)
